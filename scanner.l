@@ -18,16 +18,39 @@
 
 /* ~~~ regex definitions ~~~ */
 
-num		[0-9]+
-
+delim		[\t\n]
+ws			{ delim }+
+letter		[a - zA - Z]
+digit		[0 - 9]
+underscore	[_]
+id			{ letter }({ letter } | {digit} | {underscore})*
+number  	{ digit }+
 
 /* ~~~ actions section ~~~ */
 %%
 
-{num}	{ printf("num found: %s in line %d\n", yytext, yylineno); return atoi(yytext); /* telesths new gia to struct */}
-.	{ printf("No match found for %s\n", yytext); return MY_EOF; }
-\n	{ }	/* Work-arround because yylineno was stuck at 1. */
+{number}	{ printf("num found: %s in line %d\n", yytext, yylineno); return atoi(yytext); /* telesths new gia to struct */}
+.	        { printf("No match found for %s\n", yytext); return MY_EOF; }
+\n	        { }	/* Work-arround because yylineno was stuck at 1. */
 
+{digit}+"."{digit}*     { return REALCONST; }
+{id}                    { return IDENTIFIER; }
+
+if						{ return IF; }
+else					{ return ELSE; }
+while					{ return WHILE; }
+for						{ return FOR; }
+function				{ return FUNCTION; }
+return					{ return RETURN; }
+break					{ return BREAK; }
+continue				{ return CONTINUE; }
+and						{ return AND; }
+not						{ return NOT; }
+or						{ return OR; }
+local					{ return LOCAL; }
+true					{ return TRUE; }
+false					{ return FALSE; }
+nil						{ return NIL; }
 
 %%
 
