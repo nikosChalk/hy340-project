@@ -6,7 +6,7 @@
 	#define MY_EOF 0
 	#define YY_DECL int alpha_yylex(void *ylval)
 
-//d	#define MAKE_TOKEN (new Token(yyline, yytext, type)(type))
+	#define MAKE_TOKEN (new Token(yyline, yytext, type)(type))
 %}
 
 /* ~~~ FLEX parameters ~~~ */
