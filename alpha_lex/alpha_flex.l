@@ -14,6 +14,7 @@
 			OP_GT, OP_LT, OP_GE, OP_LE,
 			CONST_INT, CONST_REAL, CONST_STR, PUNCTUATION, IDENTIFIER, COMMENT
 	};
+	alpha_lex::alpha_token_generator gen;
 %}
 
 /* ~~~ FLEX parameters ~~~ */
@@ -39,26 +40,233 @@ const_int  		{digit}+
 .	        { return UNKNOWN; }
 \n	        { }	/* Work-arround because yylineno was stuck at 1. */
 
-{const_int}				{ return CONST_INT; }
-{digit}+"."{digit}*     { return CONST_REAL; }
+{const_int}				{ 
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_const_int_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return CONST_INT; 
+						}
+{digit}+"."{digit}*     { 
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_const_real_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return CONST_REAL; 
+						}
 
-if						{ return IF; }
-else					{ return ELSE; }
-while					{ return WHILE; }
-for						{ return FOR; }
-function				{ return FUNCTION; }
-return					{ return RETURN; }
-break					{ return BREAK; }
-continue				{ return CONTINUE; }
-and						{ return AND; }
-not						{ return NOT; }
-or						{ return OR; }
-local					{ return LOCAL; }
-true					{ return BOOL_TRUE; }
-false					{ return BOOL_FALSE; }
-nil						{ return NIL; }
+if						{ 
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_keyword_token(yylineno,yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return IF; 
+                        }
+else					{ 
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_keyword_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return ELSE; 
+						}
+while					{ 
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_keyword_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return WHILE; 
+						}
+for						{ 
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_keyword_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return FOR; 
+}
+function				{ 
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_keyword_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return FUNCTION; 
+						}
+return					{ 
+						    alpha_lex::alpha_token_t *ptr;
+						    ptr = gen.gen_keyword_token(yylineno, yytext);
+						    memcpy(ylval, ptr, sizeof(alpha_token_t));
+						    free(ptr);
+						    return RETURN; 
+						}
+break					{ 
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_keyword_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return BREAK; 
+						}
+continue				{ 
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_keyword_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return CONTINUE; 
+                        }
+and						{ 
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_keyword_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return AND; 
+                        }
+not						{ 
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_keyword_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return NOT; 
+						}
+or						{ 
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_keyword_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return OR; 
+						}
+local					{ 
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_keyword_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return LOCAL; 
+						}
+true					{ 
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_keyword_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return BOOL_TRUE; 
+						}
+false					{ 
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_keyword_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return BOOL_FALSE; 
+						}
+nil						{ 
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_keyword_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return NIL; 
+						}
 
-{id}                    { return IDENTIFIER; } /* id MUST be bellow all the above enumerated rules. */
+{id}                    { 
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_identifier_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return IDENTIFIER; /* id MUST be bellow all the above enumerated rules. */
+						} 
+
+"="						{
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_operator_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return OP_ASSIGN; 
+						}
+"+"						{
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_operator_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return OP_PLUS; 
+						}
+"-"						{
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_operator_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return OP_MINUS; 
+						}
+"*"						{
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_operator_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return OP_MUL; 
+						}
+"/"						{
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_operator_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return OP_DIV; 
+						}
+"%"						{
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_operator_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return OP_MOD; 
+						}
+"=="					{
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_operator_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return OP_EQ; 
+						}
+"!="					{
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_operator_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return OP_NE; 
+						}
+"++"					{
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_operator_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return OP_PLUS_PLUS; 
+						}
+"--"					{
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_operator_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return OP_MINUS_MINUS; 
+						}
+">"						{
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_operator_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return OP_GT; 
+						}
+"<"						{
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_operator_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return OP_LT; 
+						}
+">="					{
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_operator_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return OP_GE; 
+						}
+"<="					{
+							alpha_lex::alpha_token_t *ptr;
+							ptr = gen.gen_operator_token(yylineno, yytext);
+							memcpy(ylval, ptr, sizeof(alpha_token_t));
+							free(ptr);
+							return OP_LE; 
+						}
 
 %%
 
