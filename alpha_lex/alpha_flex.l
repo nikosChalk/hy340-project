@@ -18,8 +18,8 @@
 
 /* ~~~ FLEX parameters ~~~ */
 
-%option header-file="alpha_lex.h"
-%option outfile = "alpha_lex.cpp"
+%option header-file="alpha_flex.h"
+%option outfile = "alpha_flex.cpp"
 %option noyywrap
 %option yylineno
 
