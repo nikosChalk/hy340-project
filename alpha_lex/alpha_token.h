@@ -20,7 +20,8 @@ namespace alpha_lex {
          * @param sub_category The token's sub-category as shown in the example's 5th column. (e.g. SEMICOLON)
          * @param category_type The token's category type as shown in the example's last column. (e.g. char*)
          */
-        alpha_token_t(unsigned int numline, std::string content, std::string category, std::string sub_category, std::string category_type);
+        alpha_token_t(unsigned int numline, const std::string &content, const std::string &category,
+                                     const std::string &sub_category, const std::string &category_type);
 
         /**
          * Returns the line number of this token

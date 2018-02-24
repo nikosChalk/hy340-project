@@ -1,9 +1,10 @@
 /* ~~~ user macros  and forward declarations ~~~ */
 
 %{
-	#include <stdio.h>
-	#include <stdlib.h>
+	#include <iostream>
 	#include <string>
+	#include <memory>
+	#include <vector>
 	#include "alpha_token.h"
 	#include "alpha_token_generator.h"
 	#define YY_DECL int alpha_yylex(void *ylval)
@@ -14,7 +15,8 @@
 			OP_GT, OP_LT, OP_GE, OP_LE,
 			CONST_INT, CONST_REAL, CONST_STR, PUNCTUATION, IDENTIFIER, COMMENT
 	};
-	alpha_lex::alpha_token_generator gen;
+
+	alpha_lex::alpha_token_generator token_generator;
 %}
 
 /* ~~~ FLEX parameters ~~~ */
@@ -37,254 +39,79 @@ const_int  		{digit}+
 /* ~~~ actions section ~~~ */
 %%
 
-.	        { return UNKNOWN; }
-\n	        { }	/* Work-arround because yylineno was stuck at 1. */
+if						{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return IF; }
+else					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return ELSE; }
+while					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return WHILE; }
+for						{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return FOR;}
+function				{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return FUNCTION; }
+return					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return RETURN; }
+break					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return BREAK; }
+continue				{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return CONTINUE; }
+and						{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return AND; }
+not						{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return NOT; }
+or						{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return OR; }
+local					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return LOCAL; }
+true					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return BOOL_TRUE; }
+false					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return BOOL_FALSE; }
+nil						{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return NIL; }
 
-{const_int}				{ 
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_const_int_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return CONST_INT; 
-						}
-{digit}+"."{digit}*     { 
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_const_real_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return CONST_REAL; 
-						}
+"="						{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_ASSIGN; }
+"+"						{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_PLUS; }
+"-"						{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_MINUS; }
+"*"						{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_MUL; }
+"/"						{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_DIV; }
+"%"						{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_MOD; }
+"=="					{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_EQ; }
+"!="					{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_NE; }
+"++"					{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_PLUS_PLUS; }
+"--"					{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_MINUS_MINUS; }
+">"						{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_GT; }
+"<"						{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_LT; }
+">="					{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_GE; }
+"<="					{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_LE; }
 
-if						{ 
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_keyword_token(yylineno,yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return IF; 
-                        }
-else					{ 
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_keyword_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return ELSE; 
-						}
-while					{ 
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_keyword_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return WHILE; 
-						}
-for						{ 
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_keyword_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return FOR; 
-}
-function				{ 
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_keyword_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return FUNCTION; 
-						}
-return					{ 
-						    alpha_lex::alpha_token_t *ptr;
-						    ptr = gen.gen_keyword_token(yylineno, yytext);
-						    memcpy(ylval, ptr, sizeof(alpha_token_t));
-						    free(ptr);
-						    return RETURN; 
-						}
-break					{ 
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_keyword_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return BREAK; 
-						}
-continue				{ 
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_keyword_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return CONTINUE; 
-                        }
-and						{ 
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_keyword_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return AND; 
-                        }
-not						{ 
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_keyword_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return NOT; 
-						}
-or						{ 
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_keyword_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return OR; 
-						}
-local					{ 
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_keyword_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return LOCAL; 
-						}
-true					{ 
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_keyword_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return BOOL_TRUE; 
-						}
-false					{ 
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_keyword_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return BOOL_FALSE; 
-						}
-nil						{ 
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_keyword_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return NIL; 
-						}
+{const_int}				{ token_generator.gen_const_int_token(yylineno, yytext, ylval); return CONST_INT; }
+{digit}*"."{digit}+     { token_generator.gen_const_real_token(yylineno, yytext, ylval); return CONST_REAL; }
+{id}                    { token_generator.gen_identifier_token(yylineno, yytext, ylval); return IDENTIFIER; /* id MUST be bellow all the above enumerated rules. */ }
 
-{id}                    { 
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_identifier_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return IDENTIFIER; /* id MUST be bellow all the above enumerated rules. */
-						} 
-
-"="						{
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_operator_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return OP_ASSIGN; 
-						}
-"+"						{
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_operator_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return OP_PLUS; 
-						}
-"-"						{
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_operator_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return OP_MINUS; 
-						}
-"*"						{
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_operator_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return OP_MUL; 
-						}
-"/"						{
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_operator_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return OP_DIV; 
-						}
-"%"						{
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_operator_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return OP_MOD; 
-						}
-"=="					{
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_operator_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return OP_EQ; 
-						}
-"!="					{
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_operator_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return OP_NE; 
-						}
-"++"					{
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_operator_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return OP_PLUS_PLUS; 
-						}
-"--"					{
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_operator_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return OP_MINUS_MINUS; 
-						}
-">"						{
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_operator_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return OP_GT; 
-						}
-"<"						{
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_operator_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return OP_LT; 
-						}
-">="					{
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_operator_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return OP_GE; 
-						}
-"<="					{
-							alpha_lex::alpha_token_t *ptr;
-							ptr = gen.gen_operator_token(yylineno, yytext);
-							memcpy(ylval, ptr, sizeof(alpha_token_t));
-							free(ptr);
-							return OP_LE; 
-						}
+.	        			{ return UNKNOWN; }
+\n	        			{ }	/* Work-arround because yylineno was stuck at 1. */
 
 %%
 
 /* ~~~ user code ~~~ */
 
+int main (int argc, char *argv[]) {
+    int identified;
+    std::vector<alpha_lex::alpha_token_t*> token_vector;
+    std::allocator<alpha_lex::alpha_token_t> allocator;
+    alpha_lex::alpha_token_t *token_ptr;
 
-
-int main () {
-	int x;
-	alpha_lex::alpha_token_t *ptr;
-	//list<alp_alpha_token_t*> l;
 
 	yyin = stdin;
-	while((x = alpha_yylex(ptr)) != EOF && x != UNKNOWN) {
-		printf("yylex returned: %d\n", x);
-		//l.append(ptr);
-	}
-	printf("EOF reached\n");
+    token_ptr = 0;  /* ignore any compiler warnings */
+    while(true) {
+        token_ptr = allocator.allocate(1, token_ptr);
+        identified = alpha_yylex(token_ptr);
+        if(identified == EOF || identified == UNKNOWN) {
+            if(identified == UNKNOWN)
+                std::cout << "UNIDENTIFIED TOKEN" << std::endl;
+			else
+				std::cout << "EOF reached" << std::endl;
+            allocator.deallocate(token_ptr, 1);
+            break;
+        }
+
+        /* Valid token here */
+		std::cout << "yylex returned: "	<< identified << std::endl;
+		std::cout << *token_ptr << std::endl;
+        token_vector.push_back(token_ptr);
+    }
+
+    for(int i=0; i<token_vector.size(); i++) {
+        token_vector[i]->~alpha_token_t();      /* Destructor call since placement new operator was used */
+        allocator.deallocate(token_vector[i], 1);
+    }	
 
 	return 0;
 }
