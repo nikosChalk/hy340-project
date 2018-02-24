@@ -1,9 +1,10 @@
 /* ~~~ user macros  and forward declarations ~~~ */
 
 %{
-	#include <stdio.h>
-	#include <stdlib.h>
+	#include <iostream>
 	#include <string>
+	#include <memory>
+	#include <vector>
 	#include "alpha_token.h"
 	#include "alpha_token_generator.h"
 	#define YY_DECL int alpha_yylex(void *ylval)
@@ -14,6 +15,8 @@
 			OP_GT, OP_LT, OP_GE, OP_LE,
 			CONST_INT, CONST_REAL, CONST_STR, PUNCTUATION, IDENTIFIER, COMMENT
 	};
+
+	alpha_lex::alpha_token_generator token_generator;
 %}
 
 /* ~~~ FLEX parameters ~~~ */
@@ -42,7 +45,7 @@ const_int  		{digit}+
 {const_int}				{ return CONST_INT; }
 {digit}+"."{digit}*     { return CONST_REAL; }
 
-if						{ return IF; }
+if						{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return IF; }
 else					{ return ELSE; }
 while					{ return WHILE; }
 for						{ return FOR; }
@@ -66,17 +69,37 @@ nil						{ return NIL; }
 
 
 
-int main () {
-	int x;
-	alpha_lex::alpha_token_t *ptr;
-	//list<alp_alpha_token_t*> l;
+int main (int argc, char *argv[]) {
+    int identified;
+    std::vector<alpha_lex::alpha_token_t*> token_vector;
+    std::allocator<alpha_lex::alpha_token_t> allocator;
+    alpha_lex::alpha_token_t *token_ptr;
+
 
 	yyin = stdin;
-	while((x = alpha_yylex(ptr)) != EOF && x != UNKNOWN) {
-		printf("yylex returned: %d\n", x);
-		//l.append(ptr);
-	}
-	printf("EOF reached\n");
+    token_ptr = 0;  /* ignore any compiler warnings */
+    while(true) {
+        token_ptr = allocator.allocate(1, token_ptr);
+        identified = alpha_yylex(token_ptr);
+        if(identified == EOF || identified == UNKNOWN) {
+            if(identified == UNKNOWN)
+                std::cout << "UNIDENTIFIED TOKEN" << std::endl;
+			else
+				std::cout << "EOF reached" << std::endl;
+            allocator.deallocate(token_ptr, 1);
+            break;
+        }
+
+        /* Valid token here */
+		std::cout << "yylex returned: "	<< identified << std::endl;
+		std::cout << *token_ptr << std::endl;
+        token_vector.push_back(token_ptr);
+    }
+
+    for(int i=0; i<token_vector.size(); i++) {
+        token_vector[i]->~alpha_token_t();      /* Destructor call since placement new operator was used */
+        allocator.deallocate(token_vector[i], 1);
+    }	
 
 	return 0;
 }
