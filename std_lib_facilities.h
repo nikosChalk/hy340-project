@@ -5,7 +5,7 @@
 //
 
 #ifndef STD_LIB_FACILITIES_GUARD
-#define STD_LIB_FACILITIES_GUARD 1
+#define STD_LIB_FACILITIES_GUARD
 
 #include <algorithm>
 #include <cmath>
@@ -17,31 +17,29 @@
 #include <sstream>
 #include <vector>
 
-using namespace std;
-
 //------------------------------------------------------------------------------
 
 // The call to keep_window_open() is needed on some Windows machines to prevent
 // them from closing the window before you have a chance to read the output. 
 inline void keep_window_open()
 {
-    cin.get();
+    std::cin.get();
 }
 
 //------------------------------------------------------------------------------
 
-inline void keep_window_open(const string& str)
+inline void keep_window_open(const std::string& str)
 {
     static int attempts = 10; // Maximum number of attempts before forceful exit
 
     while (--attempts)
     {
-        cout << "Please enter " << str << " to exit" << endl;
+        std::cout << "Please enter " << str << " to exit" << std::endl;
 
         bool exit = true;
 
-        for(string::const_iterator p = str.begin(); p != str.end(); ++p)
-            if (*p != cin.get())
+        for(std::string::const_iterator p = str.begin(); p != str.end(); ++p)
+            if (*p != std::cin.get())
             {
                 exit = false;
                 break;
@@ -55,15 +53,15 @@ inline void keep_window_open(const string& str)
 //------------------------------------------------------------------------------
 
 // Helper function to show an error message
-inline void error(const string& errormessage)
+inline void error(const std::string& errormessage)
 {
-    cerr << errormessage << endl;
-    throw runtime_error(errormessage);
+    std::cerr << errormessage << std::endl;
+    throw std::runtime_error(errormessage);
 }
 
 //------------------------------------------------------------------------------
 
-inline void error(string s1, string s2)
+inline void error(std::string s1, std::string s2)
 {
     error(s1+s2);
 }
@@ -83,9 +81,9 @@ Target narrow_cast(Source src)
 
 //------------------------------------------------------------------------------
 
-inline ios_base& general(ios_base& b)    // to complement fixed and scientific
+inline std::ios_base& general(std::ios_base& b)    // to complement fixed and scientific
 {
-    b.setf(ios_base::fmtflags(0), ios_base::floatfield);
+    b.setf(std::ios_base::fmtflags(0), std::ios_base::floatfield);
     return b;
 }
 

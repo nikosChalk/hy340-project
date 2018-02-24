@@ -4,34 +4,69 @@
 #define HY340_PROJECT_ALPHA_TOKEN_H
 
 #include <string>
+#include <ostream>
+#include <map>
 
 namespace alpha_lex {
 
     class alpha_token_t {
     public:
-        enum type_t{
-            KEYWORD,    // leksh kleidi: if, else, while, for, function, return, break, continue, and, not, or, local, true, false, nil
-            OPERATOR,   // telesth: = + - * / % == != ++ -- > < >= <=
-            CONST_INT,  // akeraia arithmitikh stathera
-            CONST_REAL, // pragmatikh arithmitkh stathera
-            STRING,     // stathera omada xarakthrwn (string)
-            PUNCTUATION, // shmeio stikshs: { } [ ] ( ) ; , : :: . ..
-            ID,         // anagnwristiko onoma
-            COMMENT     // sxolia
-        };
 
+        /**
+         * Creates a new token with the given attributes
+         * @param numline The line number where the token was found, as shown in the example's 2nd column (e.g. 1)
+         * @param content The token's content as shown in the example's 3rd column (e.g. "function")
+         * @param category The token's category as shown in the example's 4th column. (e.g. PUNCTUATION)
+         * @param sub_category The token's sub-category as shown in the example's 5th column. (e.g. SEMICOLON)
+         * @param category_type The token's category type as shown in the example's last column. (e.g. char*)
+         */
+        alpha_token_t(unsigned int numline, std::string content, std::string category, std::string sub_category, std::string category_type);
+
+        /**
+         * Returns the line number of this token
+         * @return The line number of this token
+         */
         unsigned int get_numline() const;
-        unsigned int get_token_number() const;
+
+        /**
+         * Returns a unique number (id) for each token
+         * @return The token's id
+         */
+        unsigned int get_token_num() const;
+
+        /**
+         * Returns the token's content
+         * @return The token's content
+         */
         std::string get_content() const;
-        type_t get_type() const;
+
+        /**
+         * Returns the token's category as shown in the example's 4th column. (e.g. PUNCTUATION)
+         * @return The token's category
+         */
+        std::string get_category() const;
+
+        /**
+         * Returns the token's sub-category as shown in the example's 5th column. (e.g. SEMICOLON)
+         * @return The token's sub-category
+         */
+        std::string get_sub_category() const;
+
+        /**
+         * Returns the token's category type as shown in the example's last column. (e.g. char*)
+         * @return The token's category type
+         */
+        std::string get_category_type() const;
+
+
+        friend std::ostream& operator<<(std::ostream& os, const alpha_token_t& x);
 
     private:
         static unsigned int next_token_num;
 
-        unsigned int numline;
-        unsigned int token_number;
-        std::string content;
-        type_t type;
+
+        unsigned int numline, token_number;
+        std::string content, category, sub_category, category_type;
     };
 }
 

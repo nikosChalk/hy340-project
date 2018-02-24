@@ -2,4 +2,5 @@
 CMakeLists.txt
 cmake-build-debug/
 test.cpp
-alpha_lex/scanner.cpp
+alpha_lex/alpha_lex.h
+alpha_lex/alpha_lex.cpp

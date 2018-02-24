@@ -1,18 +1,19 @@
-/* ~~~ CODE ~~~ */
+/* ~~~ user macros  and forward declarations ~~~ */
 
 %{
 	#include <stdio.h>
 	#include <stdlib.h>
+	#include <string>
+	#include "alpha_token.h"
+	#include "alpha_token_generator.h"
 	#define MY_EOF 0
 	#define YY_DECL int alpha_yylex(void *ylval)
-
-	#define MAKE_TOKEN (new Token(yyline, yytext, type)(type))
 %}
 
 /* ~~~ FLEX parameters ~~~ */
 
-%option header-file="scanner.h"
-%option outfile = "scanner.cpp"
+%option header-file="alpha_lex.h"
+%option outfile = "alpha_lex.cpp"
 %option noyywrap
 %option yylineno
 
@@ -33,9 +34,11 @@ num		[0-9]+
 
 /* ~~~ user code ~~~ */
 
+
+
 int main () {
 	int x;
-	alpha_token_t *ptr;
+	alpha_lex::alpha_token_t *ptr;
 	//list<alp_alpha_token_t*> l;
 
 	yyin = stdin;
