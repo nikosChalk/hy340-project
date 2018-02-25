@@ -1,4 +1,4 @@
-/* ~~~ user macros  and forward declarations ~~~ */
+ /* ~~~ user macros  and forward declarations ~~~ */
 
 %{
 	#include <iostream>
@@ -9,7 +9,7 @@
 	#include "alpha_token_generator.h"
 	#define YY_DECL int alpha_yylex(void *ylval)
 
-	enum identified_token{UNKNOWN=0, IF, ELSE, WHILE, FOR, FUNCTION, RETURN, BREAK, CONTINUE, AND,
+	enum identified_token{UNKNOWN=100, IF, ELSE, WHILE, FOR, FUNCTION, RETURN, BREAK, CONTINUE, AND,
 			NOT, OR, LOCAL, BOOL_TRUE, BOOL_FALSE, NIL,
 			OP_ASSIGN, OP_PLUS, OP_MINUS, OP_MUL, OP_DIV, OP_MOD, OP_EQ, OP_NE, OP_PLUS_PLUS, OP_MINUS_MINUS,
 			OP_GT, OP_LT, OP_GE, OP_LE,
@@ -19,41 +19,46 @@
 	alpha_lex::alpha_token_generator token_generator;
 %}
 
-/* ~~~ FLEX parameters ~~~ */
+ /* ~~~ FLEX parameters ~~~ */
 
 %option header-file="alpha_flex.h"
 %option outfile = "alpha_flex.cpp"
 %option noyywrap
 %option yylineno
 
-/* ~~~ regex definitions ~~~ */
+ /* ~~~ start conditions */
+%x X_STR
 
-delim			[\t\n ]
-ws				{delim}+
+ /* ~~~ regex definitions ~~~ */
+
+ws				[ \t\n\v\f\r]+
 letter			[a-zA-Z]
 digit			[0-9]
 underscore		[_]
 id				{letter}({letter}|{digit}|_)*
 const_int  		{digit}+
 
-/* ~~~ actions section ~~~ */
+ /* ~~~ actions section ~~~ */
 %%
 
-if						{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return IF; }
-else					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return ELSE; }
-while					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return WHILE; }
-for						{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return FOR;}
-function				{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return FUNCTION; }
-return					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return RETURN; }
-break					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return BREAK; }
-continue				{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return CONTINUE; }
-and						{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return AND; }
-not						{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return NOT; }
-or						{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return OR; }
-local					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return LOCAL; }
-true					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return BOOL_TRUE; }
-false					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return BOOL_FALSE; }
-nil						{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return NIL; }
+%{
+	std::string current_str; /* Local variable within yylex function. Used in string identification */
+%}
+"if"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return IF; }
+"else"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return ELSE; }
+"while"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return WHILE; }
+"for"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return FOR;}
+"function"				{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return FUNCTION; }
+"return"				{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return RETURN; }
+"break"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return BREAK; }
+"continue"				{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return CONTINUE; }
+"and"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return AND; }
+"not"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return NOT; }
+"or"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return OR; }
+"local"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return LOCAL; }
+"true"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return BOOL_TRUE; }
+"false"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return BOOL_FALSE; }
+"nil"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return NIL; }
 
 "="						{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_ASSIGN; }
 "+"						{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_PLUS; }
@@ -74,12 +79,33 @@ nil						{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return NI
 {digit}*"."{digit}+     { token_generator.gen_const_real_token(yylineno, yytext, ylval); return CONST_REAL; }
 {id}                    { token_generator.gen_identifier_token(yylineno, yytext, ylval); return IDENTIFIER; /* id MUST be bellow all the above enumerated rules. */ }
 
+{ws}+					{ /*ignore white spaces */ }
+<<EOF>>					{ return EOF; /* check YY_START to see the current start condition. If it not INITIAL then some comment or string is left open */ }
+
+ /* CONST_STRING token identification */
+"\""					{ BEGIN(X_STR); /* when in x_my_cond, I must also find any unmatched characters */ }
+
+<X_STR>\a				{ current_str.append("\\a"); }
+<X_STR>\b				{ current_str.append("\\b"); }
+<X_STR>\f				{ current_str.append("\\f"); }
+<X_STR>\n				{ current_str.append("\\n"); }
+<X_STR>\r				{ current_str.append("\\r"); }
+<X_STR>\t				{ current_str.append("\\t"); }
+<X_STR>\v				{ current_str.append("\\v"); }
+<X_STR>[^\\]\"			{	/* Identify anything that is not a backslash, and then it is followed by double-quotes. e.g. abcd" */
+							current_str.append(1, yytext[0]); /* Do not append the double quote character */
+							token_generator.gen_const_str_token(yylineno, current_str, ylval);
+							BEGIN(INITIAL);
+							return CONST_STR;
+						}
+<X_STR>(.|\n)			{ current_str.append(yytext); /* Append any character found */ }
+
+ /* deal with unknown characters */
 .	        			{ return UNKNOWN; }
-\n	        			{ }	/* Work-arround because yylineno was stuck at 1. */
 
 %%
 
-/* ~~~ user code ~~~ */
+ /* ~~~ user code ~~~ */
 
 int main (int argc, char *argv[]) {
     int identified;
@@ -89,13 +115,14 @@ int main (int argc, char *argv[]) {
 
 
 	yyin = stdin;
+	yyout = stdout;
     token_ptr = 0;  /* ignore any compiler warnings */
     while(true) {
         token_ptr = allocator.allocate(1, token_ptr);
         identified = alpha_yylex(token_ptr);
         if(identified == EOF || identified == UNKNOWN) {
             if(identified == UNKNOWN)
-                std::cout << "UNIDENTIFIED TOKEN" << std::endl;
+                std::cout << "UNIDENTIFIED TOKEN: " << yytext << std::endl;
 			else
 				std::cout << "EOF reached" << std::endl;
             allocator.deallocate(token_ptr, 1);

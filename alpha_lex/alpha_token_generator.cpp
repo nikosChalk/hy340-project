@@ -2,6 +2,8 @@
 
 #include "alpha_token_generator.h"
 #include <algorithm>
+#include <stdexcept>
+#include <cassert>
 
 namespace alpha_lex {
 
@@ -64,7 +66,52 @@ namespace alpha_lex {
 
     alpha_token_t* alpha_token_generator::gen_const_str_token(unsigned int numline, const std::string &content, void *placement /*=nullptr*/) const {
         std::string token_content = std::string("\"" + content + "\"");
-        return (this->gen_token(numline, content, "STRING", content, "char*", placement));
+
+        /* Replaced unescaped characters (e.g. char *str = {'\\' 'n'}; ) within sub_category with ther correspnding escaped character */
+        std::string sub_category = std::string(content);
+        char to_replace;
+        enum state{INITIAL, ESC};
+        state cur_state = INITIAL;
+
+        for(int i=0; i<sub_category.length(); i++) {
+            char ch = sub_category[i];
+            switch(cur_state){
+                case INITIAL:
+                    if(ch == '\\')
+                        cur_state = ESC;
+                    break;
+                case ESC:
+                    if(ch=='a')
+                        to_replace = '\a';
+                    else if(ch=='b')
+                        to_replace = '\b';
+                    else if(ch=='f')
+                        to_replace = '\f';
+                    else if(ch=='n')
+                        to_replace = '\n';
+                    else if(ch=='r')
+                        to_replace = '\r';
+                    else if(ch=='t')
+                        to_replace = '\t';
+                    else if(ch=='v')
+                        to_replace = '\v';
+                    else if(ch=='0')
+                        to_replace = '\0';
+                    else if(ch=='\'' || ch == '\"' || ch=='\?' || ch=='\\')
+                        to_replace = ch;
+                    else
+                        throw std::runtime_error("Malformed escaped character in string");
+                    sub_category.replace(i-1, 2, 1, to_replace);
+                    cur_state = INITIAL;
+                    i--;
+                    break;
+                default:
+                    assert(false);  /* Unreachable code */
+
+            }
+        }
+        sub_category = ("\"" + sub_category + "\"");
+        return (this->gen_token(numline, token_content, "STRING", sub_category, "char*", placement));
     }
 
     alpha_token_t* alpha_token_generator::gen_punctuation_token(unsigned int numline, const std::string &content, void *placement /*=nullptr*/) const {

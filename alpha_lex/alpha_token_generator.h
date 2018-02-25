@@ -22,6 +22,15 @@ namespace alpha_lex {
         alpha_token_t* gen_operator_token(unsigned int numline, const std::string &content, void *placement = nullptr) const;
         alpha_token_t* gen_const_int_token(unsigned int numline, const std::string &content, void *placement = nullptr) const;
         alpha_token_t* gen_const_real_token(unsigned int numline, const std::string &content, void *placement = nullptr) const;
+
+        /**
+         *
+         * @param numline
+         * @param content
+         * @param placement
+         * @return
+         * @throw std::runtime_error ......
+         */
         alpha_token_t* gen_const_str_token(unsigned int numline, const std::string &content, void *placement = nullptr) const;
         alpha_token_t* gen_punctuation_token(unsigned int numline, const std::string &content, void *placement = nullptr) const;
         alpha_token_t* gen_identifier_token(unsigned int numline, const std::string &content, void *placement = nullptr) const;
