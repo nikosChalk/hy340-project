@@ -20,6 +20,15 @@ namespace alpha_lex {
         alpha_token_t::next_token_num++;
     }
 
+    std::string alpha_token_t::to_str() const {
+        string space = "    ";
+        string ret;
+        ret = to_string(this->get_numline()) + ":" + space + "#" + to_string(this->get_token_num())
+           + space + this->get_content() + space + this->get_category() + space + this->get_sub_category()
+           + space + "<--" + this->get_category_type();
+        return ret;
+    }
+
     unsigned int alpha_token_t::get_numline() const {
         return this->numline;
     }
@@ -47,9 +56,7 @@ namespace alpha_lex {
 
     ostream& operator<<(ostream& os, const alpha_token_t& x) {
         string space = "    ";
-        os << x.get_numline() << ":" + space + "#" << x.get_token_num()
-           << space + x.get_content() << space + x.get_category() << space + x.get_sub_category()
-           << space + "<--" + x.get_category_type();
+        os << x.to_str();
         return os;
     }
 }

@@ -24,6 +24,12 @@ namespace alpha_lex {
                                      const std::string &sub_category, const std::string &category_type);
 
         /**
+         * Returns a string representation of this object in printable format (with no newline at the end)
+         * @return The string representation
+         */
+        std::string to_str() const;
+
+        /**
          * Returns the line number of this token
          * @return The line number of this token
          */
