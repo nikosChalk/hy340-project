@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <vector>
 #include <map>
+#include <memory>
 #include "../alpha_token_generator.h"
 
 namespace alpha_lex {
@@ -60,7 +61,7 @@ namespace alpha_lex {
          * Moves the DFA from its current state by reading the character c.
          * @param c The character to read
          * @return The resulting state
-         * @throws alpha_lex::DFA_state_error if the DFA does not contain a rule for transitioning from its current state
+         * @throws alpha_lex::DFA::DFA_state_error if the DFA does not contain a rule for transitioning from its current state
          * to another state with character c
          */
         DFA_state& move(char c);
@@ -89,6 +90,7 @@ namespace alpha_lex {
         class DFA_state {
 
         public:
+
             /**
              * Creates a new non-final state with a random tag
              */
@@ -99,7 +101,7 @@ namespace alpha_lex {
              * @param tag A name for this state. Note that the name is NOT used for comparison of DFA_state objects
              * @param is_final True if the constructed state should be final. False otherwise.
              */
-            DFA_state(std::string tag, bool is_final);
+            explicit DFA_state(const std::string &tag, bool is_final = false);
 
             /**
              * Retunrs the tag of this DFA state
@@ -122,17 +124,20 @@ namespace alpha_lex {
          * Represents a state error that might occur within a DFA. (e.g. non-existing move)
          */
         class DFA_state_error: public std::runtime_error {
+
+        public:
             DFA_state_error();
-            explicit DFA_state_error(std::string msg);
+            explicit DFA_state_error(const std::string &msg);
         };
 
 
     private:
-        char alphabet[];
+        char alphabet[256];
         size_t alphabet_len;
-
-        std::vector<DFA_state> states;
-        DFA_state& init_state;
+        
+        const std::vector<const DFA_state> states;
+        const DFA_state &init_state;
+		std::shared_ptr<const DFA_state> curr_state;
         std::string token;
 
         /**
@@ -141,8 +146,7 @@ namespace alpha_lex {
          * This map is constructed through invocations of add_move_rule()
          * (state --> map of <character, next_state>)
          */
-        std::map<DFA_state&, std::map<char, DFA_state&> > available_moves;
-
+        std::map<const DFA_state&, std::map<char, const DFA_state&>> available_moves;
     };
 
 
