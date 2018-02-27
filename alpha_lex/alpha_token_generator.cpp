@@ -2,7 +2,6 @@
 
 #include "alpha_token_generator.h"
 #include <algorithm>
-#include <stdexcept>
 #include <cassert>
 
 namespace alpha_lex {
@@ -67,7 +66,7 @@ namespace alpha_lex {
     alpha_token_t* alpha_token_generator::gen_const_str_token(unsigned int numline, const std::string &content, void *placement /*=nullptr*/) const {
         std::string token_content = std::string("\"" + content + "\"");
 
-        /* Replaced unescaped characters (e.g. char *str = {'\\' 'n'}; ) within sub_category with ther correspnding escaped character */
+        /* Replaced unescaped characters (e.g. char *str = {'\\' 'n'}; ) within sub_category with the corresponding escaped character */
         std::string sub_category = std::string(content);
         char to_replace;
         enum state{INITIAL, ESC};

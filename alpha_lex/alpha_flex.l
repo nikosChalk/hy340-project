@@ -1,6 +1,7 @@
  /* ~~~ user macros  and forward declarations ~~~ */
 
 %{
+	#include <stdio.h>
 	#include <iostream>
 	#include <string>
 	#include <memory>
@@ -150,26 +151,45 @@ int main (int argc, char *argv[]) {
     std::vector<alpha_lex::alpha_token_t*> token_vector;
     std::allocator<alpha_lex::alpha_token_t> allocator;
     alpha_lex::alpha_token_t *token_ptr;
+	FILE *tmp;
 
 
-	yyin = stdin;
-	yyout = stdout;
+	/* Check command line arguments and open I/O files */
+	if(argc < 2) {
+		std::cerr << "Too few arguments. Expected input file." << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	if(argc >= 2) {
+		if(!(yyin=fopen(argv[1], "r"))) {
+			perror("Error while opening input file. Execution aborted");
+			exit(EXIT_FAILURE);
+		}
+		std::cout << "Using input file: " << argv[1] << std::endl;
+	}
+	if(argc>=3) {
+		if(!(yyout=fopen(argv[2], "w"))) {
+			perror("Error while opening output file. Using stdout instead.");
+			yyout = stdout;
+		} else {
+			std::cout << "Using output file: " << argv[2] << std::endl;
+		}
+	}
+
     token_ptr = 0;  /* ignore any compiler warnings */
     while(true) {
         token_ptr = allocator.allocate(1, token_ptr);
         identified = alpha_yylex(token_ptr);
         if(identified == EOF || identified == UNKNOWN) {
             if(identified == UNKNOWN)
-                std::cout << "UNIDENTIFIED TOKEN: " << yytext << std::endl;
+                fprintf(yyout, "UNIDENTIFIED TOKEN: %s\n", yytext);
 			else
-				std::cout << "EOF reached" << std::endl;
+				fprintf(yyout, "EOF reached\n");
             allocator.deallocate(token_ptr, 1);
             break;
         }
 
         /* Valid token here */
-		std::cout << "yylex returned: "	<< identified << std::endl;
-		std::cout << *token_ptr << std::endl;
+		fprintf(yyout, "%s\n", (token_ptr->to_str().c_str()));
         token_vector.push_back(token_ptr);
     }
 
