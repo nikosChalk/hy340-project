@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <vector>
 #include <map>
+#include <memory>
 
 namespace alpha_lex {
 
@@ -79,6 +80,8 @@ namespace alpha_lex {
         class DFA_state {
 
         public:
+
+			DFA_state();
             /**
              * Creates a new state.
              * @param tag A name for this state. Note that the name is NOT used for comparison of DFA_state objects
@@ -99,11 +102,12 @@ namespace alpha_lex {
 
 
     private:
-        char alphabet[];
+        char alphabet[256];
         size_t alphabet_len;
         
-        std::vector<DFA_state> states;
-        DFA_state& init_state;
+        const std::vector<DFA_state> states;
+        const DFA_state &init_state;
+		std::shared_ptr<const DFA_state> curr_state;
 
         /**
          * Maps each state A to a map of move actions. Each map of move actions maps a character c to a state B.
@@ -111,7 +115,7 @@ namespace alpha_lex {
          * This map is constructed through invocations of add_move_rule()
          * (state --> map of <character, next_state>)
          */
-        std::map<DFA_state&, std::map<char, DFA_state&>> available_moves;
+        std::map<const DFA_state&, std::map<char, DFA_state&>> available_moves;
 
     };
 
