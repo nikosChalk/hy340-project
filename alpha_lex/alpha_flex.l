@@ -17,7 +17,7 @@
 			OP_ASSIGN, OP_PLUS, OP_MINUS, OP_MUL, OP_DIV, OP_MOD, OP_EQ, OP_NE, OP_PLUS_PLUS, OP_MINUS_MINUS,
 			OP_GT, OP_LT, OP_GE, OP_LE,
 			CONST_INT, CONST_REAL, CONST_STR, PUNCT_LEFT_BRACE, PUNCT_RIGHT_BRACE, PUNCT_LEFT_BRACKET, PUNCT_RIGHT_BRACKET, PUNCT_LEFT_PARENTHESIS, PUNCT_RIGHT_PARENTHESIS, 		
-			PUNCT_SEMICOLON, PUNCT_COMMA, PUNCT_COLON, PUNCT_DOUBLE_COLON, PUNCT_DOT, PUNCT_ELIPSIS, IDENTIFIER, LINE_COMMENT, BLOCK_COMMENT, NESTED_COMMENT
+			PUNCT_SEMICOLON, PUNCT_COMMA, PUNCT_COLON, PUNCT_DOUBLE_COLON, PUNCT_DOT, PUNCT_ELIPSIS, IDENTIFIER, LINE_COMMENT, BLOCK_COMMENT, NESTED_COMMENT, EOF_BLOCK_COMMENT_OPEN, EOF_LINE_COMMENT_OPEN, EOF_NESTED_COMMENT_OPEN, EOF_STRING_OPEN
 	};
 
 	alpha_lex::alpha_token_generator token_generator;
@@ -102,7 +102,11 @@ const_int  		{digit}+
 {id}                    { token_generator.gen_identifier_token(yylineno, yytext, ylval); return IDENTIFIER; /* id MUST be bellow all the above enumerated rules. */ }
 
 {ws}					{ /*ignore white spaces */ }
-<<EOF>>					{ return EOF; /* check YY_START to see the current start condition. If it not INITIAL then some comment or string is left open */ }
+<<EOF>>					{ 	if(YY_START == X_BLOCK_COMMENT){std::cout << " EOF reached while block comment is open!"} return EOF_BLOCK_COMMENT_OPEN;
+							if(YY_START == X_LINE_COMMENT){std::cout << "EOF reached while line comment is open!"} return EOF_LINE_COMMENT_OPEN;
+							if(YY_START == X_NESTED_COMMENT){std::cout << "EOF reached while nested comment is open!"} return EOF_NESTED_COMMENT_OPEN;
+							if(YY_START == X_STR){std::cout << "EOF reached while string is open!"} return EOF_STRING_OPEN;
+						}
 
  /* CONST_STRING token identification */
 "\""					{ BEGIN(X_STR); /* when in x_my_cond, I must also find any unmatched characters */ }
