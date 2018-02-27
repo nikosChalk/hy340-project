@@ -17,7 +17,7 @@
 			CONST_INT, CONST_REAL, CONST_STR, PUNCTUATION, IDENTIFIER, COMMENT
 	};
 
-	alpha_lex::alpha_token_generator token_generator;
+	analyzer::alpha_token_generator token_generator;
 %}
 
  /* ~~~ FLEX parameters ~~~ */
@@ -80,7 +80,7 @@ const_int  		{digit}+
 {digit}*"."{digit}+     { token_generator.gen_const_real_token(yylineno, yytext, ylval); return CONST_REAL; }
 {id}                    { token_generator.gen_identifier_token(yylineno, yytext, ylval); return IDENTIFIER; /* id MUST be bellow all the above enumerated rules. */ }
 
-{ws}+					{ /*ignore white spaces */ }
+{ws}					{ /*ignore white spaces */ }
 <<EOF>>					{ return EOF; /* check YY_START to see the current start condition. If it not INITIAL then some comment or string is left open */ }
 
  /* CONST_STRING token identification */
@@ -110,9 +110,9 @@ const_int  		{digit}+
 
 int main (int argc, char *argv[]) {
     int identified;
-    std::vector<alpha_lex::alpha_token_t*> token_vector;
-    std::allocator<alpha_lex::alpha_token_t> allocator;
-    alpha_lex::alpha_token_t *token_ptr;
+    std::vector<analyzer::alpha_token_t*> token_vector;
+    std::allocator<analyzer::alpha_token_t> allocator;
+    analyzer::alpha_token_t *token_ptr;
 	FILE *tmp;
 
 
@@ -158,7 +158,16 @@ int main (int argc, char *argv[]) {
     for(int i=0; i<token_vector.size(); i++) {
         token_vector[i]->~alpha_token_t();      /* Destructor call since placement new operator was used */
         allocator.deallocate(token_vector[i], 1);
-    }	
+    }
+
+	if(yyin != stdin) {
+		if(fclose(yyin) == EOF)
+			perror("Error while closing input file.");
+	}
+	if(yyout != stdout) {
+		if(fclose(yyout) == EOF)
+			perror("Error while closing output file.");
+	}
 
 	return 0;
 }

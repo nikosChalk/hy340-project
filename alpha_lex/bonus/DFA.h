@@ -8,21 +8,21 @@
 #include <cstdlib>
 #include <vector>
 #include <map>
+#include "../alpha_token_generator.h"
 
 namespace alpha_lex {
 
     /**
-     * Deterministic Finite Automaton including a "hang" state
+     * Deterministic Finite Automaton
      */
     class DFA {
 
     public:
         class DFA_state;    /* Forward declaration */
+        class DFA_state_error;  /* Forward declaration */
 
         /**
-         * Creates a DFA with the given alphabet and states. In addition to the given states,
-         * the DFA has a non-final "hang" state, in which no matter-what the input it stays there.
-         * The DFA goes in the "hang" state if it meets a character for which it has no rule defined from its current state.
+         * Creates a DFA with the given alphabet and states.
          * @param alphabet The alphabet of the DFA. This is a character sequence, NOT a string. A null-terminating character
          * is considered part of the alphabet.
          * @param len The length of the alphabet. (If the null-terminating character is within alphabet, then it should
@@ -49,9 +49,19 @@ namespace alpha_lex {
         DFA& add_move_rule(const DFA_state &current, char c, const DFA_state &next);
 
         /**
+         * Checks if this DFA has a move rule from the state s with character c
+         * @param s The state to check
+         * @param c The character to check
+         * @return True if the DFA has a move rule from state s with character c to some other state. False otherwise.
+         */
+        bool has_move_rule(const DFA_state &s, char c) const;
+
+        /**
          * Moves the DFA from its current state by reading the character c.
          * @param c The character to read
          * @return The resulting state
+         * @throws alpha_lex::DFA_state_error if the DFA does not contain a rule for transitioning from its current state
+         * to another state with character c
          */
         DFA_state& move(char c);
 
@@ -62,16 +72,16 @@ namespace alpha_lex {
         DFA_state& current_state() const;
 
         /**
-         * Checks if the DFA is hanging
-         * @return True if the DFA is in the "hang" state, as described in the constructor. False otherwise.
-         */
-        bool has_hanged() const;
-
-        /**
          * Resets the DFA to its initial state.
          */
         void reset();
 
+        /**
+         * Returns the token that this DFA has identified up to its current state through move actions.
+         * Note that calls to reset(), also reset this token to an empty string
+         * @return The token that this DFA has identified up until now
+         */
+        std::string generate_token() const;
 
         /**
          * Represents a state of a DFA
@@ -80,11 +90,22 @@ namespace alpha_lex {
 
         public:
             /**
+             * Creates a new non-final state with a random tag
+             */
+            DFA_state();
+
+            /**
              * Creates a new state.
              * @param tag A name for this state. Note that the name is NOT used for comparison of DFA_state objects
              * @param is_final True if the constructed state should be final. False otherwise.
              */
             DFA_state(std::string tag, bool is_final);
+
+            /**
+             * Retunrs the tag of this DFA state
+             * @return The tag of this DFA state
+             */
+            std::string get_tag() const;
 
             /**
              * Checks if this state is a final state
@@ -97,13 +118,22 @@ namespace alpha_lex {
             bool is_final_state;
         };
 
+        /**
+         * Represents a state error that might occur within a DFA. (e.g. non-existing move)
+         */
+        class DFA_state_error: public std::runtime_error {
+            DFA_state_error();
+            explicit DFA_state_error(std::string msg);
+        };
+
 
     private:
         char alphabet[];
         size_t alphabet_len;
-        
+
         std::vector<DFA_state> states;
         DFA_state& init_state;
+        std::string token;
 
         /**
          * Maps each state A to a map of move actions. Each map of move actions maps a character c to a state B.
@@ -111,7 +141,7 @@ namespace alpha_lex {
          * This map is constructed through invocations of add_move_rule()
          * (state --> map of <character, next_state>)
          */
-        std::map<DFA_state&, std::map<char, DFA_state&>> available_moves;
+        std::map<DFA_state&, std::map<char, DFA_state&> > available_moves;
 
     };
 
