@@ -130,7 +130,7 @@ const_int  		{digit}+
 "/*"							{ yy_push_state(X_BLOCK_COMMENT); stack_comment.push(yylineno); }
 
 <X_BLOCK_COMMENT,X_NESTED_COMMENT>"/"+"*"		{ yy_push_state(X_NESTED_COMMENT); stack_comment.push(yylineno); }
-<X_BLOCK_COMMENT,X_NESTED_COMMENT>[^*]*			{ }
+<X_BLOCK_COMMENT,X_NESTED_COMMENT>"/"+[^*]*		{ }
 <X_BLOCK_COMMENT,X_NESTED_COMMENT>"*"+[^/]*		{ }
 <X_NESTED_COMMENT>"*"+"/"		{ 	int start_line = stack_comment.top();
 									yy_pop_state();
@@ -140,6 +140,7 @@ const_int  		{digit}+
 									ss << start_line << " - " << yylineno;
 
 									token_generator.gen_comment_token(yylineno, ss.str(), "NESTED_COMMENT", ylval);
+									std::cout << "NESTED COMMENT CLOSE" << std::endl;
 									return NESTED_COMMENT;
 								}
 <X_BLOCK_COMMENT>"*"+"/" 		{ 
@@ -150,6 +151,7 @@ const_int  		{digit}+
 									std::stringstream ss;
 									ss << start_line << " - " << yylineno;
 									token_generator.gen_comment_token(yylineno, ss.str(), "BLOCK_COMMENT", ylval);
+									std::cout << "BLOCK COMMENT CLOSE" << std::endl;
 									return BLOCK_COMMENT;
 								}
 
