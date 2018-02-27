@@ -6,6 +6,7 @@
 	#include <string>
 	#include <memory>
 	#include <vector>
+	#include <sstream>
 	#include "alpha_token.h"
 	#include "alpha_token_generator.h"
 	#define YY_DECL int alpha_yylex(void *ylval)
@@ -15,7 +16,8 @@
 			NOT, OR, LOCAL, BOOL_TRUE, BOOL_FALSE, NIL,
 			OP_ASSIGN, OP_PLUS, OP_MINUS, OP_MUL, OP_DIV, OP_MOD, OP_EQ, OP_NE, OP_PLUS_PLUS, OP_MINUS_MINUS,
 			OP_GT, OP_LT, OP_GE, OP_LE,
-			CONST_INT, CONST_REAL, CONST_STR, PUNCT_LEFT_BRACE, PUNCT_RIGHT_BRACE, PUNCT_LEFT_BRACKET, PUNCT_RIGHT_BRACKET, PUNCT_LEFT_PARENTHESIS, PUNCT_RIGHT_PARENTHESIS, PUNCT_SEMICOLON, PUNCT_COMMA, PUNCT_COLON, PUNCT_DOUBLE_COLON, PUNCT_DOT, PUNCT_ELIPSIS, IDENTIFIER, LINE_COMMENT, BLOCK_COMMENT, NESTED_COMMENT
+			CONST_INT, CONST_REAL, CONST_STR, PUNCT_LEFT_BRACE, PUNCT_RIGHT_BRACE, PUNCT_LEFT_BRACKET, PUNCT_RIGHT_BRACKET, PUNCT_LEFT_PARENTHESIS, PUNCT_RIGHT_PARENTHESIS, 		
+			PUNCT_SEMICOLON, PUNCT_COMMA, PUNCT_COLON, PUNCT_DOUBLE_COLON, PUNCT_DOT, PUNCT_ELIPSIS, IDENTIFIER, LINE_COMMENT, BLOCK_COMMENT, NESTED_COMMENT
 	};
 
 	alpha_lex::alpha_token_generator token_generator;
@@ -33,7 +35,7 @@
 %x X_STR
 %x X_BLOCK_COMMENT
 %x X_LINE_COMMENT
-%x X_INNER_COMMENT
+%x X_NESTED_COMMENT
 
  /* ~~~ regex definitions ~~~ */
 
@@ -101,7 +103,7 @@ const_int  		{digit}+
 {digit}*"."{digit}+     { token_generator.gen_const_real_token(yylineno, yytext, ylval); return CONST_REAL; }
 {id}                    { token_generator.gen_identifier_token(yylineno, yytext, ylval); return IDENTIFIER; /* id MUST be bellow all the above enumerated rules. */ }
 
-{ws}+					{ /*ignore white spaces */ }
+{ws}					{ /*ignore white spaces */ }
 <<EOF>>					{ return EOF; /* check YY_START to see the current start condition. If it not INITIAL then some comment or string is left open */ }
 
  /* CONST_STRING token identification */
@@ -127,20 +129,37 @@ const_int  		{digit}+
 
 
  /* BLOCK COMMENTS */
-"/*"							{ BEGIN(X_BLOCK_COMMENT); start_line = yylineno; stack_comment.push(yylineno); }
+"/*"							{ yy_push_state(X_BLOCK_COMMENT); stack_comment.push(yylineno); }
 
-<X_BLOCK_COMMENT>"/"+"*"		{ yy_push_state(X_INNER_COMMENT); stack_comment.push(yylineno); }
-<X_INNER_COMMENT>"/"+"*"		{ yy_push_state(X_INNER_COMMENT); stack_comment.push(yylineno); }
+<X_BLOCK_COMMENT,X_NESTED_COMMENT>"/"+"*"		{ yy_push_state(X_NESTED_COMMENT); stack_comment.push(yylineno); }
 <X_BLOCK_COMMENT>[^*]*			{ }
 <X_BLOCK_COMMENT>"*"+[^*/]*		{ }
-<X_INNER_COMMENT>"*"+"/"		{ yy_pop_state(); end_line = yylineno; stack_comment.pop(); }
-<X_BLOCK_COMMENT>"*"+"/" 		{ BEGIN(INITIAL); token_generator.gen_comment_token(yylineno, yytext, "BLOCK_COMMENT", ylval); stack_comment.pop(); }
+<X_NESTED_COMMENT>"*"+"/"		{ 	int start_line = stack_comment.top();
+									yy_pop_state();
+									stack_comment.pop();
+									
+									std::stringstream ss;
+									ss << start_line << " - " << yylineno;
+
+									token_generator.gen_comment_token(yylineno, ss.str(), "NESTED_COMMENT", ylval);
+									return NESTED_COMMENT;
+								}
+<X_BLOCK_COMMENT>"*"+"/" 		{ 
+									int start_line = stack_comment.top();
+									yy_pop_state(); 
+									stack_comment.pop();
+									
+									std::stringstream ss;
+									ss << start_line << " - " << yylineno;
+									token_generator.gen_comment_token(yylineno, ss.str(), "BLOCK_COMMENT", ylval);
+									return BLOCK_COMMENT;
+								}
 
  /* LINE COMMENTS*/
 "//"					{ BEGIN(X_LINE_COMMENT); }
 
 <X_LINE_COMMENT>[^\n]*	{ }
-<X_LINE_COMMENT>"\n"	{ BEGIN(INITIAL); token_generator.gen_comment_token(yylineno, yytext, "LINE_COMMENT", ylval); }
+<X_LINE_COMMENT>"\n"	{ BEGIN(INITIAL); token_generator.gen_comment_token(yylineno, yytext, "LINE_COMMENT", ylval); return LINE_COMMENT; }
 
 %%
 

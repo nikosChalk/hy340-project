@@ -119,7 +119,7 @@ namespace alpha_lex {
 
     alpha_token_t* alpha_token_generator::gen_identifier_token(unsigned int numline, const std::string &content, void *placement /*=nullptr*/) const {
         std::string token_content = std::string("\"" + content + "\"");
-        return (this->gen_token(numline, content, "ID", content, "char*", placement));
+        return (this->gen_token(numline, token_content, "ID", token_content, "char*", placement));
     }
 
     alpha_token_t* alpha_token_generator::gen_comment_token(unsigned int numline, const std::string &content,
