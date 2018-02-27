@@ -51,8 +51,6 @@ const_int  		{digit}+
 
 %{
 	std::string current_str; /* Local variable within yylex function. Used in string identification */
-	int start_line;
-	int end_line;
 	std::stack<int> stack_comment;
 %}
 "if"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return IF; }
@@ -132,8 +130,8 @@ const_int  		{digit}+
 "/*"							{ yy_push_state(X_BLOCK_COMMENT); stack_comment.push(yylineno); }
 
 <X_BLOCK_COMMENT,X_NESTED_COMMENT>"/"+"*"		{ yy_push_state(X_NESTED_COMMENT); stack_comment.push(yylineno); }
-<X_BLOCK_COMMENT>[^*]*			{ }
-<X_BLOCK_COMMENT>"*"+[^*/]*		{ }
+<X_BLOCK_COMMENT,X_NESTED_COMMENT>[^*]*			{ }
+<X_BLOCK_COMMENT,X_NESTED_COMMENT>"*"+[^/]*		{ }
 <X_NESTED_COMMENT>"*"+"/"		{ 	int start_line = stack_comment.top();
 									yy_pop_state();
 									stack_comment.pop();
