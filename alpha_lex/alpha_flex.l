@@ -159,7 +159,7 @@ const_int  		{digit}+
 "//"					{ BEGIN(X_LINE_COMMENT); }
 
 <X_LINE_COMMENT>[^\n]*	{ }
-<X_LINE_COMMENT>"\n"	{ BEGIN(INITIAL); token_generator.gen_comment_token(yylineno, yytext, "LINE_COMMENT", ylval); return LINE_COMMENT; }
+<X_LINE_COMMENT>"\n"	{ BEGIN(INITIAL); token_generator.gen_comment_token(yylineno-1, "", "LINE_COMMENT", ylval); return LINE_COMMENT; }
 
 %%
 
