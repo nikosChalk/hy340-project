@@ -24,20 +24,30 @@ namespace alpha_lex {
 
     const alpha_token_generator analyzer::generator = alpha_token_generator();
 
-    analyzer::analyzer(std::ifstream &input)
-        : input(input)
+    analyzer::analyzer(ifstream &input, ofstream &output)
+        : input(input), output(output)
     {
+        /*TODO: check if input and output are both open */
         current_line = 0;
         keyword_dfas = vector();
         op_dfas = vector();
         punctuation_dfas = vector();
 
-        DFA::DFA_state init;
+        /*
         dfa_const_int_p = std::make_shared<DFA>(DFA(
-                "0123456789", 10, {DFA::DFA_state(), DFA::DFA_state(), init}, init
+                "0123456789", 10, {DFA::DFA_state(), DFA::DFA_state()}, DFA::DFA_state()
         ));
+         */
         /* Add move rules */
         /*TODO: to be filled for all */
+
+        /* TEST */
+        DFA::DFA_state *p1, *p2;
+
+        keyword_dfas.push_back(std::make_shared<DFA>(DFA(
+                "if", 2, {DFA::DFA_state("f", true)}, DFA::DFA_state("i")
+        )));
+        
     }
 
     int analyzer::alpha_yylex(void *ylval) {
