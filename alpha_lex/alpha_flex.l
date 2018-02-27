@@ -127,24 +127,13 @@ const_int  		{digit}+
 
 
  /* BLOCK COMMENTS */
-"/*"							{ 	std::cout << "OPEN BLOCK COMMENT WITH CURRENT STATE:" << YY_START << std::endl;
-									std::cout << "STACK ADDRESS: " << &stack_comment << std::endl;
-									yy_push_state(X_BLOCK_COMMENT);
-									stack_comment.push(yylineno);
-									std::cout << "END OF BLOCK COMMENT WITH STATE:" << YY_START << std::endl;
-								}
+"/*"							{ yy_push_state(X_BLOCK_COMMENT); stack_comment.push(yylineno); }
 
-<X_BLOCK_COMMENT,X_NESTED_COMMENT>"/"+"*"		{	std::string s = (YY_START == X_BLOCK_COMMENT) ? "BLOCK_COMMENT" : "NESTED_COMMENT";
-													std::cout << "OPEN OF " << s << " WITH STATE:" << YY_START << std::endl;
-													yy_push_state(X_NESTED_COMMENT);
-													stack_comment.push(yylineno);
-													std::cout << "END OF " << s << " WITH STATE:" << YY_START << std::endl;
-												}
+<X_BLOCK_COMMENT,X_NESTED_COMMENT>"/"+"*"		{ yy_push_state(X_NESTED_COMMENT); stack_comment.push(yylineno); }
 <X_BLOCK_COMMENT,X_NESTED_COMMENT>[^/*]*		{ }
 <X_BLOCK_COMMENT,X_NESTED_COMMENT>"/"+[^*]*		{ }
 <X_BLOCK_COMMENT,X_NESTED_COMMENT>"*"+[^/]*		{ }
-<X_NESTED_COMMENT>"*"+"/"		{ 	std::cout << "CLOSING OF NESTED COMMENT WITH STATE:" << YY_START << std::endl;
-									int start_line = stack_comment.top();
+<X_NESTED_COMMENT>"*"+"/"		{ 	int start_line = stack_comment.top();
 									yy_pop_state();
 									stack_comment.pop();
 									
@@ -152,22 +141,16 @@ const_int  		{digit}+
 									ss << start_line << " - " << yylineno;
 
 									token_generator.gen_comment_token(yylineno, ss.str(), "NESTED_COMMENT", ylval);
-									std::cout << "NESTED COMMENT CLOSED WITH RESULTING STATE: " << YY_START << std::endl;
 									return NESTED_COMMENT;
 								}
-<X_BLOCK_COMMENT>"*"+"/" 		{ 
-									std::cout << "CLOSING OF BLOCK COMMENT WITH STATE:" << YY_START << std::endl;
-									int start_line = stack_comment.top();
+<X_BLOCK_COMMENT>"*"+"/" 		{ 	int start_line = stack_comment.top();
 									yy_pop_state(); 
 									stack_comment.pop();
 									
 									std::stringstream ss;
 									ss << start_line << " - " << yylineno;
 									token_generator.gen_comment_token(yylineno, ss.str(), "BLOCK_COMMENT", ylval);
-									std::cout << "BLOCK COMMENT CLOSED WITH RESULTING STATE: " << YY_START << std::endl;
 
-									stack_comment.pop();
-									BEGIN(INITIAL);
 									return BLOCK_COMMENT;
 								}
 
