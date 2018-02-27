@@ -28,9 +28,9 @@ namespace alpha_lex {
          * is considered part of the alphabet.
          * @param len The length of the alphabet. (If the null-terminating character is within alphabet, then it should
          * be included in the calculation of len)
-         * @param states The DFA's states
-         * @param init The initial state of the DFA. Must be within states.
-         * @throws std::invalid_argument if init is not within states
+         * @param states The DFA's states, EXCLUDING its initial state
+         * @param init The initial state of the DFA. Must NOT be within states.
+         * @throws std::invalid_argument if init is within states
          * @throws std::invalid_argument if alphabet is NULL
          */
         DFA(char const alphabet[], size_t len,
@@ -46,6 +46,7 @@ namespace alpha_lex {
          * @return *this
          * @throws std::invalid_argument if a rule from the state current with character c to some other state
          * already exists
+         * @throws std::invalid_argument if c is not in the DFA's alphabet
          */
         DFA& add_move_rule(const DFA_state &current, char c, const DFA_state &next);
 
@@ -104,6 +105,12 @@ namespace alpha_lex {
             explicit DFA_state(const std::string &tag, bool is_final = false);
 
             /**
+             * Copy constructor. Creates a DFA state with the same attributes as original
+             * @param original The DFA_state to copy
+             */
+            DFA_state(const DFA_state& original);
+
+            /**
              * Retunrs the tag of this DFA state
              * @return The tag of this DFA state
              */
@@ -126,7 +133,6 @@ namespace alpha_lex {
         class DFA_state_error: public std::runtime_error {
 
         public:
-            DFA_state_error();
             explicit DFA_state_error(const std::string &msg);
         };
 
@@ -135,9 +141,9 @@ namespace alpha_lex {
         char alphabet[256];
         size_t alphabet_len;
         
-        const std::vector<const DFA_state> states;
-        const DFA_state &init_state;
-		std::shared_ptr<const DFA_state> curr_state;
+        std::vector<DFA_state> states;
+        DFA_state *init_state;
+        DFA_state *curr_state;
         std::string token;
 
         /**
@@ -146,7 +152,7 @@ namespace alpha_lex {
          * This map is constructed through invocations of add_move_rule()
          * (state --> map of <character, next_state>)
          */
-        std::map<const DFA_state&, std::map<char, const DFA_state&>> available_moves;
+        std::map<DFA_state&, std::map<char, DFA_state&>> available_moves;
     };
 
 
