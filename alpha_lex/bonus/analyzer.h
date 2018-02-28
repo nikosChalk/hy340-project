@@ -45,9 +45,9 @@ namespace alpha_lex {
         /**
          * Tags used by the dfa
          */
-        static const std::string &tag_keyword, &tag_op, &tag_const_int, &tag_const_real, &tag_const_str, &tag_punctuation, &tag_id, &tag_line_comment, &tag_block_comment;
-        static const std::map<std::string&, identified_token> tag_to_code;
-        static const alpha_token_generator &generator;
+        static const std::string tag_keyword, tag_op, tag_const_int, tag_const_real, tag_const_str, tag_punctuation, tag_id, tag_line_comment, tag_block_comment;
+        static const std::map<std::string, identified_token> tag_to_code;
+        static const alpha_token_generator generator;
 
         unsigned int current_line;
         std::vector<std::shared_ptr<DFA>> keyword_dfas, op_dfas, punctuation_dfas;

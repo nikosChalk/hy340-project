@@ -32,6 +32,7 @@ namespace alpha_lex {
          * @param init The initial state of the DFA. Must NOT be within states.
          * @throws std::invalid_argument if init is within states
          * @throws std::invalid_argument if alphabet is NULL
+         * @throws std::invalid_argument if any of the DFA_states withing states vector, have the same id.
          */
         DFA(char const alphabet[], size_t len,
             const std::vector<DFA_state> &states,
@@ -49,6 +50,20 @@ namespace alpha_lex {
          * @throws std::invalid_argument if c is not in the DFA's alphabet
          */
         DFA& add_move_rule(const DFA_state &current, char c, const DFA_state &next);
+
+        /**
+         * Adds a move rule for the DFA. The rule states that, if from the current state you read character c then go to
+         * the next state.
+         * @param current The id of the current DFA_state from which the transition initiates
+         * @param c The character which triggers the transition
+         * @param next The id of the resulting DFA_state
+         * @return *this
+         * @throws std::invalid_argument if a rule from the DFA_state with current_id, with character c to some other state
+         * already exists
+         * @throws std::invalid_argument if c is not in the DFA's alphabet
+         * @throws std::invalid_argument if current_id or next_id does not belong to any DFA_state
+         */
+        DFA& add_move_rule(unsigned int current_id, char c, unsigned int next_id);
 
         /**
          * Checks if this DFA has a move rule from the state s with character c
@@ -93,6 +108,26 @@ namespace alpha_lex {
         public:
 
             /**
+             * Comparator that can be used to compare two DFA_states with their id.
+             */
+            struct cmpr_by_id {
+                /**
+                 * Compares two DFA_states through their id
+                 * @return True if a.id == b.id. False otherwise
+                 */
+                bool operator()(const DFA_state &a, const DFA_state &b) const;
+            };
+
+            /**
+             * Checks if two DFA_states are equal. Comparision is done based on the id of the two states
+             * @param other The other state to compare
+             * @return True if other.id == this->id. False otherwise
+             */
+            bool operator==(const DFA_state& other) const;
+
+
+
+            /**
              * Creates a new non-final state with a random tag
              */
             DFA_state();
@@ -100,9 +135,10 @@ namespace alpha_lex {
             /**
              * Creates a new state.
              * @param tag A name for this state. Note that the name is NOT used for comparison of DFA_state objects
+             * @param An id for this state.
              * @param is_final True if the constructed state should be final. False otherwise.
              */
-            explicit DFA_state(const std::string &tag, bool is_final = false);
+            explicit DFA_state(const std::string &tag, unsigned int id, bool is_final = false);
 
             /**
              * Copy constructor. Creates a DFA state with the same attributes as original
@@ -116,6 +152,8 @@ namespace alpha_lex {
              */
             std::string get_tag() const;
 
+            unsigned int get_id() const;
+
             /**
              * Checks if this state is a final state
              * @return True if this state is final. False otherwise.
@@ -124,6 +162,7 @@ namespace alpha_lex {
 
         private:
             std::string tag;
+            unsigned int id;
             bool is_final_state;
         };
 
@@ -152,7 +191,7 @@ namespace alpha_lex {
          * This map is constructed through invocations of add_move_rule()
          * (state --> map of <character, next_state>)
          */
-        std::map<DFA_state&, std::map<char, DFA_state&>> available_moves;
+        std::map<DFA_state, std::map<char, DFA_state>, DFA_state::cmpr_by_id> available_moves;
     };
 
 

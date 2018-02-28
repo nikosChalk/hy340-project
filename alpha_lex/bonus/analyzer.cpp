@@ -18,7 +18,7 @@ namespace alpha_lex {
     const string analyzer::tag_line_comment = "LINE_COMMENT";
     const string analyzer::tag_block_comment = "BLOCK_COMMENT";
 
-    const std::map<std::string&, identified_token> analyzer::tag_to_code = {
+    const std::map<string, analyzer::identified_token> analyzer::tag_to_code = {
             {"if", IF}, {"else", ELSE}
     };
 
@@ -27,26 +27,31 @@ namespace alpha_lex {
     analyzer::analyzer(ifstream &input, ofstream &output)
         : input(input), output(output)
     {
-        /*TODO: check if input and output are both open */
+        if(!input.is_open())
+            throw invalid_argument("Input stream is not open!");
+        if(!output.is_open())
+            throw invalid_argument("Output stream is not open!");
+
         current_line = 0;
-        keyword_dfas = vector();
-        op_dfas = vector();
-        punctuation_dfas = vector();
+        keyword_dfas = vector<std::shared_ptr<DFA>>();
+        op_dfas = vector<std::shared_ptr<DFA>>();
+        punctuation_dfas = vector<std::shared_ptr<DFA>>();
+
 
         /*
         dfa_const_int_p = std::make_shared<DFA>(DFA(
                 "0123456789", 10, {DFA::DFA_state(), DFA::DFA_state()}, DFA::DFA_state()
         ));
-         */
+        */
         /* Add move rules */
         /*TODO: to be filled for all */
 
         /* TEST */
-        DFA::DFA_state *p1, *p2;
 
         keyword_dfas.push_back(std::make_shared<DFA>(DFA(
-                "if", 2, {DFA::DFA_state("f", true)}, DFA::DFA_state("i")
+                "if", 2, {DFA::DFA_state("i", 1), DFA::DFA_state("f", 2, true)}, DFA::DFA_state("", 0)
         )));
+        keyword_dfas[0]->add_move_rule(0, 'i', 1).add_move_rule(1, 'f', 2);
         
     }
 
@@ -55,6 +60,7 @@ namespace alpha_lex {
 
         vector<shared_ptr<DFA>> active;
         active.insert(active.end(), keyword_dfas.begin(), keyword_dfas.end() );
+        /*
         active.insert(active.end(), op_dfas.begin(), op_dfas.end() );
         active.insert(active.end(), punctuation_dfas.begin(), punctuation_dfas.end() );
         active.push_back(dfa_const_int_p);
@@ -63,6 +69,7 @@ namespace alpha_lex {
         active.push_back(dfa_id_p);
         active.push_back(dfa_line_comment_p);
         active.push_back(dfa_block_comment_p);
+        */
 
         /* Reset the DFAs */
         for(int i=0; i<active.size(); i++)

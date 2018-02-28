@@ -22,7 +22,13 @@ namespace alpha_lex {
 		if (find(states.begin(), states.end(), init) != states.end())
 			throw invalid_argument("init state is must not be in vector with states");
 
-        this->states = vector(states.begin(), states.end());
+        for(int i=0; i<states.size(); i++)
+            for(int j=i+1; j<states.size(); j++)
+                if(states[i].get_id() == states[j].get_id())
+                    throw std::runtime_error("State in index " + to_string(i) + " and index " + to_string(j) +
+                                             " have the same id: " + to_string(states[i].get_id()));
+
+        this->states = vector<DFA_state>(states.begin(), states.end());
         this->states.emplace_back(init);
 
         init_state = &(this->states[this->states.size()-1]);
@@ -31,9 +37,11 @@ namespace alpha_lex {
         token = string();
         memcpy(this->alphabet, alphabet, len);
 
-        available_moves = map();
-		for(int i = 0; i < states.size(); i++)
-			available_moves[this->states[i]] = map();
+        available_moves = map<DFA_state, std::map<char, DFA_state>, DFA_state::cmpr_by_id>();
+		for(int i = 0; i < states.size(); i++) {
+            DFA_state &d = this->states[i];
+            available_moves[d] = map<char, DFA_state>();
+        }
 	}
 
 	DFA& DFA::add_move_rule(const DFA_state &current, char c, const DFA_state &next) {
@@ -54,11 +62,27 @@ namespace alpha_lex {
         return *this;
 	}
 
+    DFA& DFA::add_move_rule(unsigned int current_id, char c, unsigned int next_id) {
+        DFA_state *ptr_cur = nullptr;
+        DFA_state *ptr_next = nullptr;
+
+        for(int i=0; i<states.size(); i++) {
+            if(states[i].get_id() == current_id)
+                ptr_cur = &states[i];
+            if(states[i].get_id() == next_id)
+                ptr_next = &states[i];
+        }
+
+        if(ptr_cur == nullptr || ptr_next == nullptr)
+            throw std::invalid_argument("Invalid current_id or next_id");
+        return add_move_rule(*ptr_cur, c, *ptr_next);
+    }
+
     bool DFA::has_move_rule(const DFA_state &s, char c) const {
         DFA_state &tmp = const_cast<DFA_state&>(s);
 
         if(available_moves.find(tmp) != available_moves.end())
-            if(available_moves[tmp].find(c) != available_moves[tmp].end())
+            if(available_moves.at(tmp).find(c) != available_moves.at(tmp).end())
                 return true;
         return false;
     }
@@ -99,8 +123,9 @@ namespace alpha_lex {
         is_final_state = false;
     }
 
-    DFA::DFA_state::DFA_state(const std::string &tag, bool is_final /*=false*/){
+    DFA::DFA_state::DFA_state(const std::string &tag, unsigned int id, bool is_final /*=false*/){
         this->tag = tag;
+        this->id = id;
         this->is_final_state = is_final;
     }
 
@@ -109,8 +134,19 @@ namespace alpha_lex {
         is_final_state = original.is_final_state;
     }
 
+    bool DFA::DFA_state::cmpr_by_id::operator()(const DFA_state &a, const DFA_state &b) const {
+        return ((a.get_id() - b.get_id()) == 0);
+    }
+    bool DFA::DFA_state::operator==(const DFA_state &other) const {
+        return this->get_id() == other.get_id();
+    }
+
     std::string DFA::DFA_state::get_tag() const {
         return tag;
+    }
+
+    unsigned int DFA::DFA_state::get_id() const {
+        return id;
     }
 
 	bool DFA::DFA_state::is_final() const {
