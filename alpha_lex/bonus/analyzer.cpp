@@ -176,7 +176,7 @@ namespace alpha_lex {
 		
 		/* == */
 		op_dfas.push_back(std::make_shared<DFA>(DFA(
-				"==", 2, {DFA::DFA_state("=", 1), DFA::DFA_state(tag_op, 2, true)}, DFA::DFA_state("", 0)
+				"=", 1, {DFA::DFA_state("=", 1), DFA::DFA_state(tag_op, 2, true)}, DFA::DFA_state("", 0)
 		)));
 		op_dfas[6]->add_move_rule(0, '=', 1).add_move_rule(1, '=', 2);
 		
@@ -188,13 +188,13 @@ namespace alpha_lex {
 		
 		/* ++ */
 		op_dfas.push_back(std::make_shared<DFA>(DFA(
-				"++", 2, {DFA::DFA_state("+", 1), DFA::DFA_state(tag_op, 2, true)}, DFA::DFA_state("", 0)
+				"+", 1, {DFA::DFA_state("+", 1), DFA::DFA_state(tag_op, 2, true)}, DFA::DFA_state("", 0)
 		)));
 		op_dfas[8]->add_move_rule(0, '+', 1).add_move_rule(1, '+', 2);
 		
 		/* -- */
 		op_dfas.push_back(std::make_shared<DFA>(DFA(
-				"--", 2, {DFA::DFA_state("-", 1), DFA::DFA_state(tag_op, 2, true)}, DFA::DFA_state("", 0)
+				"-", 1, {DFA::DFA_state("-", 1), DFA::DFA_state(tag_op, 2, true)}, DFA::DFA_state("", 0)
 		)));
 		op_dfas[9]->add_move_rule(0, '-', 1).add_move_rule(1, '-', 2);
 		
@@ -278,7 +278,7 @@ namespace alpha_lex {
 		
 		/* :: */
 		op_dfas.push_back(std::make_shared<DFA>(DFA(
-				"::", 2, {DFA::DFA_state(":", 1), DFA::DFA_state(tag_op, 2, true)}, DFA::DFA_state("", 0)
+				":", 1, {DFA::DFA_state(":", 1), DFA::DFA_state(tag_op, 2, true)}, DFA::DFA_state("", 0)
 		)));
 		op_dfas[22]->add_move_rule(0, ':', 1).add_move_rule(1, ':', 2);
 		
@@ -290,13 +290,13 @@ namespace alpha_lex {
 		
 		/* .. */
 		op_dfas.push_back(std::make_shared<DFA>(DFA(
-				"..", 2, {DFA::DFA_state(".", 1), DFA::DFA_state(tag_op, 2, true)}, DFA::DFA_state("", 0)
+				".", 1, {DFA::DFA_state(".", 1), DFA::DFA_state(tag_op, 2, true)}, DFA::DFA_state("", 0)
 		)));
 		op_dfas[24]->add_move_rule(0, '.', 1).add_move_rule(1, '.', 2);
 		
 		/* const int */
 		
-		dfa_const_int_p(std::make_shared<DFA>(DFA(
+		dfa_const_int_p.push_back(std::make_shared<DFA>(DFA(
 				"0123456789", 10, {DFA::DFA_state(tag_const_int, 1, true)}, DFA::DFA_state("", 0) 
 		)));
 		for(char c='0'; c<='9'; c++){
@@ -306,7 +306,7 @@ namespace alpha_lex {
 		
 		/* digit.digit */
 		
-		dfa_const_real_p(std::make_shared<DFA>(
+		dfa_const_real_p.push_back(std::make_shared<DFA>(DFA(
 				"0123456789.", 11, {DFA::DFA_state("0-9" , 1), DFA::DFA_state("0-9." , 2), DFA::DFA_state(tag_const_real , 3, true)}, DFA::DFA_state("", 0)
 		)));
 		for(char c='0'; c<='9'; c++){
@@ -318,6 +318,43 @@ namespace alpha_lex {
 		
 		dfa_const_real_p->add_move_rule(1, '.', 2);
 		dfa_const_real_p->add_move_rule(0, '.', 2);
+		
+		/* line comment */
+		
+		dfa_line_comment_p.push_back(std::make_shared<DFA>(DFA(
+				"/", 1, {DFA::DFA_state("/", 1), DFA::DFA_state(tag_line_comment, 2, true)}, DFA::DFA_state("", 0)
+		)));
+		dfa_line_comment_p->add_move_rule(0, '/', 1);
+		dfa_line_comment_p->add_move_rule(1, '/', 2);
+		
+		for(int i=0; i<=255; i++){
+			if(i != '\n'){
+				dfa_line_comment_p->add_move_rule(2, i, 2)
+			}
+		}
+		
+		/* block comment */
+		string s;
+		
+		for(int j=0; j<=255; j++){
+			s = s+to_string(j);
+		}
+		dfa_block_comment_p.push_back(std::make_shared<DFA>(DFA(
+				s, 256, {DFA::DFA_state("/", 1), DFA::DFA_state("*", 2), DFA::DFA_state("*", 3), DFA::DFA_state(tag_block_comment, 4, true)}, DFA::DFA_state("", 0)
+		)));
+		dfa_block_comment_p->add_move_rule(0, '/', 1);
+		dfa_block_comment_p->add_move_rule(1, '*', 2);
+		for(int i=0; i<=255; i++){
+			if(i != '*'){
+				dfa_block_comment_p->add_move_rule(2, i, 2);
+			}
+			if( i != '/' && i != '*'){
+				dfa_block_comment_p->add_move_rule(3, i, 2);
+			}
+		}
+		dfa_block_comment_p->add_move_rule(2, '*', 3);
+		dfa_block_comment_p->add_move_rule(3, '*', 3);
+		dfa_block_comment_p->add_move_rule(3, '/', 4);
 	}
 
     int analyzer::alpha_yylex(void *ylval) {
