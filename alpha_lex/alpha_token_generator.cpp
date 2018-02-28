@@ -94,12 +94,12 @@ namespace alpha_lex {
                         to_replace = '\t';
                     else if(ch=='v')
                         to_replace = '\v';
-                    else if(ch=='0')
-                        to_replace = '\0';
                     else if(ch=='\'' || ch == '\"' || ch=='\?' || ch=='\\')
                         to_replace = ch;
                     else
-                        throw std::runtime_error("Malformed escaped character in string");
+                        throw std::runtime_error("LINE " + std::to_string(numline) + ": Invalid escaped sequence: " +
+                                                 "\"\\" + ch + "\" inside string");
+
                     sub_category.replace(i-1, 2, 1, to_replace);
                     cur_state = INITIAL;
                     i--;
