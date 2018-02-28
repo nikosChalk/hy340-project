@@ -128,7 +128,7 @@ namespace alpha_lex {
 
 
             /**
-             * Creates a new non-final state with a random tag
+             * Creates a new non-final state with a random tag and 0 id
              */
             DFA_state();
 
@@ -138,7 +138,7 @@ namespace alpha_lex {
              * @param An id for this state.
              * @param is_final True if the constructed state should be final. False otherwise.
              */
-            explicit DFA_state(const std::string &tag, unsigned int id, bool is_final = false);
+            DFA_state(const std::string &tag, unsigned int id, bool is_final = false);
 
             /**
              * Copy constructor. Creates a DFA state with the same attributes as original
@@ -191,7 +191,7 @@ namespace alpha_lex {
          * This map is constructed through invocations of add_move_rule()
          * (state --> map of <character, next_state>)
          */
-        std::map<DFA_state, std::map<char, DFA_state>, DFA_state::cmpr_by_id> available_moves;
+        std::map<DFA_state*, std::map<char, DFA_state*>> available_moves;
     };
 
 

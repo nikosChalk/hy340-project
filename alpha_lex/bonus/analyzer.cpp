@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <algorithm>
+#include <cstring>
 #include "analyzer.h"
 
 using namespace std;
@@ -24,14 +25,9 @@ namespace alpha_lex {
 
     const alpha_token_generator analyzer::generator = alpha_token_generator();
 
-    analyzer::analyzer(ifstream &input, ofstream &output)
-        : input(input), output(output)
+    analyzer::analyzer(ifstream &input)
+        : input(input)
     {
-        if(!input.is_open())
-            throw invalid_argument("Input stream is not open!");
-        if(!output.is_open())
-            throw invalid_argument("Output stream is not open!");
-
         current_line = 0;
         keyword_dfas = vector<std::shared_ptr<DFA>>();
         op_dfas = vector<std::shared_ptr<DFA>>();
@@ -44,12 +40,11 @@ namespace alpha_lex {
         ));
         */
         /* Add move rules */
-        /*TODO: to be filled for all */
 
         /* TEST */
 
         keyword_dfas.push_back(std::make_shared<DFA>(DFA(
-                "if", 2, {DFA::DFA_state("i", 1), DFA::DFA_state("f", 2, true)}, DFA::DFA_state("", 0)
+                "if", 2, {DFA::DFA_state("i", 1), DFA::DFA_state(tag_keyword, 2, true)}, DFA::DFA_state("", 0)
         )));
         keyword_dfas[0]->add_move_rule(0, 'i', 1).add_move_rule(1, 'f', 2);
         
@@ -77,6 +72,7 @@ namespace alpha_lex {
 
         /* Scan input until a matching token is found or EOF or something bad happens */
         while(input.get(ch)) {
+
             /* Check if any of the parallel DFAs can move */
             bool exists_move = false;
             for(int i=0; i<active.size(); i++) {
@@ -98,9 +94,12 @@ namespace alpha_lex {
                 } else { /* No DFA can move. */
                     if(active[i]->current_state().is_final()) {
                         string cur_tag = active[i]->current_state().get_tag();
+                        string token_content = active[i]->generate_token();
+                        int ret_value;
 
                         if(cur_tag == tag_keyword) {
-                            generator.gen_keyword_token(current_line, active[i]->generate_token(), ylval);
+                            generator.gen_keyword_token(current_line, token_content, ylval);
+                            ret_value = tag_to_code.at(token_content);
                         } else if(cur_tag == tag_op) {
 
                         } else if(cur_tag == analyzer::tag_const_int) {
@@ -121,7 +120,7 @@ namespace alpha_lex {
                             assert(false); /* unreachable statement */
                         }
                         input.unget();
-                        return tag_to_code.at(cur_tag);
+                        return ret_value;
                     }
                 }
             }
@@ -129,19 +128,18 @@ namespace alpha_lex {
             if(!exists_move) {    /* No DFA can move and none of them is in final state */
                 /* Found unknown token */
                 input.unget();
-                return UNKNOWN;
+                throw runtime_error("unknown token: " + string(1, ch) + " (ASCII code: " + to_string(ch) + ")");
             }
+        }
 
-            if(!input.good()) {
-                if(input.eof()) {
-                    /* EOF reached */
-                    return EOF;
-                } else {
-                    /* Something bad happend */
-                    return INPUT_ERROR;
-                }
+        if(!input.good()) {
+            if(input.eof()) {
+                /* EOF reached */
+                return EOF;
+            } else {
+                /* Something bad happend */
+                return INPUT_ERROR;
             }
-
         }
     }
 }

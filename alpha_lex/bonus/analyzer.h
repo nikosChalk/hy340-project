@@ -29,10 +29,10 @@ namespace alpha_lex {
         /**
          * Lexical analyzer for the "alpha" language
          * @param The input file to tokenize. Must have been opened.
-         * @param output The output file to print messages and results. Must have been opened.
-         * @throws std::invalid_argument if any of the input or output file streams have not been opened.
+         * @param input The input stream which will be tokenized
+         * @param output The output file to print messages and results.
          */
-        analyzer(std::ifstream &input, std::ofstream &output);
+        explicit analyzer(std::ifstream &input);
 
         /**
          * Reads from the input file and fetches the next token
@@ -52,8 +52,7 @@ namespace alpha_lex {
         unsigned int current_line;
         std::vector<std::shared_ptr<DFA>> keyword_dfas, op_dfas, punctuation_dfas;
         std::shared_ptr<DFA> dfa_const_int_p, dfa_const_real_p, dfa_const_str_p, dfa_id_p, dfa_line_comment_p, dfa_block_comment_p;
-        std::ifstream &input;
-        std::ofstream &output;
+        std::istream &input;
     };
 
 }

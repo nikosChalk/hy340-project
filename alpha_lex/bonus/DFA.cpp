@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cstring>
 #include <sstream>
+#include <iostream>
 
 using namespace std;
 
@@ -20,7 +21,7 @@ namespace alpha_lex {
 
 		/*we check if init state is in the vector*/
 		if (find(states.begin(), states.end(), init) != states.end())
-			throw invalid_argument("init state is must not be in vector with states");
+			throw invalid_argument("init state must not be in vector with states");
 
         for(int i=0; i<states.size(); i++)
             for(int j=i+1; j<states.size(); j++)
@@ -37,17 +38,16 @@ namespace alpha_lex {
         token = string();
         memcpy(this->alphabet, alphabet, len);
 
-        available_moves = map<DFA_state, std::map<char, DFA_state>, DFA_state::cmpr_by_id>();
+        available_moves = map<DFA_state*, std::map<char, DFA_state*>>();
 		for(int i = 0; i < states.size(); i++) {
-            DFA_state &d = this->states[i];
-            available_moves[d] = map<char, DFA_state>();
+            available_moves[&this->states[i]] = map<char, DFA_state*>();
         }
 	}
 
 	DFA& DFA::add_move_rule(const DFA_state &current, char c, const DFA_state &next) {
 		if(has_move_rule(current, c))
 			throw invalid_argument("rule already exists in map");
-
+        /*TODO: check if we have these states in our list */
         bool exists = false;
         for(int i=0; i<alphabet_len; i++) {
             if(alphabet[i] == c) {
@@ -58,7 +58,9 @@ namespace alpha_lex {
         if(!exists)
             throw invalid_argument("DFA does not recognize the given character for adding a new move rule");
 
-        available_moves[const_cast<DFA_state&>(current)][c] = next;
+        DFA_state &t1 = const_cast<DFA_state&>(current);
+        DFA_state &t2 = const_cast<DFA_state&>(next);
+        available_moves[&t1][c] = &t2;
         return *this;
 	}
 
@@ -81,8 +83,8 @@ namespace alpha_lex {
     bool DFA::has_move_rule(const DFA_state &s, char c) const {
         DFA_state &tmp = const_cast<DFA_state&>(s);
 
-        if(available_moves.find(tmp) != available_moves.end())
-            if(available_moves.at(tmp).find(c) != available_moves.at(tmp).end())
+        if(available_moves.find(&tmp) != available_moves.end())
+            if(available_moves.at(&tmp).find(c) != available_moves.at(&tmp).end())
                 return true;
         return false;
     }
@@ -91,7 +93,8 @@ namespace alpha_lex {
         if(!has_move_rule(current_state(), c))
             throw DFA_state_error("No such move exists from current state");
 
-        curr_state = &available_moves[current_state()][c];
+        DFA_state &tmp = current_state();
+        curr_state = available_moves[&tmp][c];
         token = token + c;
 		return current_state();
 	}
@@ -120,6 +123,7 @@ namespace alpha_lex {
 
         ss << addr;
         tag = ss.str();
+        id = 0;
         is_final_state = false;
     }
 
@@ -131,6 +135,7 @@ namespace alpha_lex {
 
     DFA::DFA_state::DFA_state(const DFA_state &original) {
         tag = original.get_tag();
+        id = original.get_id();
         is_final_state = original.is_final_state;
     }
 
