@@ -1,7 +1,3 @@
-//
-// Created by nikos on 2/26/18.
-//
-
 #ifndef HY340_PROJECT_ANALYZER_H
 #define HY340_PROJECT_ANALYZER_H
 
