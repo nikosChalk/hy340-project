@@ -9,6 +9,7 @@
 	#include <sstream>
 	#include <stack>
 	#include "alpha_token.h"
+	#include "../utilities.h"
 	#include "alpha_token_generator.h"
 	#define YY_DECL int alpha_yylex(void *ylval)
 
@@ -19,31 +20,6 @@
 			CONST_INT, CONST_REAL, CONST_STR, PUNCT_LEFT_BRACE, PUNCT_RIGHT_BRACE, PUNCT_LEFT_BRACKET, PUNCT_RIGHT_BRACKET, PUNCT_LEFT_PARENTHESIS, PUNCT_RIGHT_PARENTHESIS, 		
 			PUNCT_SEMICOLON, PUNCT_COMMA, PUNCT_COLON, PUNCT_DOUBLE_COLON, PUNCT_DOT, PUNCT_ELIPSIS, IDENTIFIER, LINE_COMMENT, BLOCK_COMMENT, NESTED_COMMENT
 	};
-
-	/**
-	* Checks if the given character is any of the '\ a' '\ b' '\ f' '\ n' '\ r' '\ t' '\ v' and returns its unescaped version (eg "\\n" for '\n')
-	* In all other cases, ch is returned
-	* @param ch The character to un-escape
-	* @return The string which represents the un-escaped version of ch.
-	*/
-	std::string unescape_ch(char ch) {
-		if(ch=='\a')
-			return std::string("\\a");
-		else if(ch=='\b')
-			return std::string("\\b");
-		else if(ch=='\f')
-           	return std::string("\\f");
-		else if(ch=='\n')
-			return std::string("\\n");
-		else if(ch=='\r')
-			return std::string("\\r");
-		else if(ch=='\t')
-			return std::string("\\t");
-		else if(ch=='\v')
-			return std::string("\\v");
-		else
-			return std::string(1, ch);
-	}
 
 	/* Global variables within alpha_flex.cpp */
 	alpha_lex::alpha_token_generator token_generator;
@@ -147,9 +123,9 @@ const_int  		{digit}+
 <X_STR>\n							|
 <X_STR>\r							|
 <X_STR>\t							|
-<X_STR>\v				{ current_str.append(unescape_ch(yytext[0])); }
+<X_STR>\v				{ current_str.append(utilities::unescape_ch(yytext[0])); }
 <X_STR>[^\\]\"			{	/* Identify anything that is not a backslash, and then it is followed by double-quotes. e.g. abcd" */
-							current_str.append(unescape_ch(yytext[0])); /* Do not append the double quote character */
+							current_str.append(utilities::unescape_ch(yytext[0])); /* Do not append the double quote character */
 							token_generator.gen_const_str_token(str_open_lineno, current_str, ylval);
 							BEGIN(INITIAL);
 							str_open_lineno = -1; /* For debugging reasons */

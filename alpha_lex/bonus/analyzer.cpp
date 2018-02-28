@@ -1,10 +1,9 @@
-
-
 #include <cassert>
 #include <algorithm>
 #include <cstring>
 #include <iostream>
 #include "analyzer.h"
+#include "../../utilities.h"
 
 using namespace std;
 
@@ -474,9 +473,9 @@ namespace alpha_lex {
                             ret_value = tag_to_code.at(tag_const_real);
 
                         } else if(cur_tag == tag_const_str) {
-                            generator.gen_const_str_token(init_line, token_content, ylval);
+                            generator.gen_const_str_token(init_line, utilities::unescape_str(token_content), ylval);
                             ret_value = tag_to_code.at(tag_const_str);
-
+							
                         } else if(cur_tag == tag_punctuation) {
                             generator.gen_punctuation_token(current_line, token_content, ylval);
                             ret_value = tag_to_code.at(token_content);
