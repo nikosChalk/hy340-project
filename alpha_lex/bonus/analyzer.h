@@ -56,6 +56,8 @@ namespace alpha_lex {
         std::vector<std::shared_ptr<DFA>> keyword_dfas, op_dfas, punctuation_dfas;
         std::shared_ptr<DFA> dfa_const_int_p, dfa_const_real_p, dfa_const_str_p, dfa_id_p, dfa_line_comment_p, dfa_block_comment_p, dfa_ws_p;
         std::istream &input;
+
+        int __alpha_yylex(void *ylval);
     };
 
 }

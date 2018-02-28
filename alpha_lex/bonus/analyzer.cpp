@@ -395,16 +395,15 @@ namespace alpha_lex {
 		dfa_block_comment_p->add_move_rule(3, '/', 4);
 	}
 
-    /*
-    int analyzer::__alpha_yylex(void *ylval) {
-        identified_token token_type;
-        do {
-            alpha_yylex(ylval) == WHITE_SPACE
-        });
-    }
-     */
-
     int analyzer::alpha_yylex(void *ylval) {
+        int token_type;
+        do {
+            token_type = __alpha_yylex(ylval);
+        } while(token_type == WHITE_SPACE); /* discard white spaces */
+        return token_type;
+    }
+
+    int analyzer::__alpha_yylex(void *ylval) {
         char ch;
 
         vector<shared_ptr<DFA>> active;
@@ -425,10 +424,10 @@ namespace alpha_lex {
             active[i]->reset();
 
         /* Scan input until a matching token is found or EOF or something bad happens */
+        int init_line = current_line;
+        bool is_open_block_comment = false;
+        bool is_open_str = false;
         while(input.get(ch)) {
-            if(ch == '\n')
-                current_line++;
-
             /* Check if any of the parallel DFAs can move */
             bool exists_move = false;
             for(int i=0; i<active.size(); i++) {
@@ -443,6 +442,11 @@ namespace alpha_lex {
                 if(exists_move) { /* Move all the DFAs that can move */
                     try {
                         active[i]->move(ch);
+
+                        if(active[i] == dfa_block_comment_p && active[i]->generate_token() == "/*")
+                            is_open_block_comment = true;
+                        else if(active[i] == dfa_const_str_p && active[i]->generate_token() == "\"")
+                            is_open_str = true;
                     } catch(DFA::DFA_state_error &error) {  /* Move failed because no rule exists */
                         active.erase(active.begin() + i);
                         i--;
@@ -470,7 +474,7 @@ namespace alpha_lex {
                             ret_value = tag_to_code.at(tag_const_real);
 
                         } else if(cur_tag == tag_const_str) {
-                            generator.gen_const_str_token(current_line, token_content, ylval);
+                            generator.gen_const_str_token(init_line, token_content, ylval);
                             ret_value = tag_to_code.at(tag_const_str);
 
                         } else if(cur_tag == tag_punctuation) {
@@ -486,13 +490,24 @@ namespace alpha_lex {
                             ret_value = tag_to_code.at(tag_line_comment);
 
                         } else if(cur_tag == tag_block_comment) {
-                            generator.gen_comment_token(current_line, "x - y", "BLOCK_COMMENT", ylval);
+                            /* Calculate how many lines the comment spans */
+                            /*
+                            unsigned int start_line = current_line;
+                            for(unsigned long i=0; i<token_content.size(); i++)
+                                if(token_content.at(i) == '\n')
+                                    start_line--;
+                            */
+
+                            generator.gen_comment_token(init_line, (to_string(init_line) + " - " + to_string(current_line)), "BLOCK_COMMENT", ylval);
                             ret_value = tag_to_code.at(tag_block_comment);
 
                         } else if(cur_tag == tag_ws) {
-							/* noop */
-                            input.unget();
-                            return alpha_yylex(ylval);
+							/* noop. will be discarded. Just count how many lines we read */
+                            /* unget() before the return statment will never put back a '\n' */
+                            for(unsigned long i=0; i<token_content.size(); i++)
+                                if(token_content.at(i) == '\n')
+                                    current_line++;
+                            ret_value = tag_to_code.at(tag_ws);
 						} else {
                             assert(false); /* unreachable statement */
                         }
@@ -511,7 +526,11 @@ namespace alpha_lex {
 
         if(!input.good()) {
             if(input.eof()) {
-                /* EOF reached */
+                if(is_open_block_comment)
+                    throw runtime_error("EOF reached while block comment is open. Opened in line: " + to_string(init_line));
+                if(is_open_str)
+                    throw runtime_error("EOF reached while string is open. Opened in line: " + to_string(init_line));
+
                 return EOF;
             } else {
                 throw runtime_error("Something went wrong with the input file");
