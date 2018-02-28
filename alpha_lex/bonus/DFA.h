@@ -38,6 +38,8 @@ namespace alpha_lex {
             const std::vector<DFA_state> &states,
             const DFA_state& init);
 
+        DFA(std::string alphabet, const std::vector<DFA_state> &states, const DFA_state& init);
+
         /**
          * Adds a move rule for the DFA. The rule states that, if from the current state you read character c then go to
          * the next state.

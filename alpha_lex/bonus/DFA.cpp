@@ -44,6 +44,9 @@ namespace alpha_lex {
         }
 	}
 
+    DFA::DFA(std::string alphabet, const std::vector<DFA_state> &states, const DFA_state &init)
+        : DFA(alphabet.c_str(), alphabet.size(), states, init) { /* Empty Body */ }
+
 	DFA& DFA::add_move_rule(const DFA_state &current, char c, const DFA_state &next) {
 		if(has_move_rule(current, c))
 			throw invalid_argument("rule already exists in map");
