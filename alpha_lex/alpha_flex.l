@@ -178,10 +178,9 @@ const_int  		{digit}+
 
 int main (int argc, char *argv[]) {
     int identified;
-    std::vector<analyzer::alpha_token_t*> token_vector;
-    std::allocator<analyzer::alpha_token_t> allocator;
-    analyzer::alpha_token_t *token_ptr;
-	FILE *tmp;
+    std::vector<alpha_lex::alpha_token_t*> token_vector;
+    std::allocator<alpha_lex::alpha_token_t> allocator;
+    alpha_lex::alpha_token_t *token_ptr;
 
 
 	/* Check command line arguments and open I/O files */

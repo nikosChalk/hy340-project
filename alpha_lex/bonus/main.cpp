@@ -15,8 +15,8 @@ int main (int argc, char *argv[]) {
     vector<alpha_token_t*> token_vector;
     allocator<alpha_token_t> allocator;
     alpha_token_t *token_ptr;
-    ifstream in;
-    ofstream out;
+	std::shared_ptr<std::ifstream> in;
+    std::shared_ptr<std::ofstream> out;
     ostream *ptr_out = &cout;
 
     /* Check command line arguments and open I/O files */
@@ -25,24 +25,25 @@ int main (int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
     if(argc >= 2) {
-        in = ifstream(argv[1], ios_base::in);
-        if(!in.good()) {
+        in = std::make_shared<std::ifstream>(argv[1], ios_base::in);
+        if(!in->good()) {
             cerr << "Error while opening input file: " << argv[1] << ". Execution aborted." << endl;
             exit(EXIT_FAILURE);
         }
         cout << "Using input file: " << argv[1] << endl;
     }
     if(argc>=3) {
-        out = ofstream(argv[3], ios_base::out);
-        if(!out.good()) {
+        out = std::make_shared<std::ofstream>(argv[3], ios_base::out);
+        if(!out->good()) {
             cerr << "Error while opening output file: " << argv[3] << ". Using stdout instead." << endl;
-            ptr_out = &out;
+            ptr_out = &cout;
         } else {
+			ptr_out = &(*out);
             cout << "Using output file: " << argv[2] << endl;
         }
     }
 
-    analyzer my_analyzer(in);
+    analyzer my_analyzer(*in);
     token_ptr = 0;  /* ignore any compiler warnings */
     while(true) {
         token_ptr = allocator.allocate(1, token_ptr);
