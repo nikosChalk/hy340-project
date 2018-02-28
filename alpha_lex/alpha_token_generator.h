@@ -68,7 +68,7 @@ namespace alpha_lex {
          * @param placement The memory to place the token
          * @return A pointer to the constructed token. Placement is returned if not null.
          * @throw std::runtime_error If content contains a malformed escaped character. Valid escaped characters are:
-         *  '\ a' '\ b' '\ f' '\ n' '\ r' '\ t' '\ v' and '\ 0'
+         *  '\ a' '\ b' '\ f' '\ n' '\ r' '\ t' '\ v'
          */
         alpha_token_t* gen_const_str_token(unsigned int numline, const std::string &content, void *placement = nullptr) const;
 

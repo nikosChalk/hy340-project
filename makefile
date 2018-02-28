@@ -1,21 +1,38 @@
-CFLAGS=-Wall -pedantic -std=c++11
+CPP=g++
+CPP_FLAGS=-Wall -pedantic -std=c++11
+
+LEX=flex
+
 SOURCE_PATH=sources
+LEX_PATH=$(SOURCE_PATH)/alpha_lex
 DEST_PATH=destination
 
-all: $DEST_PATH/al
+SOURCE_FILES=$(wildcard $(LEX_PATH)/*.cpp)
+HEADERS_FILES=$(wildcard $(LEX_PATH)/*.h)
+OBJECT_FILES=$(SOURCE_FILES:.cpp=.o)
 
-al: alpha_token.o alpha_token_generator.o
-	g++ $(CFLAGS) -o alpha_token.o alpha_token_generator.o al
+EXECUTABLE=$(DEST_PATH)/al
 
-alpha_token.o: alpha_token.cpp alpha_token.h
-	g++ $(CFLAGS) -c alpha_token.cpp
+all: directory lex al
 
-alpha_token_generator.o: alpha_token_generator.cpp alpha_token_generator.h
-	g++ $(CFLAGS) -c alpha_token_generator.cpp
+clean: cln_obj cln_exec
 
-lex: $SOURCE_PATH/alpha_flex.l
-	flex< $<
- 
+directory:
+	mkdir -p $(DEST_PATH)
+	
+%.o: $(LEX_PATH)/%.cpp $(HEADERS_FILES)
+	$(CPP) $(CPP_FLAGS) -o $@
 
-clean:
-	rm *o al
+lex: $(LEX_PATH)/alpha_flex.l
+	cd $(LEX_PATH) && \
+	flex alpha_flex.l && \
+	cd -
+
+al: $(OBJECT_FILES)
+	$(CPP) $(CPP_FLAGS) $(OBJECT_FILES) -o $(EXECUTABLE)
+
+cln_obj:
+	rm $(OBJECT_FILES)
+
+cln_exec:
+	rm $(EXECUTABLE)

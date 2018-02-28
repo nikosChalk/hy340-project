@@ -1,0 +1,7 @@
+1 	#1 	23 	INTCONST
+1 	#2 	5.5 	REALCONST
+2 	#3 	myvariable 	IDENT
+3 	#4 	32 	INTCONST
+3 	#5 	s 	IDENT
+4 	#6 	"Hello 	
+Example" STRING 			

@@ -6,18 +6,48 @@
 	#include <string>
 	#include <memory>
 	#include <vector>
+	#include <sstream>
+	#include <stack>
 	#include "alpha_token.h"
 	#include "alpha_token_generator.h"
 	#define YY_DECL int alpha_yylex(void *ylval)
 
-	enum identified_token{UNKNOWN=100, IF, ELSE, WHILE, FOR, FUNCTION, RETURN, BREAK, CONTINUE, AND,
+	enum identified_token{IF=100, ELSE, WHILE, FOR, FUNCTION, RETURN, BREAK, CONTINUE, AND,
 			NOT, OR, LOCAL, BOOL_TRUE, BOOL_FALSE, NIL,
 			OP_ASSIGN, OP_PLUS, OP_MINUS, OP_MUL, OP_DIV, OP_MOD, OP_EQ, OP_NE, OP_PLUS_PLUS, OP_MINUS_MINUS,
 			OP_GT, OP_LT, OP_GE, OP_LE,
-			CONST_INT, CONST_REAL, CONST_STR, PUNCTUATION, IDENTIFIER, COMMENT
+			CONST_INT, CONST_REAL, CONST_STR, PUNCT_LEFT_BRACE, PUNCT_RIGHT_BRACE, PUNCT_LEFT_BRACKET, PUNCT_RIGHT_BRACKET, PUNCT_LEFT_PARENTHESIS, PUNCT_RIGHT_PARENTHESIS, 		
+			PUNCT_SEMICOLON, PUNCT_COMMA, PUNCT_COLON, PUNCT_DOUBLE_COLON, PUNCT_DOT, PUNCT_ELIPSIS, IDENTIFIER, LINE_COMMENT, BLOCK_COMMENT, NESTED_COMMENT
 	};
 
-	analyzer::alpha_token_generator token_generator;
+	/**
+	* Checks if the given character is any of the '\ a' '\ b' '\ f' '\ n' '\ r' '\ t' '\ v' and returns its unescaped version (eg "\\n" for '\n')
+	* In all other cases, ch is returned
+	* @param ch The character to un-escape
+	* @return The string which represents the un-escaped version of ch.
+	*/
+	std::string unescape_ch(char ch) {
+		if(ch=='\a')
+			return std::string("\\a");
+		else if(ch=='\b')
+			return std::string("\\b");
+		else if(ch=='\f')
+           	return std::string("\\f");
+		else if(ch=='\n')
+			return std::string("\\n");
+		else if(ch=='\r')
+			return std::string("\\r");
+		else if(ch=='\t')
+			return std::string("\\t");
+		else if(ch=='\v')
+			return std::string("\\v");
+		else
+			return std::string(1, ch);
+	}
+
+	/* Global variables within alpha_flex.cpp */
+	alpha_lex::alpha_token_generator token_generator;
+	std::stack<int> stack_comment = std::stack<int>();
 %}
 
  /* ~~~ FLEX parameters ~~~ */
@@ -26,9 +56,13 @@
 %option outfile = "alpha_flex.cpp"
 %option noyywrap
 %option yylineno
+%option stack
 
  /* ~~~ start conditions */
 %x X_STR
+%x X_BLOCK_COMMENT
+%x X_LINE_COMMENT
+%x X_NESTED_COMMENT
 
  /* ~~~ regex definitions ~~~ */
 
@@ -43,7 +77,8 @@ const_int  		{digit}+
 %%
 
 %{
-	std::string current_str; /* Local variable within yylex function. Used in string identification */
+	int str_open_lineno;		/* Local variable within yylex function. Used for holding the line where current_str opened */
+	std::string current_str; 	/* Local variable within yylex function. Used in string identification */
 %}
 "if"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return IF; }
 "else"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return ELSE; }
@@ -76,33 +111,89 @@ const_int  		{digit}+
 ">="					{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_GE; }
 "<="					{ token_generator.gen_operator_token(yylineno, yytext, ylval); return OP_LE; }
 
+"{"						{ token_generator.gen_punctuation_token(yylineno, yytext, ylval); return PUNCT_LEFT_BRACE; }
+"}"						{ token_generator.gen_punctuation_token(yylineno, yytext, ylval); return PUNCT_RIGHT_BRACE; }
+"["						{ token_generator.gen_punctuation_token(yylineno, yytext, ylval); return PUNCT_LEFT_BRACKET; }
+"]"						{ token_generator.gen_punctuation_token(yylineno, yytext, ylval); return PUNCT_RIGHT_BRACKET; }
+"("						{ token_generator.gen_punctuation_token(yylineno, yytext, ylval); return PUNCT_LEFT_PARENTHESIS; }
+")"						{ token_generator.gen_punctuation_token(yylineno, yytext, ylval); return PUNCT_RIGHT_PARENTHESIS; }
+";"						{ token_generator.gen_punctuation_token(yylineno, yytext, ylval); return PUNCT_SEMICOLON; }
+","						{ token_generator.gen_punctuation_token(yylineno, yytext, ylval); return PUNCT_COMMA; }
+":"						{ token_generator.gen_punctuation_token(yylineno, yytext, ylval); return PUNCT_COLON; }
+"::"					{ token_generator.gen_punctuation_token(yylineno, yytext, ylval); return PUNCT_DOUBLE_COLON; }
+"."						{ token_generator.gen_punctuation_token(yylineno, yytext, ylval); return PUNCT_DOT; }
+".."					{ token_generator.gen_punctuation_token(yylineno, yytext, ylval); return PUNCT_ELIPSIS; }
+
 {const_int}				{ token_generator.gen_const_int_token(yylineno, yytext, ylval); return CONST_INT; }
 {digit}*"."{digit}+     { token_generator.gen_const_real_token(yylineno, yytext, ylval); return CONST_REAL; }
 {id}                    { token_generator.gen_identifier_token(yylineno, yytext, ylval); return IDENTIFIER; /* id MUST be bellow all the above enumerated rules. */ }
 
 {ws}					{ /*ignore white spaces */ }
-<<EOF>>					{ return EOF; /* check YY_START to see the current start condition. If it not INITIAL then some comment or string is left open */ }
+<<EOF>>					{ 	if(YY_START == X_BLOCK_COMMENT)
+								throw std::runtime_error("EOF reached while block comment is open. Opened in line: " + std::to_string(stack_comment.top()));
+							if(YY_START == X_NESTED_COMMENT)
+								throw std::runtime_error("EOF reached while nested comment is open. Opened in line: " + std::to_string(stack_comment.top()));
+							if(YY_START == X_STR)
+								throw std::runtime_error("EOF reached while string is open. Opened in line: " + std::to_string(str_open_lineno));
+							return EOF; /* Everything was OK */
+						}
 
  /* CONST_STRING token identification */
-"\""					{ BEGIN(X_STR); /* when in x_my_cond, I must also find any unmatched characters */ }
+"\""					{ BEGIN(X_STR); str_open_lineno = yylineno; }
 
-<X_STR>\a				{ current_str.append("\\a"); }
-<X_STR>\b				{ current_str.append("\\b"); }
-<X_STR>\f				{ current_str.append("\\f"); }
-<X_STR>\n				{ current_str.append("\\n"); }
-<X_STR>\r				{ current_str.append("\\r"); }
-<X_STR>\t				{ current_str.append("\\t"); }
-<X_STR>\v				{ current_str.append("\\v"); }
+<X_STR>\a							|
+<X_STR>\b							|
+<X_STR>\f							|
+<X_STR>\n							|
+<X_STR>\r							|
+<X_STR>\t							|
+<X_STR>\v				{ current_str.append(unescape_ch(yytext[0])); }
 <X_STR>[^\\]\"			{	/* Identify anything that is not a backslash, and then it is followed by double-quotes. e.g. abcd" */
-							current_str.append(1, yytext[0]); /* Do not append the double quote character */
-							token_generator.gen_const_str_token(yylineno, current_str, ylval);
+							current_str.append(unescape_ch(yytext[0])); /* Do not append the double quote character */
+							token_generator.gen_const_str_token(str_open_lineno, current_str, ylval);
 							BEGIN(INITIAL);
+							str_open_lineno = -1; /* For debugging reasons */
 							return CONST_STR;
 						}
-<X_STR>(.|\n)			{ current_str.append(yytext); /* Append any character found */ }
+<X_STR>.			{ current_str.append(yytext); /* Append any character found */ }
 
  /* deal with unknown characters */
-.	        			{ return UNKNOWN; }
+.	        			{ throw std::runtime_error("UNDEFINED input " + std::string(yytext) + " in line: " + std::to_string(yylineno)); }
+
+
+ /* BLOCK COMMENTS */
+"/*"							{ yy_push_state(X_BLOCK_COMMENT); stack_comment.push(yylineno); }
+
+<X_BLOCK_COMMENT,X_NESTED_COMMENT>"/"+"*"		{ yy_push_state(X_NESTED_COMMENT); stack_comment.push(yylineno); }
+<X_BLOCK_COMMENT,X_NESTED_COMMENT>[^/*]*		{ }
+<X_BLOCK_COMMENT,X_NESTED_COMMENT>"/"+[^*]*		{ }
+<X_BLOCK_COMMENT,X_NESTED_COMMENT>"*"+[^/]*		{ }
+<X_NESTED_COMMENT>"*"+"/"		{ 	int start_line = stack_comment.top();
+									yy_pop_state();
+									stack_comment.pop();
+									
+									std::stringstream ss;
+									ss << start_line << " - " << yylineno;
+
+									token_generator.gen_comment_token(start_line, ss.str(), "NESTED_COMMENT", ylval);
+									return NESTED_COMMENT;
+								}
+<X_BLOCK_COMMENT>"*"+"/" 		{ 	int start_line = stack_comment.top();
+									yy_pop_state(); 
+									stack_comment.pop();
+									
+									std::stringstream ss;
+									ss << start_line << " - " << yylineno;
+									token_generator.gen_comment_token(start_line, ss.str(), "BLOCK_COMMENT", ylval);
+
+									return BLOCK_COMMENT;
+								}
+
+ /* LINE COMMENTS*/
+"//"					{ BEGIN(X_LINE_COMMENT); }
+
+<X_LINE_COMMENT>[^\n]*	{ }
+<X_LINE_COMMENT>"\n"	{ BEGIN(INITIAL); token_generator.gen_comment_token(yylineno-1, "", "LINE_COMMENT", ylval); return LINE_COMMENT; }
 
 %%
 
@@ -140,12 +231,17 @@ int main (int argc, char *argv[]) {
     token_ptr = 0;  /* ignore any compiler warnings */
     while(true) {
         token_ptr = allocator.allocate(1, token_ptr);
-        identified = alpha_yylex(token_ptr);
-        if(identified == EOF || identified == UNKNOWN) {
-            if(identified == UNKNOWN)
-                fprintf(yyout, "UNIDENTIFIED TOKEN: %s\n", yytext);
-			else
-				fprintf(yyout, "EOF reached\n");
+
+		try {
+			identified = alpha_yylex(token_ptr);
+		} catch(std::runtime_error &error) {	/* Catch any possible errors such as unknown tokens, malformed escape sequences in strings, EOF reach while block comment is open, etc. */
+			fprintf(yyout, "%s\n", error.what());
+			allocator.deallocate(token_ptr, 1);
+			break;
+		}
+        
+        if(identified == EOF) {
+			fprintf(yyout, "EOF reached. Success!\n");
             allocator.deallocate(token_ptr, 1);
             break;
         }
