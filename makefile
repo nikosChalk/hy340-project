@@ -7,18 +7,20 @@ SOURCE_PATH=sources
 LEX_PATH=$(SOURCE_PATH)/alpha_lex
 DEST_PATH=destination
 
-SOURCES=$(wildcard $(LEX_PATH)/*.cpp)
-HEADERS=$(wildcard $(LEX_PATH)/*.h)
-OBJECTS=$(SOURCES:.cpp=.o)
+SOURCE_FILES=$(wildcard $(LEX_PATH)/*.cpp)
+HEADERS_FILES=$(wildcard $(LEX_PATH)/*.h)
+OBJECT_FILES=$(SOURCE_FILES:.cpp=.o)
 
 EXECUTABLE=$(DEST_PATH)/al
 
 all: directory lex al
 
+clean: cln_obj cln_exec
+
 directory:
 	mkdir -p $(DEST_PATH)
 	
-%.o: %.cpp $(HEADERS)
+%.o: $(LEX_PATH)/%.cpp $(HEADERS_FILES)
 	$(CPP) $(CPP_FLAGS) -o $@
 
 lex: $(LEX_PATH)/alpha_flex.l
@@ -26,8 +28,11 @@ lex: $(LEX_PATH)/alpha_flex.l
 	flex alpha_flex.l && \
 	cd -
 
-al: $(OBJECTS)
-	$(CPP) $(CPP_FLAGS) $(OBJECTS) -o $(EXECUTABLE)
+al: $(OBJECT_FILES)
+	$(CPP) $(CPP_FLAGS) $(OBJECT_FILES) -o $(EXECUTABLE)
 
-clean:
-	rm $(OBJECTS) $(EXECUTABLE)
+cln_obj:
+	rm $(OBJECT_FILES)
+
+cln_exec:
+	rm $(EXECUTABLE)
