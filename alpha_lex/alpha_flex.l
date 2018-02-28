@@ -8,11 +8,12 @@
 	#include <vector>
 	#include <sstream>
 	#include <stack>
+	#include <stdexcept>
 	#include "alpha_token.h"
 	#include "../utilities.h"
 	#include "alpha_token_generator.h"
 	#define YY_DECL int alpha_yylex(void *ylval)
-
+	
 	enum identified_token{IF=100, ELSE, WHILE, FOR, FUNCTION, RETURN, BREAK, CONTINUE, AND,
 			NOT, OR, LOCAL, BOOL_TRUE, BOOL_FALSE, NIL,
 			OP_ASSIGN, OP_PLUS, OP_MINUS, OP_MUL, OP_DIV, OP_MOD, OP_EQ, OP_NE, OP_PLUS_PLUS, OP_MINUS_MINUS,

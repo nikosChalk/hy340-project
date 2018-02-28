@@ -1,5 +1,5 @@
 CPP=g++
-CPP_FLAGS=-Wall -pedantic -std=c++11
+CXXFLAGS=-Wall -pedantic -std=c++11
 
 LEX=flex
 
@@ -20,16 +20,22 @@ clean: cln_obj cln_exec
 directory:
 	mkdir -p $(DEST_PATH)
 	
-%.o: $(LEX_PATH)/%.cpp $(HEADERS_FILES)
-	$(CPP) $(CPP_FLAGS) -o $@
-
+alpha_token.o: $(HEADERS_FILES) $(LEX_PATH)/alpha_token.cpp
+	$(CPP) -c $(CXXFLAGS) $(LEX_PATH)/alpha_token.cpp
+	
+alpha_token_generator.o: $(HEADERS_FILES) $(LEX_PATH)/alpha_token_generator.cpp
+	$(CPP) -c $(CXXFLAGS) $(LEX_PATH)/alpha_token_generator.cpp
+	
+alpha_flex.o: $(HEADERS_FILES) $(LEX_PATH)/alpha_flex.cpp
+	$(CPP) -c $(CXXFLAGS) $(LEX_PATH)/alpha_flex.cpp
+	
 lex: $(LEX_PATH)/alpha_flex.l
 	cd $(LEX_PATH) && \
 	flex alpha_flex.l && \
 	cd -
 
 al: $(OBJECT_FILES)
-	$(CPP) $(CPP_FLAGS) $(OBJECT_FILES) -o $(EXECUTABLE)
+	$(CPP) $(CXXFLAGS) $(OBJECT_FILES) -o $(EXECUTABLE)
 
 cln_obj:
 	rm $(OBJECT_FILES)
