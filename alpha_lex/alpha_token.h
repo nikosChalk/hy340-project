@@ -9,6 +9,15 @@
 
 namespace alpha_lex {
 
+    /**
+     * Represents a runtime_error that occurs when an undefined token is encountered
+     */
+    class undefined_token: public std::runtime_error {
+
+    public:
+        explicit undefined_token(const std::string &msg);
+    };
+
     class alpha_token_t {
     public:
 

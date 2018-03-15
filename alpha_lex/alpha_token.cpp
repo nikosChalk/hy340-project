@@ -6,6 +6,10 @@ using namespace std;
 
 namespace alpha_lex {
 
+    alpha_lex::undefined_token::undefined_token(const std::string &msg)
+        : runtime_error(msg) { }
+
+
     unsigned int alpha_token_t::next_token_num = 0;
 
     alpha_token_t::alpha_token_t(unsigned int numline, const string &content, const string &category,

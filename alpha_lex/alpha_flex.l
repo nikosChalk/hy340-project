@@ -37,6 +37,7 @@
 
  /* ~~~ start conditions */
 %x X_STR
+%x X_STR_ESC
 %x X_BLOCK_COMMENT
 %x X_LINE_COMMENT
 %x X_NESTED_COMMENT
@@ -47,8 +48,9 @@ ws				[ \t\n\v\f\r]+
 letter			[a-zA-Z]
 digit			[0-9]
 underscore		[_]
-id				{letter}({letter}|{digit}|_)*
+id				{letter}({letter}|{digit}|{underscore})*
 const_int  		{digit}+
+const_real		{digit}*"."{digit}+
 
  /* ~~~ actions section ~~~ */
 %%
@@ -57,6 +59,7 @@ const_int  		{digit}+
 	int str_open_lineno;		/* Local variable within yylex function. Used for holding the line where current_str opened */
 	std::string current_str; 	/* Local variable within yylex function. Used in string identification */
 %}
+
 "if"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return IF; }
 "else"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return ELSE; }
 "while"					{ token_generator.gen_keyword_token(yylineno, yytext, ylval); return WHILE; }
@@ -102,7 +105,7 @@ const_int  		{digit}+
 ".."					{ token_generator.gen_punctuation_token(yylineno, yytext, ylval); return PUNCT_ELIPSIS; }
 
 {const_int}				{ token_generator.gen_const_int_token(yylineno, yytext, ylval); return CONST_INT; }
-{digit}*"."{digit}+     { token_generator.gen_const_real_token(yylineno, yytext, ylval); return CONST_REAL; }
+{const_real}			{ token_generator.gen_const_real_token(yylineno, yytext, ylval); return CONST_REAL; }
 {id}                    { token_generator.gen_identifier_token(yylineno, yytext, ylval); return IDENTIFIER; /* id MUST be bellow all the above enumerated rules. */ }
 
 {ws}					{ /*ignore white spaces */ }
@@ -118,59 +121,57 @@ const_int  		{digit}+
  /* CONST_STRING token identification */
 "\""					{ BEGIN(X_STR); str_open_lineno = yylineno; }
 
-<X_STR>\a							|
-<X_STR>\b							|
-<X_STR>\f							|
-<X_STR>\n							|
-<X_STR>\r							|
-<X_STR>\t							|
-<X_STR>\v				{ current_str.append(utilities::unescape_ch(yytext[0])); }
-<X_STR>[^\\]\"			{	/* Identify anything that is not a backslash, and then it is followed by double-quotes. e.g. abcd" */
-							current_str.append(utilities::unescape_ch(yytext[0])); /* Do not append the double quote character */
+<X_STR>\\				{ BEGIN(X_STR_ESC); current_str.append(yytext); }
+<X_STR_ESC>.|\n			{ BEGIN(X_STR); 	current_str.append(utilities::unescape_ch(yytext[0])); /* Appened user's escaped sequence and validate it later */ }
+
+<X_STR>\"				{	/* Identify a non-escaped double quote. This means that the string has closed. We do no append the double quote character. */
 							token_generator.gen_const_str_token(str_open_lineno, current_str, ylval);
 							BEGIN(INITIAL);
 							str_open_lineno = -1; /* For debugging reasons */
 							return CONST_STR;
 						}
-<X_STR>.			{ current_str.append(yytext); /* Append any character found */ }
 
- /* deal with unknown characters */
-.	        			{ throw std::runtime_error("UNDEFINED input " + std::string(yytext) + " in line: " + std::to_string(yylineno)); }
+<X_STR>.|\n				{ current_str.append(utilities::unescape_ch(yytext[0])); /* Append any character found */ }
 
 
  /* BLOCK COMMENTS */
-"/*"							{ yy_push_state(X_BLOCK_COMMENT); stack_comment.push(yylineno); }
+"/*"					{ yy_push_state(X_BLOCK_COMMENT); stack_comment.push(yylineno); }
 
-<X_BLOCK_COMMENT,X_NESTED_COMMENT>"/"+"*"		{ yy_push_state(X_NESTED_COMMENT); stack_comment.push(yylineno); }
-<X_BLOCK_COMMENT,X_NESTED_COMMENT>[^/*]*		{ }
-<X_BLOCK_COMMENT,X_NESTED_COMMENT>"/"+[^*]*		{ }
-<X_BLOCK_COMMENT,X_NESTED_COMMENT>"*"+[^/]*		{ }
-<X_NESTED_COMMENT>"*"+"/"		{ 	int start_line = stack_comment.top();
-									yy_pop_state();
-									stack_comment.pop();
+<X_BLOCK_COMMENT,X_NESTED_COMMENT>"/*"	{ yy_push_state(X_NESTED_COMMENT); stack_comment.push(yylineno); }
+
+<X_BLOCK_COMMENT>"*/"	 { 	int start_line = stack_comment.top();
+							yy_pop_state(); 
+							stack_comment.pop();
 									
-									std::stringstream ss;
-									ss << start_line << " - " << yylineno;
+							std::stringstream ss;
+							ss << start_line << " - " << yylineno;
+							token_generator.gen_comment_token(start_line, ss.str(), "BLOCK_COMMENT", ylval);
 
-									token_generator.gen_comment_token(start_line, ss.str(), "NESTED_COMMENT", ylval);
-									return NESTED_COMMENT;
-								}
-<X_BLOCK_COMMENT>"*"+"/" 		{ 	int start_line = stack_comment.top();
-									yy_pop_state(); 
-									stack_comment.pop();
+							return BLOCK_COMMENT;
+						}
+
+<X_NESTED_COMMENT>"*/"	{ 	int start_line = stack_comment.top();
+							yy_pop_state();
+							stack_comment.pop();
 									
-									std::stringstream ss;
-									ss << start_line << " - " << yylineno;
-									token_generator.gen_comment_token(start_line, ss.str(), "BLOCK_COMMENT", ylval);
+							std::stringstream ss;
+							ss << start_line << " - " << yylineno;
 
-									return BLOCK_COMMENT;
-								}
+							token_generator.gen_comment_token(start_line, ss.str(), "NESTED_COMMENT", ylval);
+							return NESTED_COMMENT;
+						}
+
+<X_BLOCK_COMMENT,X_NESTED_COMMENT>.|\n	{ }
 
  /* LINE COMMENTS*/
 "//"					{ BEGIN(X_LINE_COMMENT); }
 
 <X_LINE_COMMENT>[^\n]*	{ }
-<X_LINE_COMMENT>"\n"	{ BEGIN(INITIAL); token_generator.gen_comment_token(yylineno-1, "", "LINE_COMMENT", ylval); return LINE_COMMENT; }
+<X_LINE_COMMENT>\n		{ BEGIN(INITIAL); token_generator.gen_comment_token(yylineno-1, "", "LINE_COMMENT", ylval); return LINE_COMMENT; }
+
+
+ /* deal with unknown characters */
+.	        			{ throw alpha_lex::undefined_token("UNDEFINED input " + std::string(yytext) + " in line: " + std::to_string(yylineno)); }
 
 %%
 
@@ -210,21 +211,26 @@ int main (int argc, char *argv[]) {
 
 		try {
 			identified = alpha_yylex(token_ptr);
+
+		    if(identified == EOF) {
+				fprintf(yyout, "EOF reached. Success!\n");
+		        allocator.deallocate(token_ptr, 1);
+		        break;
+		    }
+
+		    /* Valid token here */
+			fprintf(yyout, "%s\n", (token_ptr->to_str().c_str()));
+		    token_vector.push_back(token_ptr);
+
+		} catch(alpha_lex::undefined_token &error) {
+			fprintf(yyout, "%s. Token ignored\n", error.what());
+			allocator.deallocate(token_ptr, 1);
+
 		} catch(std::runtime_error &error) {	/* Catch any possible errors such as unknown tokens, malformed escape sequences in strings, EOF reach while block comment is open, etc. */
 			fprintf(yyout, "%s\n", error.what());
 			allocator.deallocate(token_ptr, 1);
 			break;
 		}
-        
-        if(identified == EOF) {
-			fprintf(yyout, "EOF reached. Success!\n");
-            allocator.deallocate(token_ptr, 1);
-            break;
-        }
-
-        /* Valid token here */
-		fprintf(yyout, "%s\n", (token_ptr->to_str().c_str()));
-        token_vector.push_back(token_ptr);
     }
 
     for(int i=0; i<token_vector.size(); i++) {
