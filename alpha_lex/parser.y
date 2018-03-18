@@ -50,8 +50,8 @@ stmt:		expr ';'
 		| whilestmt {}
 		| forstmt {}
 		| returnstmt {}
-		| break ';' {}
-		| continue ';' {}
+		| 'break' ';' {}
+		| 'continue' ';' {}
 		| block {}
 		| funcdef {}
 		| ';' {}
