@@ -12,7 +12,7 @@
 	#include "alpha_token.h"
 	#include "../utilities.h"
 	#include "alpha_token_generator.h"
-	#define YY_DECL int yylex(union YYSTYPE *yylval)
+	#define YY_DECL int yylex(union syntax_analyzer::YYSTYPE *yylval)
 	
 	enum identified_token{IF=100, ELSE, WHILE, FOR, FUNCTION, RETURN, BREAK, CONTINUE, AND,
 			NOT, OR, LOCAL, BOOL_TRUE, BOOL_FALSE, NIL,

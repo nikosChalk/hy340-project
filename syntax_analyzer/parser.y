@@ -5,14 +5,15 @@
 	#include <string>
 	#include "types.h"
 	#include "parser_manager.h"
-	extern int yylex(union value_types *yylval)
+
+	using namespace syntax_analyzer;
+
+	extern int yylex(union YYSTYPE *yylval)
 	extern int yylineno;
 	extern char *yytext;
 	extern FILE *yyin;
 
 	int yyerror (char *msg);
-
-
 %}
 
 /* bison parameters */
