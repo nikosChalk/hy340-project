@@ -102,93 +102,95 @@ term:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS
 
 /****************** DEN PEIRAKSA PARAKATW (NIKOS) ******************/
 
-assignexpr:	lvalue '=' expr {}
+assignexpr:	lvalue ASSIGN expr {}
 		;
 
 primary:	lvalue {}
        		| call {}
 		| objectdef {}
-		| '(' functdef ')' {}
+		| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS {}
 		| const {}
 		;
 
 lvalue:		IDENTIFIER {}
-		| 'local' IDENTIFIER {}
-		| '::' IDENTIFIER {}
+		| LOCAL IDENTIFIER {}
+		| DOUBLE_COLON IDENTIFIER {}
 		| member {}
 		;
 
-member:		lvalue '.' IDENTIFIER {}
-      		| lvalue '[' expr ']' {}
-		| call '.' IDENTIFIER {}
-		| call '[' expr ']' {}
+member:		lvalue DOT IDENTIFIER {}
+      		| lvalue LEFT_BRACKET expr RIGHT_BRACKET {}
+		| call DOT IDENTIFIER {}
+		| call LEFT_BRACKET expr RIGHT_BRACKET {}
 
-call:		call '(' elist ')' {}
+call:		call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
     		| lvalue callsuffix {}
-		| '(' funcdef ')' '(' elist ')' {}
+		| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
 		;
 
 callsuffix:	normcall {}
 	  	| methodcall {}
 		;
 
-normcall:	'(' elist ')' {}
+normcall:	LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
 		;
 
-methodcall:	'..' IDENTIFIER '(' elist ')' {}
+methodcall:	DOUBLE_DOT IDENTIFIER LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
 	  	;
 
 elist:		expr {}                                              /* TODO check */
-     		| elist ',' expr {}
-		| /* empty */ {;}
+     		| elist COMMA expr {}
+		| %empty
 		;
 
-objectdef:	'[' elist ']' {}
-	 	| '[' indexed ']' {}
+objectdef:	LEFT_BRACKET elist RIGHT_BRACKET {}
+	 	| LEFT_BRACKET indexed RIGHT_BRACKET {}
 		;
 
 indexed:	indexedelem {}
-       		| indexed ',' indexedelem {}
+       		| indexed COMMA indexedelem {}
+		| %empty
 		;
 
-indexedelem:	'{' expr ':' expr '}' {}
+indexedelem:	LEFT_BRACE expr COLON expr RIGHT_BRACE {}
 	   	;
 
 help_stmt:	help_stmt stmt
- 		| /* empty */ {;}
+ 		| %empty
 		;	 
 
-block:		'{' help_stmt '}' {}
+block:		LEFT_BRACE help_stmt RIGHT_BRACE {}
      		;
 
-funcdef:	'function' IDENTIFIER '(' idlist ')' block            /* TODO check */
+funcdef:	FUNCTION IDENTIFIER LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block            /* TODO check */
+       		| FUNCTION LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block
 		;
 
 const:		CONST_INT {}
      		| CONST_REAL {}
 		| CONST_STR {}
-		| 'nil' {}
-		| 'true' {}
-		| 'false' {}
+		| NIL {}
+		| BOOL_TRUE {}
+		| BOOL_FALSE {}
 		;
 
 idlist:		IDENTIFIER {}                                       /* TODO check */
-      		| idlist ',' IDENTIFIER {}
-		| /* empty */ {;}
+      		| idlist COMMA IDENTIFIER {}
+		| %empty
 		;
 
-ifstmt:		'if' '(' expr ')' stmt 				/* TODO check  prepei na the %prec */
-      		| ifstmt 'else' stmt
+ifstmt:		IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt 				/* TODO check  prepei na the %prec */
+      		| ifstmt ELSE stmt
 		;
 
-whilestmt:	'while' '(' empr ')' stmt {}
+whilestmt:	WHILE LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {}
 	 	;
 
-forstmt:	'for' '(' elist ';' expr ';' elist ')' stmt {}
+forstmt:	FOR LEFT_PARENTHESIS elist SEMICLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {}
        		;
 
-returnstmt:	'return' ';' {}
-	  	| 'return' expr ';' {}
+returnstmt:	RETURN SEMICOLON {}
+	  	| RETURN expr SEMICOLON {}
 		;
 
 %%
