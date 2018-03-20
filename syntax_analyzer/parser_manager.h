@@ -41,5 +41,4 @@ namespace syntax_analyzer {
 };
 
 
-
 #endif //HY340_PROJECT_PARSER_MANAGER_H
