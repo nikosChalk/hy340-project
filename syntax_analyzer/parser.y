@@ -145,6 +145,7 @@ elist:		expr {}                                              /* TODO check */
 
 objectdef:	LEFT_BRACKET elist RIGHT_BRACKET {}
 	 	| LEFT_BRACKET indexed RIGHT_BRACKET {}
+		| LEFT_BRACKET RIGHT_BRACKET {}
 		;
 
 indexed:	indexedelem {}
