@@ -12,7 +12,7 @@ class not_implemented_error : public std::logic_error {
 public:
     not_implemented_error();
     explicit not_implemented_error(std::string &msg);
-    virtual char const * what() const;
+    virtual char const* what() const noexcept;
 };
 
 
