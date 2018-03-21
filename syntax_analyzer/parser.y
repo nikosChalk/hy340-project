@@ -39,7 +39,8 @@
 
 /*declaration of non-terminal symbols*/
 %type <voidVal> stmt
-%type <realVal> expr term
+%type <voidVal> assignexpr primary lvalue member
+%type <voidVal> expr term
 
 /*priority*/
 /*TODO: check if they are correct. Shouldn't they be in reverse order? */
@@ -100,31 +101,30 @@ term:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS
 		| primary {}
 		;
 
-/****************** DEN PEIRAKSA PARAKATW (NIKOS) ******************/
+assignexpr:	lvalue ASSIGN expr {$$=Manage_assignexpr__lvalue_ASSIGN_expr();}
+			;
 
-assignexpr:	lvalue ASSIGN expr {}
+primary:	lvalue											{$$ = Manage_primary__lvalue(); }
+			| call											{$$ = Manage_primary__call(); }
+			| objectdef										{$$ = Manage_primary__objectdef(); }
+			| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS	{$$ = Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS(); }
+			| const											{$$ = Manage_primary__const(); }
+			;
+
+lvalue:	IDENTIFIER					{$$ = Manage_lvalue__IDENTIFIER(); }
+		| LOCAL IDENTIFIER			{$$ = Manage_lvalue__LOCAL_IDENTIFIER(); }
+		| DOUBLE_COLON IDENTIFIER	{$$ = Manage_lvalue__DOUBLE_COLON_IDENTIFIER(); }
+		| member					{$$ = Manage_lvalue__member(); }
 		;
 
-primary:	lvalue {}
-       		| call {}
-		| objectdef {}
-		| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS {}
-		| const {}
+member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER();}
+		| lvalue LEFT_BRACKET expr RIGHT_BRACKET	{$$=Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET();}
+		| call DOT IDENTIFIER						{$$=Manage_member__call_DOT_IDENTIFIER();}
+		| call LEFT_BRACKET expr RIGHT_BRACKET		{$$=Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();}
 		;
 
-lvalue:		IDENTIFIER {}
-		| LOCAL IDENTIFIER {}
-		| DOUBLE_COLON IDENTIFIER {}
-		| member {}
-		;
-
-member:		lvalue DOT IDENTIFIER {}
-      		| lvalue LEFT_BRACKET expr RIGHT_BRACKET {}
-		| call DOT IDENTIFIER {}
-		| call LEFT_BRACKET expr RIGHT_BRACKET {}
-
-call:		call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
-    		| lvalue callsuffix {}
+call:	call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
+		| lvalue callsuffix {}
 		| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
 		;
 
@@ -149,9 +149,9 @@ objectdef:	LEFT_BRACKET elist RIGHT_BRACKET {}
 		;
 
 indexed:	indexedelem {}
-       		| indexed COMMA indexedelem {}
-		| %empty
-		;
+			| indexed COMMA indexedelem {}
+			| %empty
+			;
 
 indexedelem:	LEFT_BRACE expr COLON expr RIGHT_BRACE {}
 	   	;
@@ -187,7 +187,7 @@ ifstmt:		IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt 				/* TODO check  prep
 whilestmt:	WHILE LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {}
 	 	;
 
-forstmt:	FOR LEFT_PARENTHESIS elist SEMICLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {}
+forstmt:	FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {}
        		;
 
 returnstmt:	RETURN SEMICOLON {}

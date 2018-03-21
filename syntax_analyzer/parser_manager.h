@@ -22,22 +22,39 @@ namespace syntax_analyzer {
     void_t Manage_stmt__funcdef();
     void_t Manage_stmt__SEMICOLON();
 
-    /*TODO: <type> Manage_expr__assignexpr(); */
-    double Manage_expr__expr_PLUS_expr(double opLeft, double opRight);
-    double Manage_expr__expr_MINUS_expr(double opLeft, double opRight);
-    double Manage_expr__expr_MUL_expr(double opLeft, double opRight);
-    double Manage_expr__expr_DIV_expr(double opLeft, double opRight);
-    double Manage_expr__expr_MOD_expr(double opLeft, double opRight);
-    double Manage_expr__expr_GT_expr(double opLeft, double opRight);
-    double Manage_expr__expr_GE_expr(double opLeft, double opRight);
-    double Manage_expr__expr_LT_expr(double opLeft, double opRight);
-    double Manage_expr__expr_LE_expr(double opLeft, double opRight);
-    double Manage_expr__expr_EQ_expr(double opLeft, double opRight);
-    double Manage_expr__expr_NE_expr(double opLeft, double opRight);
-    double Manage_expr__expr_AND_expr(double opLeft, double opRight);
-    double Manage_expr__expr_OR_expr(double opLeft, double opRight);
-    double Manage_expr__term(double term);
+    void_t Manage_expr__assignexpr();
+    void_t Manage_expr__expr_PLUS_expr();
+    void_t Manage_expr__expr_MINUS_expr();
+    void_t Manage_expr__expr_MUL_expr();
+    void_t Manage_expr__expr_DIV_expr();
+    void_t Manage_expr__expr_MOD_expr();
+    void_t Manage_expr__expr_GT_expr();
+    void_t Manage_expr__expr_GE_expr();
+    void_t Manage_expr__expr_LT_expr();
+    void_t Manage_expr__expr_LE_expr();
+    void_t Manage_expr__expr_EQ_expr();
+    void_t Manage_expr__expr_NE_expr();
+    void_t Manage_expr__expr_AND_expr();
+    void_t Manage_expr__expr_OR_expr();
+    void_t Manage_expr__term(void_t term);
 
+    void_t Manage_assignexpr__lvalue_ASSIGN_expr();
+
+    void_t Manage_primary__lvalue();
+    void_t Manage_primary__call();
+    void_t Manage_primary__objectdef();
+    void_t Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS();
+    void_t Manage_primary__const();
+
+    void_t Manage_lvalue__IDENTIFIER();
+    void_t Manage_lvalue__LOCAL_IDENTIFIER();
+    void_t Manage_lvalue__void_t_COLON_IDENTIFIER();
+    void_t Manage_lvalue__member();
+
+    void_t Manage_member__lvalue_DOT_IDENTIFIER();
+    void_t Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET();
+    void_t Manage_member__call_DOT_IDENTIFIER();
+    void_t Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();
 };
 
 
