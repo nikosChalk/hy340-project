@@ -142,7 +142,7 @@ namespace syntax_analyzer {
 
 
     void_t Manage_member__lvalue_DOT_IDENTIFIER() {
-        fprintf(yyout, "member -> .IDENTFIER\n");
+        fprintf(yyout, "member -> .IDENTIFIER\n");
         return void_value;
     }
     void_t Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET() {
@@ -150,7 +150,7 @@ namespace syntax_analyzer {
         return void_value;
     }
     void_t Manage_member__call_DOT_IDENTIFIER() {
-        fprintf(yyout, "member -> call.IDENTFIER\n");
+        fprintf(yyout, "member -> call.IDENTIFIER\n");
         return void_value;
     }
     void_t Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET() {
