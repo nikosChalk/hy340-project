@@ -156,6 +156,15 @@ namespace syntax_analyzer {
         std::vector<entry> lookup(const std::string &key, unsigned int scope) const;
 
         /**
+         * Same as lookup, except that it searches from the given scope, up to the global scope (entry::GLOBAL_SCOPE)
+         * @param key An entry.get_name() string
+         * @param scope The scope to search the given key. Searching starts from scope and goes up to global scope (inclusive)
+         * @return A vector with visible symbol table entries for each match. If no visible value was found with the given key,
+         * an empty vector is returned.
+         */
+        std::vector<entry> recursive_lookup(const std::string &key, unsigned int scope) const;
+
+        /**
          * Sets all the symbol table entries in the given scope to invisible.
          * @param scope The scope where all the symbol table entries will be set to invisible.
          */

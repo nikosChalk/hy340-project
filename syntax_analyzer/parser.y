@@ -38,10 +38,13 @@
 %token <intVal>		CONST_INT
 %token <realVal>	CONST_REAL
 
-/*declaration of non-terminal symbols*/
-%type <voidVal> stmt
-%type <voidVal> assignexpr primary lvalue member
-%type <voidVal> expr term
+/* type declaration of non-terminal symbols, defined b the grammar */
+%type <voidVal> program stmt expr term assignexpr primary lvalue member
+%type <voidVal> call callsuffix normcall methodcall elist objectdef indexed indexedelem block
+%type <voidVal> funcdef const idlist ifstmt whilestmt forstmt returnstmt
+
+/* type declaration of non-terminal helper symbols, defined by us */
+%type <voidVal> tmp_elist tmp_indexed tmp_idlist
 
 /*priority*/
 /*TODO: check if they are correct. Shouldn't they be in reverse order? */
@@ -134,39 +137,38 @@ call:		call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_call_call_LEFT
 		;
 
 callsuffix:	normcall {$$ = Manage_callsuffix_normcall();}
-	  	| methodcall {$$ = Manage_callsuffix_methodcall();}
-		;
+			| methodcall {$$ = Manage_callsuffix_methodcall();}
+			;
 
 normcall:	LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_normcall_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();}
-		;
+			;
 
-methodcall:	DOUBLE_DOT IDENTIFIER LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {
-	  		$$ = Manage_methodcall_DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
-		}
-	  	;
+methodcall:	DOUBLE_DOT IDENTIFIER LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_methodcall_DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(); }
+			;
 
 tmp_elist:	tmp_elist COMMA expr {$$ = Manage_tmp_elist_tmp_elist_COMMA_expr();}
-	 	| %empty {$$ = Manage_tmp_elist_empty();}
+		 	| %empty {$$ = Manage_tmp_elist_empty();}
+			;
 
-elist:		expr tmp_elist
+elist:	expr tmp_elist
 		| %empty {$$ = Manage_elist_empty();}
 		;
 
 objectdef:	LEFT_BRACKET elist RIGHT_BRACKET {$$ = Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET();}
-	 	| LEFT_BRACKET indexed RIGHT_BRACKET {$$ = Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET();}
-		| LEFT_BRACKET RIGHT_BRACKET {$$ = Manage_objectdef_LEFT_BRACKET_RIGHT_BRACKET();}
-		;
+			| LEFT_BRACKET indexed RIGHT_BRACKET {$$ = Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET();}
+			| LEFT_BRACKET RIGHT_BRACKET {$$ = Manage_objectdef_LEFT_BRACKET_RIGHT_BRACKET();}
+			;
 
 tmp_indexed:	tmp_indexed COMMA indexedelem {$$ = Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem();}
-	   	|%empty {$$ = Manage_tmp_indexed_empty();}
-		;
+				|%empty {$$ = Manage_tmp_indexed_empty();}
+				;
 
 indexed:	indexedelem tmp_indexed
-		| %empty {$$ = Manage_indexed_empty();}
-		;
+			| %empty {$$ = Manage_indexed_empty();}
+			;
 
 indexedelem:	LEFT_BRACE expr COLON expr RIGHT_BRACE {$$ = Manage_indexedelem_LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE();}
-	   	;
+				;
 
 tmp_block:	tmp_block stmt
  		| %empty
@@ -196,8 +198,8 @@ tmp_idlist:	tmp_idlist COMMA IDENTIFIER{$$ = Manage_tmp_idlist_tmp_idlist_COMMA_
 	  	| %empty { $$ = Manage_tmp_idlist_empty();}
 		;
 
-idlist:	        IDENTIFIER tmp_idlist 
-		| %empty {$$ = Manage_idlist_empty();}
+idlist:	IDENTIFIER tmp_idlist	{$$=Manage_idlist__IDENTIFIER_tmp_idlist();}
+		| %empty				{$$ = Manage_idlist_empty();}
 		;
 
 ifstmt:		IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt { $$ = Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt();}
@@ -207,7 +209,7 @@ ifstmt:		IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt { $$ = Manage_IF_LEFT_P
 whilestmt:	WHILE LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {$$ = Manage_WHILE_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt();}
 	 	;
 
-forstmt:	FOR LEFT_PARENTHESIS elist SEMICLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {
+forstmt:	FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {
        			$$ = Manage_FOR_LEFT_PARENTHESIS_elist_SEMICLON_expr_SEMICOLON_elist_RIGHT_PARENTHESIS_stmt();
 		}
        		;

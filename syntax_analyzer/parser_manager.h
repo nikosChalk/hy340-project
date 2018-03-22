@@ -124,6 +124,7 @@ namespace syntax_analyzer {
 	/* Manage_idlist() */
 	void_t Manage_tmp_idlist_tmp_idlist_COMMA_IDENTIFIER();
 	void_t Manage_tmp_idlist_empty();
+    void_t Manage_idlist__IDENTIFIER_tmp_idlist();
 	void_t Manage_idlist_empty();
 
 	/* Manage_ifstmt() */

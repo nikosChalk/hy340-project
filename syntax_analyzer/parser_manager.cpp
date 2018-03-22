@@ -297,6 +297,10 @@ namespace syntax_analyzer {
 		fprintf(yyout, "idlist -> id\n");
 		return void_value;
 	}
+    void_t Manage_idlist__IDENTIFIER_tmp_idlist() {
+        fprintf(yyout, "idlist -> IDENTIFIER tmp_idlist\n");
+        return void_value;
+    }
 	void_t Manage_idlist_empty(){
 		fprintf(yyout, "idlist -> empty\n");
 		return void_value;

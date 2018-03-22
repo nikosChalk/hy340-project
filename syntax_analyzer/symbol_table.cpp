@@ -116,6 +116,17 @@ namespace syntax_analyzer {
         return v;
     }
 
+    std::vector<symbol_table::entry> symbol_table::recursive_lookup(const std::string &key, unsigned int scope) const {
+        vector<entry> v = vector();
+
+        while(scope >= entry::GLOBAL_SCOPE) {
+            vector<entry> scope_vector = this->lookup(key, scope);
+            v.insert(v.end(), scope_vector.begin(), scope_vector.end());
+            scope--;
+        }
+        return v;
+    }
+
     void symbol_table::hide(unsigned int scope) {
         if(scope >= this->sym_tables.size())    /* The requested scope does not even have a symbol table. Nothing to do */
             return;
