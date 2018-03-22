@@ -38,6 +38,73 @@ namespace syntax_analyzer {
     double Manage_expr__expr_OR_expr(double opLeft, double opRight);
     double Manage_expr__term(double term);
 
+	/* Manage_call() */
+	void_t Manage_call_call_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
+	void_t Manage_call_lvalue_callsuffix();
+	void_t Manage_call_LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
+
+	/* Manage_callsuffix() */
+	void_t Manage_callsuffix_normcall();
+	void_t Manage_callsuffix_methodcall();
+
+	/* Manage_normcall() */
+	void_t Manage_normcall_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
+
+	/* Manage_methodcall() */
+	void_t Manage_methodcall_DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
+
+	/* Manage_elist() */
+	void_t Manage_tmp_elist_tmp_elist_COMMA_expr();
+	void_t Manage_tmp_elist_empty();
+	void_t Manage_elist_empty();
+
+	/* Manage_objectdef()*/
+	void_t Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET();
+	void_t Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET();
+	void_t Manage_objectdef_LEFT_BRACKET_RIGHT_BRACKET();
+
+	/* Manage_indexed() */
+	void_t Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem();
+	void_t Manage_tmp_indexed_empty();
+	void_t Manage_indexed_empty();
+
+	/* Manage_indexedelem() */
+	void_t Manage_indexedelem_LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE();
+
+	/* Manage_block() */
+	void_t Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE();
+	void_t Manage_block_LEFT_BRACE_RIGHT_BRACE();
+
+	/* Manage_funcdef() */
+	void_t Manage_funcdef_FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block();
+	void_t Manage_funcdef_FUNCTION_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block();
+
+	/* Manage_const() */
+	void_t Manage_const_CONST_INT();
+	void_t Manage_const_CONST_REAL();
+	void_t Manage_const_CONST_STR();
+	void_t Manage_const_NIL();
+	void_t Manage_const_BOOL_TRUE();
+	void_t Manage_const_BOOL_FALSE();
+
+	/* Manage_idlist() */
+	void_t Manage_tmp_idlist_tmp_idlist_COMMA_IDENTIFIER();
+	void_t Manage_tmp_idlist_empty();
+	void_t Manage_idlist_empty();
+
+	/* Manage_ifstmt() */
+	void_t Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt();
+	void_t Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt_ELSE_stmt();
+
+	/* Manage_whilestmt() */
+	void_t Manage_WHILE_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt();
+
+	/* Manage_forstmt() */
+	void_t Manage_FOR_LEFT_PARENTHESIS_elist_SEMICLON_expr_SEMICOLON_elist_RIGHT_PARENTHESIS_stmt();
+
+	/* Manage_returnstmt() */
+	void_t Manage_RETURN_SEMICOLON();
+	void_t Manage_RETURN_expr_SEMICOLON();
 };
 
 

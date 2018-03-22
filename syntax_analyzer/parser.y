@@ -12,6 +12,7 @@
 	extern int yylineno;
 	extern char *yytext;
 	extern FILE *yyin;
+	int scope = 0 ;
 
 	int yyerror (char *msg);
 %}
@@ -123,75 +124,92 @@ member:		lvalue DOT IDENTIFIER {}
 		| call DOT IDENTIFIER {}
 		| call LEFT_BRACKET expr RIGHT_BRACKET {}
 
-call:		call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
-    		| lvalue callsuffix {}
-		| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
+/*************GIWRGOS*************/
+
+call:		call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_call_call_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();}
+    		| lvalue callsuffix {$$ = Manage_call_lvalue_callsuffix();}
+		| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_call_LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();}
 		;
 
-callsuffix:	normcall {}
-	  	| methodcall {}
+callsuffix:	normcall {$$ = Manage_callsuffix_normcall();}
+	  	| methodcall {$$ = Manage_callsuffix_methodcall();}
 		;
 
-normcall:	LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
+normcall:	LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_normcall_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();}
 		;
 
-methodcall:	DOUBLE_DOT IDENTIFIER LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
+methodcall:	DOUBLE_DOT IDENTIFIER LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {
+	  		$$ = Manage_methodcall_DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
+		}
 	  	;
 
-elist:		expr {}                                              /* TODO check */
-     		| elist COMMA expr {}
-		| %empty
+tmp_elist:	tmp_elist COMMA expr {$$ = Manage_tmp_elist_tmp_elist_COMMA_expr();}
+	 	| %empty {$$ = Manage_tmp_elist_empty();}
+
+elist:		expr tmp_elist
+		| %empty {$$ = Manage_elist_empty();}
 		;
 
-objectdef:	LEFT_BRACKET elist RIGHT_BRACKET {}
-	 	| LEFT_BRACKET indexed RIGHT_BRACKET {}
-		| LEFT_BRACKET RIGHT_BRACKET {}
+objectdef:	LEFT_BRACKET elist RIGHT_BRACKET {$$ = Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET();}
+	 	| LEFT_BRACKET indexed RIGHT_BRACKET {$$ = Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET();}
+		| LEFT_BRACKET RIGHT_BRACKET {$$ = Manage_objectdef_LEFT_BRACKET_RIGHT_BRACKET();}
 		;
 
-indexed:	indexedelem {}
-       		| indexed COMMA indexedelem {}
-		| %empty
+tmp_indexed:	tmp_indexed COMMA indexedelem {$$ = Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem();}
+	   	|%empty {$$ = Manage_tmp_indexed_empty();}
+
+indexed:	indexedelem tmp_indexed
+		| %empty {$$ = Manage_indexed_empty();}
 		;
 
-indexedelem:	LEFT_BRACE expr COLON expr RIGHT_BRACE {}
+indexedelem:	LEFT_BRACE expr COLON expr RIGHT_BRACE {$$ = Manage_indexedelem_LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE();}
 	   	;
 
-help_stmt:	help_stmt stmt
+tmp_block:	tmp_block stmt
  		| %empty
 		;	 
 
-block:		LEFT_BRACE help_stmt RIGHT_BRACE {}
+block:		LEFT_BRACE tmp_block RIGHT_BRACE {$$ = Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE();}
+     		|LEFT_BRACE RIGHT_BRACE {$$ = Manage_block_LEFT_BRACE_RIGHT_BRACE();}  
      		;
 
-funcdef:	FUNCTION IDENTIFIER LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block            /* TODO check */
-       		| FUNCTION LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block
+funcdef:	FUNCTION IDENTIFIER LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block {
+       			$$ = Manage_funcdef_FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block();
+		}         
+       		| FUNCTION LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block {
+			$$ = Manage_funcdef_FUNCTION_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block();
+		}
 		;
 
-const:		CONST_INT {}
-     		| CONST_REAL {}
-		| CONST_STR {}
-		| NIL {}
-		| BOOL_TRUE {}
-		| BOOL_FALSE {}
+const:		CONST_INT {$$ = Manage_const_CONST_INT();}
+     		| CONST_REAL {$$ = Manage_const_CONST_REAL();}
+		| CONST_STR {$$ = Manage_const_CONST_STR();}
+		| NIL {$$ = Manage_const_NIL();}
+		| BOOL_TRUE {$$ = Manage_const_BOOL_TRUE();}
+		| BOOL_FALSE {$$ = Manage_const_BOOL_FALSE();}
 		;
 
-idlist:		IDENTIFIER {}                                       /* TODO check */
-      		| idlist COMMA IDENTIFIER {}
-		| %empty
+tmp_idlist:	tmp_idlist COMMA IDENTIFIER{$$ = Manage_tmp_idlist_tmp_idlist_COMMA_IDENTIFIER();}
+	  	| %empty { $$ = Manage_tmp_idlist_empty();}
+
+idlist:	        IDENTIFIER tmp_idlist 
+		| %empty {$$ = Manage_idlist_empty();}
 		;
 
-ifstmt:		IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt 				/* TODO check  prepei na the %prec */
-      		| ifstmt ELSE stmt
+ifstmt:		IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt { $$ = Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt();}
+      		| IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt { $$ = Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt_ELSE_stmt();}
 		;
 
-whilestmt:	WHILE LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {}
+whilestmt:	WHILE LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {$$ = Manage_WHILE_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt();}
 	 	;
 
-forstmt:	FOR LEFT_PARENTHESIS elist SEMICLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {}
+forstmt:	FOR LEFT_PARENTHESIS elist SEMICLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {
+       			$$ = Manage_FOR_LEFT_PARENTHESIS_elist_SEMICLON_expr_SEMICOLON_elist_RIGHT_PARENTHESIS_stmt();
+		}
        		;
 
-returnstmt:	RETURN SEMICOLON {}
-	  	| RETURN expr SEMICOLON {}
+returnstmt:	RETURN SEMICOLON {$$ = Manage_RETURN_SEMICOLON();}
+	  	| RETURN expr SEMICOLON {$$ = Manage_RETURN_expr_SEMICOLON();}
 		;
 
 %%
