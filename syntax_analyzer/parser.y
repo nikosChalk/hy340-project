@@ -156,7 +156,6 @@ elist:	expr tmp_elist
 
 objectdef:	LEFT_BRACKET elist RIGHT_BRACKET {$$ = Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET();}
 			| LEFT_BRACKET indexed RIGHT_BRACKET {$$ = Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET();}
-			| LEFT_BRACKET RIGHT_BRACKET {$$ = Manage_objectdef_LEFT_BRACKET_RIGHT_BRACKET();}
 			;
 
 tmp_indexed:	tmp_indexed COMMA indexedelem {$$ = Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem();}
@@ -174,8 +173,7 @@ tmp_block:	tmp_block stmt
  		| %empty
 		;	 
 
-block:		LEFT_BRACE tmp_block RIGHT_BRACE {$$ = Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE();}
-     		|LEFT_BRACE RIGHT_BRACE {$$ = Manage_block_LEFT_BRACE_RIGHT_BRACE();}  
+block:		LEFT_BRACE tmp_block RIGHT_BRACE {$$ = Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE();}  
      		;
 
 funcdef:	FUNCTION IDENTIFIER LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block {

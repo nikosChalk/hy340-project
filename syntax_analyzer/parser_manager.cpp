@@ -217,10 +217,6 @@ namespace syntax_analyzer {
 		fprintf(yyout, "objectdef -> [ indexed ]\n");
 		return void_value;
 	}
-	void_t Manage_objectdef_LEFT_BRACKET_RIGHT_BRACKET(){
-		fprintf(yyout, "objectdef -> [ ]\n");
-		return void_value;
-	}
 
 	/* Manage_indexed */
 	void_t Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem(){
@@ -245,10 +241,6 @@ namespace syntax_analyzer {
 	/* Manage_block() */
 	void_t Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE(){
 		fprintf(yyout, "block -> { stmt }\n");
-		return void_value;
-	}
-	void_t Manage_block_LEFT_BRACE_RIGHT_BRACE(){
-		fprintf(yyout, "block -> { }\n");
 		return void_value;
 	}
 

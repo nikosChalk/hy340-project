@@ -95,7 +95,6 @@ namespace syntax_analyzer {
 	/* Manage_objectdef()*/
 	void_t Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET();
 	void_t Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET();
-	void_t Manage_objectdef_LEFT_BRACKET_RIGHT_BRACKET();
 
 	/* Manage_indexed() */
 	void_t Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem();
@@ -107,7 +106,6 @@ namespace syntax_analyzer {
 
 	/* Manage_block() */
 	void_t Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE();
-	void_t Manage_block_LEFT_BRACE_RIGHT_BRACE();
 
 	/* Manage_funcdef() */
 	void_t Manage_funcdef_FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block();
