@@ -40,7 +40,8 @@
 
 /*declaration of non-terminal symbols*/
 %type <voidVal> stmt
-%type <realVal> expr term
+%type <voidVal> assignexpr primary lvalue member
+%type <voidVal> expr term
 
 /*priority*/
 /*TODO: check if they are correct. Shouldn't they be in reverse order? */
@@ -101,34 +102,35 @@ term:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS
 		| primary {}
 		;
 
-/****************** DEN PEIRAKSA PARAKATW (NIKOS) ******************/
+assignexpr:	lvalue ASSIGN expr {$$=Manage_assignexpr__lvalue_ASSIGN_expr();}
+			;
 
-assignexpr:	lvalue ASSIGN expr {}
+primary:	lvalue											{$$ = Manage_primary__lvalue(); }
+			| call											{$$ = Manage_primary__call(); }
+			| objectdef										{$$ = Manage_primary__objectdef(); }
+			| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS	{$$ = Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS(); }
+			| const											{$$ = Manage_primary__const(); }
+			;
+
+lvalue:	IDENTIFIER					{$$ = Manage_lvalue__IDENTIFIER(); }
+		| LOCAL IDENTIFIER			{$$ = Manage_lvalue__LOCAL_IDENTIFIER(); }
+		| DOUBLE_COLON IDENTIFIER	{$$ = Manage_lvalue__DOUBLE_COLON_IDENTIFIER(); }
+		| member					{$$ = Manage_lvalue__member(); }
 		;
 
-primary:	lvalue {}
-       		| call {}
-		| objectdef {}
-		| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS {}
-		| const {}
+member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER();}
+		| lvalue LEFT_BRACKET expr RIGHT_BRACKET	{$$=Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET();}
+		| call DOT IDENTIFIER						{$$=Manage_member__call_DOT_IDENTIFIER();}
+		| call LEFT_BRACKET expr RIGHT_BRACKET		{$$=Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();}
 		;
-
-lvalue:		IDENTIFIER {}
-		| LOCAL IDENTIFIER {}
-		| DOUBLE_COLON IDENTIFIER {}
-		| member {}
-		;
-
-member:		lvalue DOT IDENTIFIER {}
-      		| lvalue LEFT_BRACKET expr RIGHT_BRACKET {}
-		| call DOT IDENTIFIER {}
-		| call LEFT_BRACKET expr RIGHT_BRACKET {}
 
 /*************GIWRGOS*************/
 
 call:		call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_call_call_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();}
     		| lvalue callsuffix {$$ = Manage_call_lvalue_callsuffix();}
-		| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_call_LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();}
+		| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {
+			$$ = Manage_call_LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
+		}
 		;
 
 callsuffix:	normcall {$$ = Manage_callsuffix_normcall();}
@@ -157,6 +159,7 @@ objectdef:	LEFT_BRACKET elist RIGHT_BRACKET {$$ = Manage_objectdef_LEFT_BRACKET_
 
 tmp_indexed:	tmp_indexed COMMA indexedelem {$$ = Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem();}
 	   	|%empty {$$ = Manage_tmp_indexed_empty();}
+		;
 
 indexed:	indexedelem tmp_indexed
 		| %empty {$$ = Manage_indexed_empty();}
@@ -191,6 +194,7 @@ const:		CONST_INT {$$ = Manage_const_CONST_INT();}
 
 tmp_idlist:	tmp_idlist COMMA IDENTIFIER{$$ = Manage_tmp_idlist_tmp_idlist_COMMA_IDENTIFIER();}
 	  	| %empty { $$ = Manage_tmp_idlist_empty();}
+		;
 
 idlist:	        IDENTIFIER tmp_idlist 
 		| %empty {$$ = Manage_idlist_empty();}
