@@ -108,11 +108,11 @@ namespace syntax_analyzer {
 	void_t Manage_indexedelem_LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE();
 
 	/* Manage_block() */
-	void_t Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE();
+	void_t Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE(unsigned int);
 
 	/* Manage_funcdef() */
 	void_t Manage_tmp_funcdef_empty(std::string&);
-	void_t Manage_funcdef_FUNCTION_tmp_funcdef(std::string&,unsigned int);
+	void_t Manage_funcdef_FUNCTION_tmp_funcdef(std::string&,unsigned int,unsigned int);
 	void_t Manage_funcdef_FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block();
 
 	/* Manage_const() */
@@ -124,8 +124,9 @@ namespace syntax_analyzer {
 	void_t Manage_const_BOOL_FALSE();
 
 	/* Manage_idlist() */
-	void_t Manage_tmp_idlist_tmp_idlist_COMMA_IDENTIFIER();
+	void_t Manage_tmp_idlist_tmp_idlist_COMMA_IDENTIFIER(std::string, unsigned int, unsigned int);
 	void_t Manage_tmp_idlist_empty();
+	void_t Manage_idlist_IDENTIFIER(std::string,unsigned int, unsigned int);
     void_t Manage_idlist__IDENTIFIER_tmp_idlist();
 	void_t Manage_idlist_empty();
 

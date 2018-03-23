@@ -178,7 +178,7 @@ tmp_block:	tmp_block stmt
 block:		LEFT_BRACE {
                             if(func_flag == 0){scope++;}
                             func_flag = 0; 
-                           } tmp_block RIGHT_BRACE {scope--; $$ = Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE();}  
+                           } tmp_block RIGHT_BRACE {$$ = Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE(scope); scope--;}  
      		;
 
 tmp_funcdef:	IDENTIFIER{func_id = $1;}
@@ -199,11 +199,13 @@ const:		CONST_INT {$$ = Manage_const_CONST_INT();}
 		| BOOL_FALSE {$$ = Manage_const_BOOL_FALSE();}
 		;
 
-tmp_idlist:	tmp_idlist COMMA IDENTIFIER{$$ = Manage_tmp_idlist_tmp_idlist_COMMA_IDENTIFIER();}
+tmp_idlist:	tmp_idlist COMMA IDENTIFIER{$$ = Manage_tmp_idlist_tmp_idlist_COMMA_IDENTIFIER($3,scope,yylineno);}
 	  	| %empty { $$ = Manage_tmp_idlist_empty();}
 		;
 
-idlist:	IDENTIFIER tmp_idlist	{$$=Manage_idlist__IDENTIFIER_tmp_idlist();}
+idlist:		IDENTIFIER {
+      				$$ = Manage_idlist_IDENTIFIER($1,scope,yylineno);
+				}tmp_idlist	{$$=Manage_idlist__IDENTIFIER_tmp_idlist();}
 		| %empty				{$$ = Manage_idlist_empty();}
 		;
 

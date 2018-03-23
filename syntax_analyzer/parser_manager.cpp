@@ -241,7 +241,9 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_block() */
-	void_t Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE(){
+	void_t Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE(unsigned int scope){
+		symbol_table sym;
+		sym.hide(scope);
 		fprintf(yyout, "block -> { stmt }\n");
 		return void_value;
 	}
@@ -253,8 +255,9 @@ namespace syntax_analyzer {
 		return void_value;
 	}
 
-	void_t Manage_funcdef_FUNCTION_tmp_funcdef(std::string& func_id, unsigned int scope, int yylineno){
-		std::vector<symbol_table::entry> v = symbol_table::recursive_lookup(func_id,scope);
+	void_t Manage_funcdef_FUNCTION_tmp_funcdef(std::string& func_id, unsigned int scope, unsigned int yylineno){
+		symbol_table sym;
+		std::vector<symbol_table::entry> v = sym.recursive_lookup(func_id,scope);
 		if (v.empty()){
 			symbol_table::func_entry::func_entry(scope, yylineno, func_id, func_entry::sym_type::USER_FUNC,
 				                                                  const vector<var_entry> &arg_list);
@@ -308,12 +311,35 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_idlist() */
-	void_t Manage_tmp_idlist_tmp_idlist_COMMA_IDENTIFIER(){
+	void_t Manage_tmp_idlist_tmp_idlist_COMMA_IDENTIFIER(std::string form_id, unsigned int scope, unsigned int yylineno){
+		Manage_idlist_IDENTIFIER(form_id, scope, yylineno); /*same work*/
 		fprintf(yyout, "idlist -> id,...,id\n");
 		return void_value;
 	}
 	void_t Manage_tmp_idlist_empty(){
 		fprintf(yyout, "idlist -> id\n");
+		return void_value;
+	}
+	void_t Manage_idlist_IDENTIFIER(std::string form_id, unsigned int scope, unsigned int yylineno){
+		symbol_table sym;
+		std::vector<symbol_table::entry> v1 = sym.lookup(form_id, scope);
+		std::vector<symbol_table::entry> v2 = sym.lookup(form_id, 0);
+		if (v1.empty()){
+			symbol_table::var_entry::var_entry(scope, yylineno, form_id, var_entry::sym_type::FORMAL_ARG);
+			/*INSERT HERE.. HOW?*/
+		}
+		else{
+			for (unsigned long i = 0; i < v1.size(); i++){
+				if (v1[i].get_sym_type() == var_entry::sym_type::FORMAL_ARG){
+					fprintf(yyout, "Syntax Error --> line:%d , Formal Argument \t"
+						"defined multiple times\n", yylineno);
+				}
+			}
+		}
+		if (!v2.empty()){
+			fprintf(yyout, "Syntax Error --> line:%d , Formal Argument \t"
+				"shadows libfunc\n", yylineno);
+		}
 		return void_value;
 	}
     void_t Manage_idlist__IDENTIFIER_tmp_idlist() {
