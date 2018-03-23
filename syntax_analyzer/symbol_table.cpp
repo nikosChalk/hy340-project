@@ -117,7 +117,7 @@ namespace syntax_analyzer {
     }
 
     std::vector<symbol_table::entry> symbol_table::recursive_lookup(const std::string &key, unsigned int scope) const {
-        vector<entry> v = vector();
+        vector<entry> v = vector<entry>();
 
         while(scope >= entry::GLOBAL_SCOPE) {
             vector<entry> scope_vector = this->lookup(key, scope);

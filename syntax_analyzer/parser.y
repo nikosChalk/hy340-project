@@ -12,7 +12,9 @@
 	extern int yylineno;
 	extern char *yytext;
 	extern FILE *yyin;
-	int scope = 0 ;
+	unsigned int scope=0;
+	int func_flag = 0;
+	std::string func_id;
 
 	int yyerror (char *msg);
 %}
@@ -44,7 +46,7 @@
 %type <voidVal> funcdef const idlist ifstmt whilestmt forstmt returnstmt
 
 /* type declaration of non-terminal helper symbols, defined by us */
-%type <voidVal> tmp_elist tmp_indexed tmp_idlist
+%type <voidVal> tmp_elist tmp_indexed tmp_idlist tmp_funcdef
 
 /*priority*/
 /*TODO: check if they are correct. Shouldn't they be in reverse order? */
@@ -150,7 +152,7 @@ tmp_elist:	tmp_elist COMMA expr {$$ = Manage_tmp_elist_tmp_elist_COMMA_expr();}
 		 	| %empty {$$ = Manage_tmp_elist_empty();}
 			;
 
-elist:	expr tmp_elist
+elist:		expr tmp_elist
 		| %empty {$$ = Manage_elist_empty();}
 		;
 
@@ -173,15 +175,20 @@ tmp_block:	tmp_block stmt
  		| %empty
 		;	 
 
-block:		LEFT_BRACE tmp_block RIGHT_BRACE {$$ = Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE();}  
+block:		LEFT_BRACE {
+                            if(func_flag == 0){scope++;}
+                            func_flag = 0; 
+                           } tmp_block RIGHT_BRACE {scope--; $$ = Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE();}  
      		;
 
-funcdef:	FUNCTION IDENTIFIER LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block {
+tmp_funcdef:	IDENTIFIER{func_id = $1;}
+   		| %empty { $$ = Manage_tmp_funcdef_empty(&func_id);}	   
+
+funcdef:	FUNCTION tmp_funcdef{
+       					$$ = Manage_funcdef_FUNCTION_tmp_funcdef(&func_id,scope,yylineno);
+					} LEFT_PARENTHESIS{scope++;func_flag=1;} idlist RIGHT_PARENTHESIS block {
        			$$ = Manage_funcdef_FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block();
 		}         
-       		| FUNCTION LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block {
-			$$ = Manage_funcdef_FUNCTION_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block();
-		}
 		;
 
 const:		CONST_INT {$$ = Manage_const_CONST_INT();}

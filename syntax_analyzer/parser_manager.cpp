@@ -3,6 +3,8 @@
 //
 
 #include "parser_manager.h"
+#include "symbol_table.h"
+#include <vector>
 #include "../not_implemented_error.h"
 
 extern FILE *yyout;
@@ -245,12 +247,37 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_funcdef() */
-	void_t Manage_funcdef_FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block(){
-		fprintf(yyout, "funcdef -> function id (idlist) block\n");
+	void_t Manage_tmp_funcdef_empty(std::string& func_id){
+		func_id = "_f" + func_num;
+		func_num++; /*increase for future use*/
 		return void_value;
 	}
-	void_t Manage_funcdef_FUNCTION_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block(){
-		fprintf(yyout, "funcdef -> function (idlist) block\n");
+
+	void_t Manage_funcdef_FUNCTION_tmp_funcdef(std::string& func_id, unsigned int scope, int yylineno){
+		std::vector<symbol_table::entry> v = symbol_table::recursive_lookup(func_id,scope);
+		if (v.empty()){
+			symbol_table::func_entry::func_entry(scope, yylineno, func_id, func_entry::sym_type::USER_FUNC,
+				                                                  const vector<var_entry> &arg_list);
+			/*INSERT HERE.. HOW? and with arg_list?*/
+		}
+		else{
+			for (unsigned long i = 0; i < v.size(); i++){
+				if (v[i].get_scope() == scope){ 
+					fprintf(yyout, "Syntax Error --> line:%d , Function definition \t"
+						           "with the same function or variable name in the same scope\n",yylineno); 
+				}
+				else if ((v[i].get_sym_type() == func_entry::sym_type::LIB_FUNC) &&
+					     (v[i].get_scope() == 0)){
+					fprintf(yyout, "Syntax Error --> line:%d , Function definition \t"
+						"with the same library function name\n", yylineno);
+				}
+			}
+		}
+		return void_value;
+	}
+
+	void_t Manage_funcdef_FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block(){
+		fprintf(yyout, "funcdef -> function id (idlist) block\n");
 		return void_value;
 	}
 

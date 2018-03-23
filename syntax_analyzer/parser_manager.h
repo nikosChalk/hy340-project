@@ -8,6 +8,9 @@
 #include "types.h"
 
 namespace syntax_analyzer {
+
+	int func_num = 1; /*counter , set function id (unique)*/
+
     void_t Manage_program__stmt_program();
     void_t Manage_program();
 
@@ -108,8 +111,9 @@ namespace syntax_analyzer {
 	void_t Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE();
 
 	/* Manage_funcdef() */
+	void_t Manage_tmp_funcdef_empty(std::string&);
+	void_t Manage_funcdef_FUNCTION_tmp_funcdef(std::string&,unsigned int);
 	void_t Manage_funcdef_FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block();
-	void_t Manage_funcdef_FUNCTION_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block();
 
 	/* Manage_const() */
 	void_t Manage_const_CONST_INT();
