@@ -10,14 +10,16 @@ namespace syntax_analyzer {
 
     /* ~~~~~~ symbol_table::entry implementation ~~~~~~ */
     const unsigned int symbol_table::entry::GLOBAL_SCOPE = 0;
+    unsigned int symbol_table::func_entry::generic_names = 0;
 
-    symbol_table::entry::entry(unsigned int scope, unsigned int line, const string &name) {
+    symbol_table::entry::entry(unsigned int scope, unsigned int line, const string &name, sym_type symbol_type) {
         this->scope = scope;
         this->line = line;
         this->visible = true;
         if(name.empty())
             throw runtime_error("SymbolTable's entry name must not be the empty string");
         this->name = name;
+        this->symbol_type = symbol_type;
     }
 
     unsigned int symbol_table::entry::get_scope() const {
@@ -46,32 +48,20 @@ namespace syntax_analyzer {
 
     /* ~~~~~~ symbol_table::var_entry implementation ~~~~~~ */
     symbol_table::var_entry::var_entry(unsigned int scope, unsigned int line, const string &name, sym_type symbol_type)
-        : entry(scope, line, name) {
-        this->symbol_type = symbol_type;
+        : entry(scope, line, name, (scope == GLOBAL_SCOPE ? GLOBAL :  symbol_type)) {
+        if(symbol_type != GLOBAL && symbol_type != LOCAL && symbol_type != FORMAL_ARG)
+            throw std::runtime_error("Invalid symbol type");
     }
 
-    symbol_table::var_entry::sym_type symbol_table::var_entry::get_sym_type() const {
+    symbol_table::entry::sym_type symbol_table::entry::get_sym_type() const {
         return this->symbol_type;
     }
 
     /* ~~~~~~ symbol_table::func_entry implementation ~~~~~~ */
-    symbol_table::func_entry::func_entry(unsigned int scope, unsigned int line, const string &name, sym_type symbol_type,
-                                         const vector<var_entry> &arg_list)
-        : entry(scope, line, name) {
-        this->symbol_type = symbol_type;
-
-        for(int i=0; i<arg_list.size(); i++)
-            if(arg_list[i].get_sym_type() != var_entry::sym_type::FORMAL_ARG)
-                throw runtime_error("In symbol table: Function argument is not of symbol type FORMAL_ARG");
-        this->arg_list = arg_list;
-    }
-
-    symbol_table::func_entry::sym_type symbol_table::func_entry::get_sym_type() const {
-        return this->symbol_type;
-    }
-
-    vector<symbol_table::var_entry>& symbol_table::func_entry::get_arg_list() {
-        return this->arg_list;
+    symbol_table::func_entry::func_entry(unsigned int scope, unsigned int line, const string &name, sym_type symbol_type)
+        : entry(scope, line, (name.empty() ? ("__gfunc" + generic_names++) : name), symbol_type) {
+        if(symbol_type != LIB_FUNC && symbol_type != USER_FUNC)
+            throw std::runtime_error("Invalid symbol type");
     }
 
     /* ~~~~~~ symbol_table implementation ~~~~~~ */
@@ -116,7 +106,7 @@ namespace syntax_analyzer {
         return v;
     }
 
-    std::vector<symbol_table::entry> symbol_table::recursive_lookup(const std::string &key, unsigned int scope) const {
+    vector<symbol_table::entry> symbol_table::recursive_lookup(const string &key, unsigned int scope) const {
         vector<entry> v = vector<entry>();
 
         while(scope >= entry::GLOBAL_SCOPE) {
@@ -125,6 +115,26 @@ namespace syntax_analyzer {
             scope--;
         }
         return v;
+    }
+
+    bool symbol_table::is_var_accessible(const string &key, unsigned int scope) const {
+        vector<entry> scope_entries = this->lookup(key, scope);
+
+        //Search the local scope
+        if(scope_entries.empty())
+            return true;
+
+        //Search scopes until any formal args
+        while(scope>0) {
+            bool reached_funcdef = false;
+
+            vector<entry> entries = this->lookup(key, scope);
+            for(const auto &cur_entry : entries) {
+                if(cur_entry.get_sym_type() == symbol_table::entry::FORMAL_ARG)
+            }
+
+            scope--;
+        }
     }
 
     void symbol_table::hide(unsigned int scope) {

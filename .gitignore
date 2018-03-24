@@ -3,5 +3,7 @@ CMakeLists.txt
 cmake-build-debug/
 alpha_lex/alpha_flex.h
 alpha_lex/alpha_flex.cpp
+syntax_analyzer/alpha_bison.hpp
+syntax_analyzer/alpha_bison.cpp
 test.cpp
 flex_doc.txt

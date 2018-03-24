@@ -6,10 +6,9 @@
 #define HY340_PROJECT_PARSER_MANAGER_H
 
 #include "types.h"
+#include "symbol_table.h"
 
 namespace syntax_analyzer {
-
-	int func_num = 1; /*counter , set function id (unique)*/
 
     void_t Manage_program__stmt_program();
     void_t Manage_program();
@@ -65,14 +64,17 @@ namespace syntax_analyzer {
     void_t Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS();
     void_t Manage_primary__const();
 
-    void_t Manage_lvalue__IDENTIFIER();
-    void_t Manage_lvalue__LOCAL_IDENTIFIER();
-    void_t Manage_lvalue__void_t_COLON_IDENTIFIER();
+    void_t Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int scope, unsigned int lineno);
+    void_t Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int scope, unsigned int lineno);
+    /**
+     * This rule NEVER inserts to the symbol table
+     */
+    void_t Manage_lvalue__DOUBLE_COLON_IDENTIFIER(const symbol_table &sym_table, const std::string &identifier, unsigned int lineno);
     void_t Manage_lvalue__member();
 
-    void_t Manage_member__lvalue_DOT_IDENTIFIER();
+    void_t Manage_member__lvalue_DOT_IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int scope, unsigned int lineno);
     void_t Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET();
-    void_t Manage_member__call_DOT_IDENTIFIER();
+    void_t Manage_member__call_DOT_IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int scope, unsigned int lineno);
     void_t Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();
 
 	/* Manage_call() */
@@ -88,12 +90,15 @@ namespace syntax_analyzer {
 	void_t Manage_normcall_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
 
 	/* Manage_methodcall() */
-	void_t Manage_methodcall_DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
+    void_t Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(symbol_table &sym_table,
+                                                                                             const std::string &identifier,
+                                                                                             unsigned int scope, unsigned int lineno);
 
-	/* Manage_elist() */
+    /* Manage_elist() */
 	void_t Manage_tmp_elist_tmp_elist_COMMA_expr();
 	void_t Manage_tmp_elist_empty();
 	void_t Manage_elist_empty();
+	void_t Manage_elist__expr_tmp_elist();
 
 	/* Manage_objectdef()*/
 	void_t Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET();
@@ -103,17 +108,26 @@ namespace syntax_analyzer {
 	void_t Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem();
 	void_t Manage_tmp_indexed_empty();
 	void_t Manage_indexed_empty();
+    void_t Manage_indexed__indexedelem_tmp_indexed();
 
 	/* Manage_indexedelem() */
 	void_t Manage_indexedelem_LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE();
 
 	/* Manage_block() */
-	void_t Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE(unsigned int);
+    void_t Manage_tmp_block__tmp_block_stmt();
+    void_t Manage_tmp_block__empty();
+	void_t Manage_block__LEFT_BRACE_tmp_block_RIGHT_BRACE(symbol_table &sym_table, unsigned int);
 
 	/* Manage_funcdef() */
-	void_t Manage_tmp_funcdef_empty(std::string&);
-	void_t Manage_funcdef_FUNCTION_tmp_funcdef(std::string&,unsigned int,unsigned int);
-	void_t Manage_funcdef_FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block();
+    std::string Manage_tmp_funcdef__IDENTIFIER(const std::string &id);
+    std::string Manage_tmp_funcdef__empty();
+    /**
+     * This is needed because once we have identified "block" in the grammar rule, first the block's semantic will be called
+     * and AFTERWARDS the "funcdef" semantic rule will be called. Calling a "block" semantic rule, hides symbols and changes scopes.
+     */
+	void_t Manage_funcdef__FUNCTION_tmp_funcdef(symbol_table &sym_table, const std::string &id, unsigned int scope, unsigned int lineno);
+    void_t Manage_funcdef__FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block();
+
 
 	/* Manage_const() */
 	void_t Manage_const_CONST_INT();
@@ -124,11 +138,11 @@ namespace syntax_analyzer {
 	void_t Manage_const_BOOL_FALSE();
 
 	/* Manage_idlist() */
-	void_t Manage_tmp_idlist_tmp_idlist_COMMA_IDENTIFIER(std::string, unsigned int, unsigned int);
-	void_t Manage_tmp_idlist_empty();
-	void_t Manage_idlist_IDENTIFIER(std::string,unsigned int, unsigned int);
-    void_t Manage_idlist__IDENTIFIER_tmp_idlist();
-	void_t Manage_idlist_empty();
+    std::vector<std::string> Manage_tmp_idlist__empty();
+    std::vector<std::string> Manage_tmp_idlist__tmp_idlist_COMMA_IDENTIFIER(std::vector<std::string> &tmp_id_list, const std::string &identifier);
+    std::vector<std::string> Manage_idlist__IDENTIFIER_tmp_idlist(symbol_table &sym_table, std::vector<std::string> tmp_id_list,
+                                                                  std::string identifier, unsigned int scope, unsigned int lineno);
+    std::vector<std::string> Manage_idlist__empty();
 
 	/* Manage_ifstmt() */
 	void_t Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt();

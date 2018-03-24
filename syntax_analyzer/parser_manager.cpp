@@ -5,11 +5,37 @@
 #include "parser_manager.h"
 #include "symbol_table.h"
 #include <vector>
+#include <iostream>
 #include "../not_implemented_error.h"
+#include "syntax_error.h"
+
+using namespace std;
 
 extern FILE *yyout;
 
 namespace syntax_analyzer {
+
+    /**
+     * Handles an identifier when it appears within a grammar rule. For example:
+     * lvalue -> id
+     * member -> lvalue.id
+     * member -> call.id
+     * etc.
+     * But not for ::id or local id.
+     */
+    static void handle_identifier(symbol_table &sym_table, const string &identifier, unsigned int scope, unsigned int lineno) {
+        vector<symbol_table::entry> all_entries = sym_table.recursive_lookup(identifier, scope);
+
+        if (all_entries.empty()) { /* This identifier was not found in any enclosing scope. ==> Insert new symbol */
+            sym_table.insert(symbol_table::var_entry(
+                    scope, lineno, identifier, symbol_table::entry::LOCAL
+            ));
+        } else {
+            /* We need to check if there is an accessible reference in all_entries */
+            if (!sym_table.is_var_accessible(identifier, scope))
+                throw syntax_error("Variable \'" + identifier + "\' does not refer to any accessible symbol.", lineno);
+        }
+    }
 
     void_t Manage_program__stmt_program() {
         throw not_implemented_error();
@@ -124,16 +150,40 @@ namespace syntax_analyzer {
         return void_value;
     }
 
-    void_t Manage_lvalue__IDENTIFIER() {
+    void_t Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int scope, unsigned int lineno) {
         fprintf(yyout, "lvalue -> IDENTIFIER\n");
+        handle_identifier(sym_table, identifier, scope, lineno);
         return void_value;
     }
-    void_t Manage_lvalue__LOCAL_IDENTIFIER() {
+    void_t Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int scope, unsigned int lineno) {
         fprintf(yyout, "lvalue -> local IDENTIFIER\n");
+        vector<symbol_table::entry> scope_entries = sym_table.lookup(identifier, scope);
+        vector<symbol_table::entry> global_entries = sym_table.lookup(identifier, symbol_table::entry::GLOBAL_SCOPE);
+
+        if(scope_entries.empty()) {
+            //Check if it shadows a library function
+            bool lib_func_clash = false;
+            for(const auto &global_entry: global_entries)
+                if(global_entry.get_sym_type() == symbol_table::entry::LIB_FUNC)
+                    lib_func_clash = true;
+            if(lib_func_clash)
+                throw syntax_error("Local variable \'" + identifier + "\' name shadows library function", lineno);
+
+            //Identifier is okay. Add it to the symbol table
+            sym_table.insert(symbol_table::var_entry(
+               scope, lineno, identifier, symbol_table::entry::LOCAL
+            ));
+        }
         return void_value;
     }
-    void_t Manage_lvalue__void_t_COLON_IDENTIFIER() {
+    void_t Manage_lvalue__DOUBLE_COLON_IDENTIFIER(const symbol_table &sym_table, const string &identifier, unsigned int lineno) {
         fprintf(yyout, "lvalue -> ::IDENTIFIER\n");
+
+        /* This rule NEVER inserts to the symbol table */
+        vector<symbol_table::entry> global_entries = sym_table.lookup(identifier, symbol_table::entry::GLOBAL_SCOPE);
+        if(!global_entries.empty())
+            throw syntax_error("No global symbol \'" + identifier + "\' found.", lineno);
+
         return void_value;
     }
     void_t Manage_lvalue__member() {
@@ -142,16 +192,18 @@ namespace syntax_analyzer {
     }
 
 
-    void_t Manage_member__lvalue_DOT_IDENTIFIER() {
+    void_t Manage_member__lvalue_DOT_IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int scope, unsigned int lineno) {
         fprintf(yyout, "member -> .IDENTIFIER\n");
+        handle_identifier(sym_table, identifier, scope, lineno);
         return void_value;
     }
     void_t Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET() {
         fprintf(yyout, "member -> lvalue[expr]\n");
         return void_value;
     }
-    void_t Manage_member__call_DOT_IDENTIFIER() {
+    void_t Manage_member__call_DOT_IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int scope, unsigned int lineno) {
         fprintf(yyout, "member -> call.IDENTIFIER\n");
+        handle_identifier(sym_table, identifier, scope, lineno);
         return void_value;
     }
     void_t Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET() {
@@ -191,8 +243,11 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_methodcall() */
-	void_t Manage_methodcall_DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(){
+	void_t Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(symbol_table &sym_table,
+                                                                                             const string &identifier,
+                                                                                             unsigned int scope, unsigned int lineno) {
 		fprintf(yyout, "methodcall -> ..id(elist)\n");
+        handle_identifier(sym_table, identifier, scope, lineno);
 		return void_value;
 	}
 
@@ -241,48 +296,52 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_block() */
-	void_t Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE(unsigned int scope){
-		symbol_table sym;
-		sym.hide(scope);
+    void_t Manage_tmp_block__tmp_block_stmt() {
+        fprintf(yyout, "tmp_block -> tmp_block stmt\n");
+        return void_value;
+    }
+    void_t Manage_tmp_block__empty() {
+        fprintf(yyout, "tmp_block -> <empty>\n");
+        return void_value;
+    }
+	void_t Manage_block__LEFT_BRACE_tmp_block_RIGHT_BRACE(symbol_table &sym_table, unsigned int scope){
+		sym_table.hide(scope);
 		fprintf(yyout, "block -> { stmt }\n");
 		return void_value;
 	}
 
 	/* Manage_funcdef() */
-	void_t Manage_tmp_funcdef_empty(std::string& func_id){
-		func_id = "_f" + func_num;
-		func_num++; /*increase for future use*/
-		return void_value;
-	}
+    string Manage_tmp_funcdef__IDENTIFIER(const string &id) {
+        fprintf(yyout, "tmp_funcdef -> IDENTIFIER\n");
+        return id;
+    }
+    string Manage_tmp_funcdef__empty() {
+        fprintf(yyout, "tmp_funcdef -> <empty>\n");
+        return string();    /* Empty string */
+    }
 
-	void_t Manage_funcdef_FUNCTION_tmp_funcdef(std::string& func_id, unsigned int scope, unsigned int yylineno){
-		symbol_table sym;
-		std::vector<symbol_table::entry> v = sym.recursive_lookup(func_id,scope);
-		if (v.empty()){
-			symbol_table::func_entry::func_entry(scope, yylineno, func_id, func_entry::sym_type::USER_FUNC,
-				                                                  const vector<var_entry> &arg_list);
-			/*INSERT HERE.. HOW? and with arg_list?*/
-		}
-		else{
-			for (unsigned long i = 0; i < v.size(); i++){
-				if (v[i].get_scope() == scope){ 
-					fprintf(yyout, "Syntax Error --> line:%d , Function definition \t"
-						           "with the same function or variable name in the same scope\n",yylineno); 
-				}
-				else if ((v[i].get_sym_type() == func_entry::sym_type::LIB_FUNC) &&
-					     (v[i].get_scope() == 0)){
-					fprintf(yyout, "Syntax Error --> line:%d , Function definition \t"
-						"with the same library function name\n", yylineno);
-				}
-			}
-		}
-		return void_value;
-	}
+    void_t Manage_funcdef__FUNCTION_tmp_funcdef(symbol_table &sym_table, const std::string &id, unsigned int scope, unsigned int lineno) {
+        vector<symbol_table::entry> cur_scope_entries = sym_table.lookup(id, scope);  /* Look up only at the current scope */
+        vector<symbol_table::entry> global_entries = sym_table.lookup(id, symbol_table::entry::GLOBAL_SCOPE);  /* Look up only at the global scope */
 
-	void_t Manage_funcdef_FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block(){
-		fprintf(yyout, "funcdef -> function id (idlist) block\n");
+        //Sanity checks
+        if(!cur_scope_entries.empty())
+            throw syntax_error("Function definition \'" + id
+                               + "\' name clashes with already defined function or variable name in the same scope", lineno);
+        if(!global_entries.empty())
+            throw syntax_error("Function definition \'" + id + "\' name shadows library function", lineno);
+
+        //Insert in the symbol table
+        sym_table.insert(symbol_table::func_entry(
+           scope, lineno, id, symbol_table::entry::USER_FUNC
+        ));
+
 		return void_value;
 	}
+    void_t Manage_funcdef__FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block() {
+        fprintf(yyout, "funcdef -> FUNCTION IDENTIFIER (idlist) block\n");
+        return void_value;
+    }
 
 	/* Manage_const() */
 	void_t Manage_const_CONST_INT(){
@@ -311,44 +370,40 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_idlist() */
-	void_t Manage_tmp_idlist_tmp_idlist_COMMA_IDENTIFIER(std::string form_id, unsigned int scope, unsigned int yylineno){
-		Manage_idlist_IDENTIFIER(form_id, scope, yylineno); /*same work*/
-		fprintf(yyout, "idlist -> id,...,id\n");
-		return void_value;
-	}
-	void_t Manage_tmp_idlist_empty(){
-		fprintf(yyout, "idlist -> id\n");
-		return void_value;
-	}
-	void_t Manage_idlist_IDENTIFIER(std::string form_id, unsigned int scope, unsigned int yylineno){
-		symbol_table sym;
-		std::vector<symbol_table::entry> v1 = sym.lookup(form_id, scope);
-		std::vector<symbol_table::entry> v2 = sym.lookup(form_id, 0);
-		if (v1.empty()){
-			symbol_table::var_entry::var_entry(scope, yylineno, form_id, var_entry::sym_type::FORMAL_ARG);
-			/*INSERT HERE.. HOW?*/
-		}
-		else{
-			for (unsigned long i = 0; i < v1.size(); i++){
-				if (v1[i].get_sym_type() == var_entry::sym_type::FORMAL_ARG){
-					fprintf(yyout, "Syntax Error --> line:%d , Formal Argument \t"
-						"defined multiple times\n", yylineno);
-				}
-			}
-		}
-		if (!v2.empty()){
-			fprintf(yyout, "Syntax Error --> line:%d , Formal Argument \t"
-				"shadows libfunc\n", yylineno);
-		}
-		return void_value;
-	}
-    void_t Manage_idlist__IDENTIFIER_tmp_idlist() {
-        fprintf(yyout, "idlist -> IDENTIFIER tmp_idlist\n");
-        return void_value;
+    vector<string> Manage_tmp_idlist__empty() {
+        fprintf(yyout, "tmp_idlist -> <empty>\n");
+        return vector<string>();
     }
-	void_t Manage_idlist_empty(){
-		fprintf(yyout, "idlist -> empty\n");
-		return void_value;
+    vector<string> Manage_tmp_idlist__tmp_idlist_COMMA_IDENTIFIER(vector<string> &tmp_id_list, const string &identifier) {
+        /* Gather the IDs. We postpone the processing until we have gathered all the IDs from the idlsit */
+        tmp_id_list.push_back(identifier);
+		fprintf(yyout, "tmp_idlist -> tmp_idlist , IDENTIFIER\n");
+        return tmp_id_list;
+	}
+    vector<string> Manage_idlist__IDENTIFIER_tmp_idlist(symbol_table &sym_table, vector<string> tmp_id_list, string identifier,
+                                                unsigned int scope, unsigned int lineno) {
+        fprintf(yyout, "idlist -> IDENTIFIER tmp_idlist\n");
+        tmp_id_list.push_back(identifier);
+        for(const auto &cur_id : tmp_id_list) {
+            vector<symbol_table::entry> cur_scope_entries = sym_table.lookup(cur_id, scope);  /* Look up only at the current scope */
+            vector<symbol_table::entry> global_entries = sym_table.lookup(cur_id, symbol_table::entry::GLOBAL_SCOPE);  /* Look up only at the global scope */
+
+            if(cur_scope_entries.empty()) {
+                sym_table.insert(symbol_table::var_entry(
+                    scope, lineno, cur_id, symbol_table::entry::FORMAL_ARG
+                ));
+            } else {
+                throw syntax_error("Formal Argument \'" + cur_id + "\' defined multiple times", lineno);
+            }
+
+            if(!global_entries.empty())
+                throw syntax_error("Formal Argument \'" + cur_id + "\' shadows library function", lineno);
+        }
+        return tmp_id_list;
+    }
+    vector<string> Manage_idlist__empty(){
+		fprintf(yyout, "idlist -> <empty>\n");
+		return vector<string>();
 	}
 
 	/* Manage_ifstmt() */

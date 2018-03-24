@@ -1,31 +1,35 @@
 
+%code requires {
+	#include "symbol_table.h"
+	#include "types.h"
+}
 
 %{
-	#include <stdio.h>
+	#include <cstdio>
 	#include <string>
-	#include "types.h"
+	#include <iostream>
 	#include "parser_manager.h"
 
 	using namespace syntax_analyzer;
 
-	extern int yylex(union YYSTYPE *yylval)
+	extern int yylex(value_stack_t *yylval);
 	extern int yylineno;
 	extern char *yytext;
-	extern FILE *yyin;
-	unsigned int scope=0;
-	int func_flag = 0;
-	std::string func_id;
+	static unsigned int scope=0;
+	static value_stack_t *lvalue = new value_stack_t;
 
-	int yyerror (char *msg);
+	int yyerror (const symbol_table &sym_table, char *msg);
 %}
 
 /* bison parameters */
-%define api.value.type { union YYSTYPE }
-%language "C++"
-%output "alpha_bison"
-%debug			/*TODO: validate this choice */
-%verbose
-%expect 1 		/* Expect 1 conflict */
+%define api.value.type { syntax_analyzer::value_stack_t }
+%language "C"
+%output "alpha_bison.cpp"
+%defines
+%parse-param {syntax_analyzer::symbol_table &sym_table}
+%lex-param {union YYSTYPE *lvalue}
+%debug
+/*%verbose*/
 %start program	/*start symbol*/
 
 /*declaration of terminal symbols*/
@@ -41,15 +45,17 @@
 %token <realVal>	CONST_REAL
 
 /* type declaration of non-terminal symbols, defined b the grammar */
+%type <strVector> idlist
 %type <voidVal> program stmt expr term assignexpr primary lvalue member
 %type <voidVal> call callsuffix normcall methodcall elist objectdef indexed indexedelem block
-%type <voidVal> funcdef const idlist ifstmt whilestmt forstmt returnstmt
+%type <voidVal> funcdef const ifstmt whilestmt forstmt returnstmt
 
 /* type declaration of non-terminal helper symbols, defined by us */
-%type <voidVal> tmp_elist tmp_indexed tmp_idlist tmp_funcdef
+%type <strVector> tmp_idlist
+%type <strVal> tmp_funcdef
+%type <voidVal> tmp_elist tmp_indexed tmp_block
 
-/*priority*/
-/*TODO: check if they are correct. Shouldn't they be in reverse order? */
+/* Define the priority of tokens */
 %right		ASSIGN
 %left		OR
 %left		AND
@@ -57,15 +63,15 @@
 %nonassoc	GT GE LT LE
 %left		PLUS MINUS
 %left		MUL DIV MOD
-%right		NOT PLUS_PLUS MINUS_MINUS '-'	/*TODO: why minus(-) is again here? */
+%right		NOT PLUS_PLUS MINUS_MINUS UMINUS	/*UMINUS is a pseudo-token never return by lex. We just need its precedence for a grammar rule in order to resolve shift/reduce conflict */
 %left		DOT DOUBLE_DOT
 %left		LEFT_BRACKET RIGHT_BRACKET
 %left		LEFT_PARENTHESIS RIGHT_PARENTHESIS
 
 %%
 
-program:	program stmt	/*TODO: actions */
-       		| %empty
+program:	program stmt	{;}
+       		| %empty		{;}
 			;
 
 stmt:	expr SEMICOLON			{$$ = Manage_stmt__expr_SEMICOLON(); 	}
@@ -94,11 +100,11 @@ expr:	assignexpr 			{/*TODO: bellow actions */}
 		| expr NE expr 		{$$ = ($1 != $3)?1:0;}
 		| expr AND expr 	{$$ = ($1 && $3)?1:0;}
 		| expr OR expr 		{$$ = Manage_expr__expr_OR_expr($1, $3); /* Example of how rules should be */ }
-		| term 				{}
+		| term 				{;}
 		;
 
 term:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS
-    	| MINUS expr %prec UMINUS {}	/* TODO: validate this */
+    	| MINUS expr %prec UMINUS {}	/* Special precedence for this rule */
 		| NOT expr {}
 		| PLUS_PLUS lvalue {}
 		| lvalue PLUS_PLUS {}
@@ -117,137 +123,108 @@ primary:	lvalue											{$$ = Manage_primary__lvalue(); }
 			| const											{$$ = Manage_primary__const(); }
 			;
 
-lvalue:	IDENTIFIER					{$$ = Manage_lvalue__IDENTIFIER(); }
-		| LOCAL IDENTIFIER			{$$ = Manage_lvalue__LOCAL_IDENTIFIER(); }
-		| DOUBLE_COLON IDENTIFIER	{$$ = Manage_lvalue__DOUBLE_COLON_IDENTIFIER(); }
+lvalue:	IDENTIFIER					{$$ = Manage_lvalue__IDENTIFIER(sym_table, $1, scope, yylineno); }
+		| LOCAL IDENTIFIER			{$$ = Manage_lvalue__LOCAL_IDENTIFIER(sym_table, $2, scope, yylineno); }
+		| DOUBLE_COLON IDENTIFIER	{$$ = Manage_lvalue__DOUBLE_COLON_IDENTIFIER(sym_table, $2, yylineno); }
 		| member					{$$ = Manage_lvalue__member(); }
 		;
 
-member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER();}
+member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER(sym_table, $3, scope, yylineno);}
 		| lvalue LEFT_BRACKET expr RIGHT_BRACKET	{$$=Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET();}
-		| call DOT IDENTIFIER						{$$=Manage_member__call_DOT_IDENTIFIER();}
+		| call DOT IDENTIFIER						{$$=Manage_member__call_DOT_IDENTIFIER(sym_table, $3, scope, yylineno);}
 		| call LEFT_BRACKET expr RIGHT_BRACKET		{$$=Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();}
 		;
 
 /*************GIWRGOS*************/
 
-call:		call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_call_call_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();}
-    		| lvalue callsuffix {$$ = Manage_call_lvalue_callsuffix();}
-		| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {
+call:	call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS	{$$ = Manage_call_call_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();}
+		| lvalue callsuffix								{$$ = Manage_call_lvalue_callsuffix();}
+		| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS	{
 			$$ = Manage_call_LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
 		}
 		;
 
-callsuffix:	normcall {$$ = Manage_callsuffix_normcall();}
-			| methodcall {$$ = Manage_callsuffix_methodcall();}
+callsuffix:	normcall		{$$ = Manage_callsuffix_normcall();}
+			| methodcall	{$$ = Manage_callsuffix_methodcall();}
 			;
 
 normcall:	LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_normcall_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();}
 			;
 
-methodcall:	DOUBLE_DOT IDENTIFIER LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_methodcall_DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(); }
+methodcall:	DOUBLE_DOT IDENTIFIER LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(sym_table, $2, scope, yylineno); }
 			;
 
-tmp_elist:	tmp_elist COMMA expr {$$ = Manage_tmp_elist_tmp_elist_COMMA_expr();}
-		 	| %empty {$$ = Manage_tmp_elist_empty();}
+tmp_elist:	tmp_elist COMMA expr	{$$ = Manage_tmp_elist_tmp_elist_COMMA_expr();}
+		 	| %empty				{$$ = Manage_tmp_elist_empty();}
 			;
 
-elist:		expr tmp_elist
-		| %empty {$$ = Manage_elist_empty();}
+elist:	expr tmp_elist	{$$ = Manage_elist__expr_tmp_elist();}
+		| %empty 		{$$ = Manage_elist_empty();}
 		;
 
-objectdef:	LEFT_BRACKET elist RIGHT_BRACKET {$$ = Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET();}
-			| LEFT_BRACKET indexed RIGHT_BRACKET {$$ = Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET();}
+objectdef:	LEFT_BRACKET elist RIGHT_BRACKET		{$$ = Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET();}
+			| LEFT_BRACKET indexed RIGHT_BRACKET	{$$ = Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET();}
 			;
 
-tmp_indexed:	tmp_indexed COMMA indexedelem {$$ = Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem();}
-				|%empty {$$ = Manage_tmp_indexed_empty();}
+tmp_indexed:	tmp_indexed COMMA indexedelem	{$$ = Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem();}
+				|%empty							{$$ = Manage_tmp_indexed_empty();}
 				;
 
-indexed:	indexedelem tmp_indexed
-			| %empty {$$ = Manage_indexed_empty();}
+indexed:	indexedelem tmp_indexed	{$$ = Manage_indexed__indexedelem_tmp_indexed();}
+			| %empty				{$$ = Manage_indexed_empty();}
 			;
 
 indexedelem:	LEFT_BRACE expr COLON expr RIGHT_BRACE {$$ = Manage_indexedelem_LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE();}
 				;
 
-tmp_block:	tmp_block stmt
- 		| %empty
-		;	 
+tmp_block:	tmp_block stmt	{$$ = Manage_tmp_block__tmp_block_stmt();}
+			| %empty		{$$ = Manage_tmp_block__empty();}
+			;	 
 
-block:		LEFT_BRACE {
-                            if(func_flag == 0){scope++;}
-                            func_flag = 0; 
-                           } tmp_block RIGHT_BRACE {$$ = Manage_block_LEFT_BRACE_tmp_block_RIGHT_BRACE(scope); scope--;}  
-     		;
-
-tmp_funcdef:	IDENTIFIER{func_id = $1;}
-   		| %empty { $$ = Manage_tmp_funcdef_empty(&func_id);}	   
-
-funcdef:	FUNCTION tmp_funcdef{
-       					$$ = Manage_funcdef_FUNCTION_tmp_funcdef(&func_id,scope,yylineno);
-					} LEFT_PARENTHESIS{scope++;func_flag=1;} idlist RIGHT_PARENTHESIS block {
-       			$$ = Manage_funcdef_FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block();
-		}         
+block:	LEFT_BRACE {scope++;} tmp_block RIGHT_BRACE {$$ = Manage_block__LEFT_BRACE_tmp_block_RIGHT_BRACE(sym_table, scope); scope--;}  
 		;
 
-const:		CONST_INT {$$ = Manage_const_CONST_INT();}
-     		| CONST_REAL {$$ = Manage_const_CONST_REAL();}
-		| CONST_STR {$$ = Manage_const_CONST_STR();}
-		| NIL {$$ = Manage_const_NIL();}
-		| BOOL_TRUE {$$ = Manage_const_BOOL_TRUE();}
-		| BOOL_FALSE {$$ = Manage_const_BOOL_FALSE();}
+tmp_funcdef:	IDENTIFIER	{$$ = Manage_tmp_funcdef__IDENTIFIER($1); }
+				| %empty	{$$ = Manage_tmp_funcdef__empty();}
+				;  
+
+funcdef:	FUNCTION tmp_funcdef {$<voidVal>$ = Manage_funcdef__FUNCTION_tmp_funcdef(sym_table, $2, scope, yylineno);} LEFT_PARENTHESIS {scope++;} idlist RIGHT_PARENTHESIS {scope--;} block
+			{$$ = Manage_funcdef__FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block();}
+			;
+
+const:	CONST_INT 		{$$ = Manage_const_CONST_INT();}
+		| CONST_REAL	{$$ = Manage_const_CONST_REAL();}
+		| CONST_STR 	{$$ = Manage_const_CONST_STR();}
+		| NIL 			{$$ = Manage_const_NIL();}
+		| BOOL_TRUE 	{$$ = Manage_const_BOOL_TRUE();}
+		| BOOL_FALSE 	{$$ = Manage_const_BOOL_FALSE();}
 		;
 
-tmp_idlist:	tmp_idlist COMMA IDENTIFIER{$$ = Manage_tmp_idlist_tmp_idlist_COMMA_IDENTIFIER($3,scope,yylineno);}
-	  	| %empty { $$ = Manage_tmp_idlist_empty();}
+tmp_idlist:	tmp_idlist COMMA IDENTIFIER {$$ = Manage_tmp_idlist__tmp_idlist_COMMA_IDENTIFIER($1, $3);}
+			| %empty					{$$ = Manage_tmp_idlist__empty();}
+			;
+
+idlist:	IDENTIFIER tmp_idlist {$$ = Manage_idlist__IDENTIFIER_tmp_idlist(sym_table, $2, $1, scope, yylineno);}
+		| %empty {$$ = Manage_idlist__empty();}
 		;
 
-idlist:		IDENTIFIER {
-      				$$ = Manage_idlist_IDENTIFIER($1,scope,yylineno);
-				}tmp_idlist	{$$=Manage_idlist__IDENTIFIER_tmp_idlist();}
-		| %empty				{$$ = Manage_idlist_empty();}
-		;
-
-ifstmt:		IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt { $$ = Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt();}
-      		| IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt { $$ = Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt_ELSE_stmt();}
+ifstmt:	IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt				{ $$ = Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt();}
+		| IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt	{ $$ = Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt_ELSE_stmt();}
 		;
 
 whilestmt:	WHILE LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {$$ = Manage_WHILE_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt();}
-	 	;
+			;
 
-forstmt:	FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {
-       			$$ = Manage_FOR_LEFT_PARENTHESIS_elist_SEMICLON_expr_SEMICOLON_elist_RIGHT_PARENTHESIS_stmt();
-		}
-       		;
+forstmt:	FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {$$ = Manage_FOR_LEFT_PARENTHESIS_elist_SEMICLON_expr_SEMICOLON_elist_RIGHT_PARENTHESIS_stmt();}
+			;
 
-returnstmt:	RETURN SEMICOLON {$$ = Manage_RETURN_SEMICOLON();}
-	  	| RETURN expr SEMICOLON {$$ = Manage_RETURN_expr_SEMICOLON();}
-		;
+returnstmt:	RETURN SEMICOLON		{$$ = Manage_RETURN_SEMICOLON();}
+			| RETURN expr SEMICOLON	{$$ = Manage_RETURN_expr_SEMICOLON();}
+			;
 
 %%
 
-int yyerror (char* msg){
-	fprintf(stderr, "%s: at line %d, before token: %s\n", msg, yylineno, yytext);
-	fprintf(stderr,"INPUT NOT VALID\n");
-}
-
-int main(int argc , char* argv[]){
-
-	int identified;
-	if(argc > 1){
-		if(!(yyin = fopen(argv[1],"r"))){
-			fprintf(stderr,"Cannot read file: %s\n",argv[1]);
-			return 1;
-		}
-	}
-	else{ 
-		yyin = stdin; 
-	}
-
-	identified = yyparse();
-	if(identified == EOF) {
-	 	   fprintf(stdout, "EOF reached. Success!\n");
-	}
-	return 0;
+int yyerror (const symbol_table &sym_table, char* msg){
+	std::cerr << msg << ": at line " << std::to_string(yylineno) << ", before token: " << yytext << std::endl;
+	std::cerr << "INPUT NOT VALID" << std::endl;
 }

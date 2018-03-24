@@ -20,6 +20,8 @@ namespace syntax_analyzer {
          */
         class entry {
         public:
+            enum sym_type {GLOBAL, LOCAL, FORMAL_ARG, USER_FUNC, LIB_FUNC};
+
             /**
              * Variable to indicate global scoping
              */
@@ -56,6 +58,12 @@ namespace syntax_analyzer {
             const std::string& get_name() const;
 
             /**
+             * Returns the variable's type
+             * @return The variable's type
+             */
+            sym_type get_sym_type() const;
+
+            /**
              * Sets the symbol either visible or invisible within the symbol table.
              * @param visible True to set it visible when lookup() is invoked on a symbol table. False to set it invisible.
              */
@@ -67,14 +75,16 @@ namespace syntax_analyzer {
              * @param scope The scope of the entry
              * @param line The line within the source file where it was encountered
              * @param name The entry's name. Must not be the empty string
+             * @param symbol_type The variable's type.
              * @throws std::runtime_error if name is the empty string
              */
-            entry(unsigned int scope, unsigned int line, const std::string &name);
+            entry(unsigned int scope, unsigned int line, const std::string &name, sym_type symbol_type);
 
         private:
             unsigned int scope, line;
             bool visible;
             std::string name;
+            sym_type symbol_type;
         };
 
         /**
@@ -82,22 +92,14 @@ namespace syntax_analyzer {
          */
         class var_entry:public entry {
         public:
-            enum sym_type {GLOBAL, LOCAL, FORMAL_ARG};
 
             /**
              * Same as entry class
-             * @param symbol_type The variable's type.
+             * @param scope If scope is GLOBAL_SCOPE, then symbol_type is ignored and this entry has GLOBAL symbol_type
+             * @param symbol_type Must be GLOBAL, LOCAL or FORMAL_ARG.
+             * @throws std::runtime_error if symbol_type has is wrong
              */
             var_entry(unsigned int scope, unsigned int line, const std::string &name, sym_type symbol_type);
-
-            /**
-             * Returns the variable's type
-             * @return The variable's type
-             */
-            sym_type get_sym_type() const;
-
-        private:
-            sym_type symbol_type;
         };
 
         /**
@@ -105,30 +107,17 @@ namespace syntax_analyzer {
          */
         class func_entry:public entry {
         public:
-            enum sym_type {USER_FUNC, LIB_FUNC};
 
             /**
              * Same as entry class.
-             * @param symbol_type The function's type
-             * @param arg_list The function's argument list. Each of the var_entries must have a symbol_type equal to FORMAL_ARG
-             * @throws std::runtime_error if the arg_list constriction is not met
+             * @param name. Same as entry except that i the name is empty, then a generic name is instead used
+             * @param symbol_type Must be either USER_FUNC or LIB_FUNC
+             * @throws std::runtime_error if symbol_type has is wrong
              */
-            func_entry(unsigned int scope, unsigned int line, const std::string &name, sym_type symbol_type, const std::vector<var_entry> &arg_list);
+            func_entry(unsigned int scope, unsigned int line, const std::string &name, sym_type symbol_type);
 
-            /**
-             * The function's type
-             * @return The function's type
-             */
-            sym_type get_sym_type() const;
-
-            /**
-             * Returns a reference to a vector containing symbol table entries for its FORMAL arguments
-             * @return The reference to the above vector
-             */
-            std::vector<var_entry>& get_arg_list();
         private:
-            sym_type symbol_type;
-            std::vector<var_entry> arg_list;
+            static unsigned int generic_names;
         };
 
 
@@ -163,6 +152,21 @@ namespace syntax_analyzer {
          * an empty vector is returned.
          */
         std::vector<entry> recursive_lookup(const std::string &key, unsigned int scope) const;
+
+        /**
+         * Checks whether or not there is a visible symbol_table entry for which the given key can refer/has access to and
+         * that entry is a var_entry.
+         *
+         * Vlepe prosvasimothta symvolwn gia to pws orizetai oti ena symvolo (key) borei na exei prosvash (reference)
+         * se kapoio hdh dhlwmeno symvolo (metavlhth or function)
+         *
+         * Note that if the key does not match with a visible value within the symbol table, then that key is
+         * also considered unaccessible (returns false)
+         * @param key The key to check for accessible entries
+         * @param scope The key's scope
+         * @return True, if there is at least one visible variable_entry to which this key refer to. False otherwise
+         */
+        bool is_var_accessible(const std::string &key, unsigned int scope) const;
 
         /**
          * Sets all the symbol table entries in the given scope to invisible.
