@@ -23,6 +23,13 @@ namespace syntax_analyzer {
             enum sym_type {GLOBAL, LOCAL, FORMAL_ARG, USER_FUNC, LIB_FUNC};
 
             /**
+             * Returns the string representation of the symbol_type
+             * @param symbol_type The symbole type
+             * @return The symbol type's string representation
+             */
+            static std::string sym_type_to_string(sym_type symbol_type);
+
+            /**
              * Variable to indicate global scoping
              */
             static const unsigned int GLOBAL_SCOPE;
@@ -122,7 +129,7 @@ namespace syntax_analyzer {
 
 
         /**
-         * Creates a new symbol table with no entries
+         * Creates a new symbol table with only the library functions at GLOBAL_SCOPE
          */
         symbol_table();
 
@@ -174,6 +181,10 @@ namespace syntax_analyzer {
          */
         void hide(unsigned int scope);
 
+        std::string to_string() const;
+
+        friend std::ostream& operator<<(std::ostream &os, const symbol_table &x);
+
     private:
         /**
          * For each scope we have a symbol table. sym_tables[i] gives the symbol table for scope i.
@@ -182,7 +193,6 @@ namespace syntax_analyzer {
         std::vector<
                 std::unordered_map<std::string, std::vector<entry>>
         > sym_tables;
-
     };
 }
 

@@ -40,7 +40,7 @@ namespace syntax_analyzer {
     void_t Manage_expr__expr_NE_expr();
     void_t Manage_expr__expr_AND_expr();
     void_t Manage_expr__expr_OR_expr();
-    void_t Manage_expr__term(void_t term);
+    void_t Manage_expr__term();
 
 	/* Manage_term() */
 	void_t Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS();
@@ -49,7 +49,7 @@ namespace syntax_analyzer {
 	void_t Manage_term__PLUS_PLUS_lvalue();
 	void_t Manage_term__lvalue_PLUS_PLUS();
 	void_t Manage_term__MINUS_MINUS_lvalue();
-	void_t Manage_term__lvalue MINUS_MINUS();
+	void_t Manage_term__lvalue_MINUS_MINUS();
 	void_t Manage_term__primary();
 	
     void_t Manage_assignexpr__lvalue_ASSIGN_expr();

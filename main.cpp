@@ -16,6 +16,8 @@ int main (int argc, char *argv[]) {
         cerr << "Too few arguments. Expected input file." << endl;
         exit(EXIT_FAILURE);
     }
+
+    yyout = stdout;
     if(argc >= 2) {
         if(!(yyin=fopen(argv[1], "r"))) {
             perror("Error while opening input file. Execution aborted");
@@ -34,10 +36,16 @@ int main (int argc, char *argv[]) {
 
     try {
         ret_val = yyparse(sym_table);
-        if (ret_val == 0)
+        if(ret_val == 0) {
             fprintf(yyout, "EOF reached. Success!\n");
+            fprintf(yyout, "%s", sym_table.to_string().c_str());
+        } else {
+            fprintf(yyout, "Error while parsing. yyparse returned %d\n", ret_val);
+        }
     } catch(runtime_error &err) {
         cerr << err.what() << endl;
+        cerr << "Current Symbol Table Is: " << endl;
+        cerr << sym_table;
     }
 
     if(yyin != stdin) {

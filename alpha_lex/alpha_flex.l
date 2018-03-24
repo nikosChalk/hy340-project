@@ -12,7 +12,7 @@
 	#include "../utilities.h"
 	#include "../syntax_analyzer/alpha_bison.hpp"
 	#include "../syntax_analyzer/types.h"
-	#define YY_DECL int yylex(syntax_analyzer::value_stack_t *yylval)
+	#define YY_DECL int yylex()
 
 	/* Global variables within alpha_flex.cpp */
 	static std::stack<int> stack_comment = std::stack<int>();
@@ -63,8 +63,8 @@ const_real		{digit}*"."{digit}+
 "not"					{ return NOT; }
 "or"					{ return OR; }
 "local"					{ return LOCAL; }
-"true"					{ yylval->boolVal = true; return BOOL_TRUE; }
-"false"					{ yylval->boolVal = false; return BOOL_FALSE; }
+"true"					{ yylval.boolVal = true; return BOOL_TRUE; }
+"false"					{ yylval.boolVal = false; return BOOL_FALSE; }
 "nil"					{ return NIL; }
 
 "="						{ return ASSIGN; }
@@ -95,9 +95,9 @@ const_real		{digit}*"."{digit}+
 "."						{ return DOT; }
 ".."					{ return DOUBLE_DOT; }
 
-{const_int}				{ yylval->intVal = std::stoi(std::string(yytext)); return CONST_INT; }
-{const_real}			{ yylval->realVal = std::stod(std::string(yytext)); return CONST_REAL; }
-{id}                    { yylval->strVal = std::string(yytext); return IDENTIFIER; /* id MUST be bellow all the above enumerated rules. */ }
+{const_int}				{ yylval.intVal = std::stoi(std::string(yytext)); return CONST_INT; }
+{const_real}			{ yylval.realVal = std::stod(std::string(yytext)); return CONST_REAL; }
+{id}                    { yylval.strVal = std::string(yytext); return IDENTIFIER; /* id MUST be bellow all the above enumerated rules. */ }
 
 {ws}					{ /*ignore white spaces */ }
 <<EOF>>					{ 	if(YY_START == X_BLOCK_COMMENT)
@@ -116,7 +116,8 @@ const_real		{digit}*"."{digit}+
 <X_STR_ESC>.|\n			{ BEGIN(X_STR); 	current_str.append(utilities::unescape_ch(yytext[0])); /* Appened user's escaped sequence and validate it later */ }
 
 <X_STR>\"				{	/* Identify a non-escaped double quote. This means that the string has closed. We do no append the double quote character. */
-							yylval->strVal = utilities::escape_str(current_str); /* Replace unescaped characters (e.g. char *str = {'\\' 'n'}; ) within str with the corresponding escaped character */
+							/* Replace unescaped characters (e.g. char *str = {'\\' 'n'}; ) within str with the corresponding escaped character */
+							yylval.strVal = std::string(utilities::escape_str(current_str));
 							BEGIN(INITIAL);
 							str_open_lineno = -1; /* For debugging reasons */
 							return CONST_STR;

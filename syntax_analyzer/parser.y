@@ -12,11 +12,11 @@
 
 	using namespace syntax_analyzer;
 
-	extern int yylex(value_stack_t *yylval);
+	extern int yylex();
 	extern int yylineno;
 	extern char *yytext;
 	static unsigned int scope=0;
-	static value_stack_t *lvalue = new value_stack_t;
+	static value_stack_t *lvalue = new value_stack_t();
 
 	int yyerror (const symbol_table &sym_table, char *msg);
 %}
@@ -27,7 +27,6 @@
 %output "alpha_bison.cpp"
 %defines
 %parse-param {syntax_analyzer::symbol_table &sym_table}
-%lex-param {union YYSTYPE *lvalue}
 %debug
 /*%verbose*/
 %start program	/*start symbol*/
@@ -70,7 +69,7 @@
 
 %%
 
-program:	program stmt		{$$ = Manage_program__stmt_program();}
+program:	program	stmt		{$$ = Manage_program__stmt_program();}
        		| %empty			{$$ = Manage_program();}
 			;
 
@@ -109,11 +108,11 @@ term:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS		{$$ = Manage_term__LEFT_PARENTHES
 		| PLUS_PLUS lvalue 							{$$ = Manage_term__PLUS_PLUS_lvalue();}
 		| lvalue PLUS_PLUS 							{$$ = Manage_term__lvalue_PLUS_PLUS();}
 		| MINUS_MINUS lvalue 						{$$ = Manage_term__MINUS_MINUS_lvalue();}
-		| lvalue MINUS_MINUS 						{$$ = Manage_term__lvalue MINUS_MINUS();}
+		| lvalue MINUS_MINUS 						{$$ = Manage_term__lvalue_MINUS_MINUS();}
 		| primary 									{$$ = Manage_term__primary();}
 		;
 
-assignexpr:	lvalue ASSIGN expr {$$=Manage_assignexpr__lvalue_ASSIGN_expr();}
+assignexpr:	lvalue ASSIGN expr {$$ = Manage_assignexpr__lvalue_ASSIGN_expr();}
 			;
 
 primary:	lvalue											{$$ = Manage_primary__lvalue(); }

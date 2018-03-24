@@ -110,7 +110,7 @@ namespace syntax_analyzer {
         return void_value;
     }
     void_t Manage_expr__expr_MOD_expr() {
-        fprintf(yyout, "expr -> expr % expr\n");
+        fprintf(yyout, "expr -> expr %% expr\n");
         return void_value;
     }
     void_t Manage_expr__expr_GT_expr() {
@@ -145,7 +145,7 @@ namespace syntax_analyzer {
         fprintf(yyout, "expr -> expr or expr\n");
         return void_value;
     }
-    void_t Manage_expr__term(void_t term) {
+    void_t Manage_expr__term() {
         fprintf(yyout, "expr -> term\n");
         return void_value;
     }
@@ -174,7 +174,7 @@ namespace syntax_analyzer {
 		fprintf(yyout, "term -> -- lvalue\n");
         return void_value;
 	}
-	void_t Manage_term__lvalue MINUS_MINUS(){
+	void_t Manage_term__lvalue_MINUS_MINUS(){
 		fprintf(yyout, "term -> lvalue --\n");
         return void_value;
 	}
@@ -241,7 +241,7 @@ namespace syntax_analyzer {
 
         /* This rule NEVER inserts to the symbol table */
         vector<symbol_table::entry> global_entries = sym_table.lookup(identifier, symbol_table::entry::GLOBAL_SCOPE);
-        if(!global_entries.empty())
+        if(global_entries.empty())
             throw syntax_error("No global symbol \'" + identifier + "\' found.", lineno);
 
         return void_value;
@@ -324,6 +324,10 @@ namespace syntax_analyzer {
 		fprintf(yyout, "elist -> empty\n");
 		return void_value;
 	}
+    void_t Manage_elist__expr_tmp_elist() {
+        fprintf(yyout, "elist -> expr tmp_elist\n");
+        return void_value;
+    }
 
 	/* Manage_objectdef()*/
 	void_t Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET(){
@@ -348,6 +352,10 @@ namespace syntax_analyzer {
 		fprintf(yyout, "indexed -> empty\n");
 		return void_value;
 	}
+    void_t Manage_indexed__indexedelem_tmp_indexed() {
+        fprintf(yyout, "indexed -> indexelem tmp_indexed\n");
+        return void_value;
+    }
 
 	/* Manage_indexedelem() */
 	void_t Manage_indexedelem_LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE(){
@@ -364,7 +372,7 @@ namespace syntax_analyzer {
         fprintf(yyout, "tmp_block -> <empty>\n");
         return void_value;
     }
-	void_t Manage_block__LEFT_BRACE_tmp_block_RIGHT_BRACE(symbol_table &sym_table, unsigned int scope){
+	void_t Manage_block__LEFT_BRACE_tmp_block_RIGHT_BRACE(symbol_table &sym_table, unsigned int scope) {
 		sym_table.hide(scope);
 		fprintf(yyout, "block -> { stmt }\n");
 		return void_value;
@@ -372,6 +380,7 @@ namespace syntax_analyzer {
 
 	/* Manage_funcdef() */
     string Manage_tmp_funcdef__IDENTIFIER(const string &id) {
+        /* Lookup operation is done by Manage_funcdef__FUNCTION_tmp_funcdef */
         fprintf(yyout, "tmp_funcdef -> IDENTIFIER\n");
         return id;
     }
@@ -388,8 +397,10 @@ namespace syntax_analyzer {
         if(!cur_scope_entries.empty())
             throw syntax_error("Function definition \'" + id
                                + "\' name clashes with already defined function or variable name in the same scope", lineno);
-        if(!global_entries.empty())
-            throw syntax_error("Function definition \'" + id + "\' name shadows library function", lineno);
+
+        for(const auto &entry : global_entries)
+            if(entry.get_sym_type() == symbol_table::entry::LIB_FUNC)
+                throw syntax_error("Function definition \'" + id + "\' name shadows library function", lineno);
 
         //Insert in the symbol table
         sym_table.insert(symbol_table::func_entry(
@@ -405,15 +416,15 @@ namespace syntax_analyzer {
 
 	/* Manage_const() */
 	void_t Manage_const_CONST_INT(){
-		fprintf(yyout, "const -> const int\n");
+		fprintf(yyout, "const -> CONST_INT\n");
 		return void_value;
 	}
 	void_t Manage_const_CONST_REAL(){
-		fprintf(yyout, "const -> const real\n");
+		fprintf(yyout, "const -> CONST_REAL\n");
 		return void_value;
 	}
 	void_t Manage_const_CONST_STR(){
-		fprintf(yyout, "const -> const string\n");
+		fprintf(yyout, "const -> CONST_STRING\n");
 		return void_value;
 	}
 	void_t Manage_const_NIL(){
@@ -456,8 +467,9 @@ namespace syntax_analyzer {
                 throw syntax_error("Formal Argument \'" + cur_id + "\' defined multiple times", lineno);
             }
 
-            if(!global_entries.empty())
-                throw syntax_error("Formal Argument \'" + cur_id + "\' shadows library function", lineno);
+            for(const auto &entry : global_entries)
+                if(entry.get_sym_type() == symbol_table::entry::LIB_FUNC)
+                    throw syntax_error("Formal Argument \'" + cur_id + "\' shadows library function", lineno);
         }
         return tmp_id_list;
     }
