@@ -64,8 +64,8 @@
 
 %%
 
-program:	program stmt	/*TODO: actions */
-       		| %empty
+program:	program stmt		{$$ = Manage_program__stmt_program();}
+       		| %empty			{$$ = Manage_program();}
 			;
 
 stmt:	expr SEMICOLON			{$$ = Manage_stmt__expr_SEMICOLON(); 	}
@@ -80,31 +80,31 @@ stmt:	expr SEMICOLON			{$$ = Manage_stmt__expr_SEMICOLON(); 	}
 		| SEMICOLON 			{$$ = Manage_stmt__SEMICOLON();			}
 		;
 
-expr:	assignexpr 			{/*TODO: bellow actions */}
-    	| expr PLUS expr 	{$$ = Manage_expr__expr_PLUS_expr($1, $3); /* Example of how rules should be */ }
-		| expr MINUS expr 	{$$ = $1 - $3;} 
-		| expr MUL expr 	{$$ = $1 * $3;}
-		| expr DIV expr 	{$$ = $1 / $3;}
-		| expr MOD expr 	{$$ = $1 % $3;}
-		| expr GT expr 		{$$ = ($1 > $3)?1:0;}
-		| expr GE expr 		{$$ = ($1 >= $3)?1:0;}
-		| expr LT expr 		{$$ = ($1 < $3)?1:0;}
-		| expr LE expr 		{$$ = ($1 <= $3)?1:0;}
-		| expr EQ expr 		{$$ = ($1 == $3)?1:0;}
-		| expr NE expr 		{$$ = ($1 != $3)?1:0;}
-		| expr AND expr 	{$$ = ($1 && $3)?1:0;}
-		| expr OR expr 		{$$ = Manage_expr__expr_OR_expr($1, $3); /* Example of how rules should be */ }
-		| term 				{}
+expr:	assignexpr 			{$$ = Manage_expr__assignexpr();}
+    	| expr PLUS expr 	{$$ = Manage_expr__expr_PLUS_expr();}
+		| expr MINUS expr 	{$$ = Manage_expr__expr_MINUS_expr();} 
+		| expr MUL expr 	{$$ = Manage_expr__expr_MUL_expr();}
+		| expr DIV expr 	{$$ = Manage_expr__expr_DIV_expr();}
+		| expr MOD expr 	{$$ = Manage_expr__expr_MOD_expr();}
+		| expr GT expr 		{$$ = Manage_expr__expr_GT_expr();}
+		| expr GE expr 		{$$ = Manage_expr__expr_GE_expr();}
+		| expr LT expr 		{$$ = Manage_expr__expr_LT_expr();}
+		| expr LE expr 		{$$ = Manage_expr__expr_LE_expr();}
+		| expr EQ expr 		{$$ = Manage_expr__expr_EQ_expr();}
+		| expr NE expr 		{$$ = Manage_expr__expr_NE_expr();}
+		| expr AND expr 	{$$ = Manage_expr__expr_AND_expr();}
+		| expr OR expr 		{$$ = Manage_expr__expr_OR_expr();}
+		| term 				{$$ = Manage_expr__term();}
 		;
 
-term:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS
-    	| MINUS expr %prec UMINUS {}	/* TODO: validate this */
-		| NOT expr {}
-		| PLUS_PLUS lvalue {}
-		| lvalue PLUS_PLUS {}
-		| MINUS_MINUS lvalue {}
-		| lvalue MINUS_MINUS {}
-		| primary {}
+term:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS		{$$ = Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS();}
+    	| MINUS expr %prec UMINUS 					{$$ = Manage_term__MINUS_expr();}
+		| NOT expr 									{$$ = Manage_term__NOT_expr();}
+		| PLUS_PLUS lvalue 							{$$ = Manage_term__PLUS_PLUS_lvalue();}
+		| lvalue PLUS_PLUS 							{$$ = Manage_term__lvalue_PLUS_PLUS();}
+		| MINUS_MINUS lvalue 						{$$ = Manage_term__MINUS_MINUS_lvalue();}
+		| lvalue MINUS_MINUS 						{$$ = Manage_term__lvalue MINUS_MINUS();}
+		| primary 									{$$ = Manage_term__primary();}
 		;
 
 assignexpr:	lvalue ASSIGN expr {$$=Manage_assignexpr__lvalue_ASSIGN_expr();}

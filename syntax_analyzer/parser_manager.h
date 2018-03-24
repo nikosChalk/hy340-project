@@ -25,22 +25,8 @@ namespace syntax_analyzer {
     void_t Manage_stmt__funcdef();
     void_t Manage_stmt__SEMICOLON();
 
-    /*TODO: <type> Manage_expr__assignexpr(); */
-    double Manage_expr__expr_PLUS_expr(double opLeft, double opRight);
-    double Manage_expr__expr_MINUS_expr(double opLeft, double opRight);
-    double Manage_expr__expr_MUL_expr(double opLeft, double opRight);
-    double Manage_expr__expr_DIV_expr(double opLeft, double opRight);
-    double Manage_expr__expr_MOD_expr(double opLeft, double opRight);
-    double Manage_expr__expr_GT_expr(double opLeft, double opRight);
-    double Manage_expr__expr_GE_expr(double opLeft, double opRight);
-    double Manage_expr__expr_LT_expr(double opLeft, double opRight);
-    double Manage_expr__expr_LE_expr(double opLeft, double opRight);
-    double Manage_expr__expr_EQ_expr(double opLeft, double opRight);
-    double Manage_expr__expr_NE_expr(double opLeft, double opRight);
-    double Manage_expr__expr_AND_expr(double opLeft, double opRight);
-    double Manage_expr__expr_OR_expr(double opLeft, double opRight);
-    double Manage_expr__term(double term);
-
+    /* Manage_expr__assignexpr() */
+   
     void_t Manage_expr__assignexpr();
     void_t Manage_expr__expr_PLUS_expr();
     void_t Manage_expr__expr_MINUS_expr();
@@ -57,6 +43,16 @@ namespace syntax_analyzer {
     void_t Manage_expr__expr_OR_expr();
     void_t Manage_expr__term(void_t term);
 
+	/* Manage_term() */
+	void_t Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS();
+	void_t Manage_term__MINUS_expr();
+	void_t Manage_term__NOT_expr();
+	void_t Manage_term__PLUS_PLUS_lvalue();
+	void_t Manage_term__lvalue_PLUS_PLUS();
+	void_t Manage_term__MINUS_MINUS_lvalue();
+	void_t Manage_term__lvalue MINUS_MINUS();
+	void_t Manage_term__primary();
+	
     void_t Manage_assignexpr__lvalue_ASSIGN_expr();
 
     void_t Manage_primary__lvalue();

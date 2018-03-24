@@ -12,91 +12,151 @@ extern FILE *yyout;
 namespace syntax_analyzer {
 
     void_t Manage_program__stmt_program() {
-        throw not_implemented_error();
+		fprintf(yyout, "program -> program stmt\n");
+        return void_value;
     }
     void_t Manage_program() {
-        throw not_implemented_error();
+		fprintf(yyout, "program -> empty\n");
+        return void_value;
     }
 
 
     void_t Manage_stmt__expr_SEMICOLON() {
-        throw not_implemented_error();
+        fprintf(yyout, "stmt -> expr ;\n");
+        return void_value;
     }
     void_t Manage_stmt__ifstmt() {
-        throw not_implemented_error();
+		fprintf(yyout, "stmt -> ifstmt\n");
+        return void_value;
     }
     void_t Manage_stmt__whilestmt() {
-        throw not_implemented_error();
+        fprintf(yyout, "stmt -> whilestmt\n");
+        return void_value;
     }
     void_t Manage_stmt__forstmt() {
-        throw not_implemented_error();
+        fprintf(yyout, "stmt -> forstmt\n");
+        return void_value;
     }
     void_t Manage_stmt__returnstmt() {
-        throw not_implemented_error();
+        fprintf(yyout, "stmt -> returnstmt\n");
+        return void_value;
     }
     void_t Manage_stmt__BREAK_SEMICOLON() {
-        throw not_implemented_error();
+        fprintf(yyout, "stmt -> break ;\n");
+        return void_value;
     }
     void_t Manage_stmt__CONTINUE_SEMICOLON() {
-        throw not_implemented_error();
+        fprintf(yyout, "stmt -> continue ;\n");
+        return void_value;
     }
     void_t Manage_stmt__block() {
-        throw not_implemented_error();
+        fprintf(yyout, "stmt -> block\n");
+        return void_value;
     }
     void_t Manage_stmt__funcdef() {
-        throw not_implemented_error();
+        fprintf(yyout, "stmt -> funcdef\n");
+        return void_value;
     }
     void_t Manage_stmt__SEMICOLON() {
-        throw not_implemented_error();
+        fprintf(yyout, "stmt -> ;\n");
+        return void_value;
     }
 
 
     void_t Manage_expr__assignexpr() {
-        throw not_implemented_error();
+        fprintf(yyout, "expr -> assignexpr\n");
+        return void_value;
     }
     void_t Manage_expr__expr_PLUS_expr() {
-        throw not_implemented_error();
+        fprintf(yyout, "expr -> expr + expr\n");
+        return void_value;
     }
     void_t Manage_expr__expr_MINUS_expr() {
-        throw not_implemented_error();
+        fprintf(yyout, "expr -> expr - expr\n");
+        return void_value;
     }
     void_t Manage_expr__expr_MUL_expr() {
-        throw not_implemented_error();
+        fprintf(yyout, "expr -> expr * expr\n");
+        return void_value;
     }
     void_t Manage_expr__expr_DIV_expr() {
-        throw not_implemented_error();
+        fprintf(yyout, "expr -> expr / expr\n");
+        return void_value;
     }
     void_t Manage_expr__expr_MOD_expr() {
-        throw not_implemented_error();
+        fprintf(yyout, "expr -> expr % expr\n");
+        return void_value;
     }
     void_t Manage_expr__expr_GT_expr() {
-        throw not_implemented_error();
+        fprintf(yyout, "expr -> expr > expr\n");
+        return void_value;
     }
     void_t Manage_expr__expr_GE_expr() {
-        throw not_implemented_error();
+        fprintf(yyout, "expr -> expr >= expr\n");
+        return void_value;
     }
     void_t Manage_expr__expr_LT_expr() {
-        throw not_implemented_error();
+        fprintf(yyout, "expr -> expr < expr\n");
+        return void_value;
     }
     void_t Manage_expr__expr_LE_expr() {
-        throw not_implemented_error();
+        fprintf(yyout, "expr -> expr <= expr\n");
+        return void_value;
     }
     void_t Manage_expr__expr_EQ_expr() {
-        throw not_implemented_error();
+        fprintf(yyout, "expr -> expr == expr\n");
+        return void_value;
     }
     void_t Manage_expr__expr_NE_expr() {
-        throw not_implemented_error();
+        fprintf(yyout, "expr -> expr != expr\n");
+        return void_value;
     }
     void_t Manage_expr__expr_AND_expr() {
-        throw not_implemented_error();
+        fprintf(yyout, "expr -> expr and expr\n");
+        return void_value;
     }
     void_t Manage_expr__expr_OR_expr() {
-        throw not_implemented_error();
+        fprintf(yyout, "expr -> expr or expr\n");
+        return void_value;
     }
     void_t Manage_expr__term(void_t term) {
-        throw not_implemented_error();
+        fprintf(yyout, "expr -> term\n");
+        return void_value;
     }
 
+	void_t Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(){
+		fprintf(yyout, "term -> ( expr )\n");
+        return void_value;
+	}
+	void_t Manage_term__MINUS_expr(){
+		fprintf(yyout, "term -> - expr\n");
+        return void_value;
+	}
+	void_t Manage_term__NOT_expr(){
+		fprintf(yyout, "term -> not expr\n");
+        return void_value;
+	}
+	void_t Manage_term__PLUS_PLUS_lvalue(){
+		fprintf(yyout, "term -> ++ lvalue\n");
+        return void_value;
+	}
+	void_t Manage_term__lvalue_PLUS_PLUS(){
+		fprintf(yyout, "term -> lvalue ++\n");
+        return void_value;
+	}
+	void_t Manage_term__MINUS_MINUS_lvalue(){
+		fprintf(yyout, "term -> -- lvalue\n");
+        return void_value;
+	}
+	void_t Manage_term__lvalue MINUS_MINUS(){
+		fprintf(yyout, "term -> lvalue --\n");
+        return void_value;
+	}
+	void_t Manage_term__primary(){
+		fprintf(yyout, "term -> primary\n");
+        return void_value;
+	}
+	
     void_t Manage_assignexpr__lvalue_ASSIGN_expr() {
         fprintf(yyout, "assignexpr -> lvalue = expr\n");
         return void_value;
