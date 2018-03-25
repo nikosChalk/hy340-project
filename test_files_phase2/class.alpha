@@ -9,10 +9,13 @@ function g(x,y) {
 	::print(print);
 
 	function h() {
-		return x+y;
+		//return x+y; //error, passed
 	}
 
 	return h;
+	{
+		h;
+	}
 }
 
 add = (function(x,y) {return x+y;} );

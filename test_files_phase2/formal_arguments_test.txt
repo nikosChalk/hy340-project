@@ -1,3 +1,4 @@
 function f(x, y, z) {}
-function g(x, y, x) {}
-function h(x, cos) {}
+function u(x, y) {}
+//function g(x, y, x) {}
+//function h(x, cos) {}

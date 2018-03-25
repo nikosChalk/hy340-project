@@ -9,7 +9,7 @@ x = y = 1;
 		{
 			z = 7;
 			function g() { 
-				//return z; //error should occur
+				return z; //error should occur
 			}
 		}
 	}

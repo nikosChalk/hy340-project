@@ -8,6 +8,7 @@
 	#include <cstdio>
 	#include <string>
 	#include <iostream>
+	#include <stack>
 	#include "parser_manager.h"
 
 	using namespace syntax_analyzer;
@@ -17,6 +18,8 @@
 	extern char *yytext;
 	static unsigned int scope=0;
 	static value_stack_t *lvalue = new value_stack_t();
+	static std::stack<unsigned int> func_scope_stack = std::stack<unsigned int>();
+	static bool is_func_open = false;
 
 	int yyerror (const symbol_table &sym_table, char const *msg);
 %}
@@ -29,6 +32,10 @@
 %parse-param {syntax_analyzer::symbol_table &sym_table}
 %debug
 %start program	/*start symbol*/
+
+%initial-action {
+	func_scope_stack.push(symbol_table::entry::GLOBAL_SCOPE);
+}
 
 /*declaration of terminal symbols*/
 %token <voidVal>	IF ELSE WHILE FOR FUNCTION RETURN BREAK CONTINUE AND NOT OR LOCAL BOOL_TRUE BOOL_FALSE NIL
@@ -122,15 +129,15 @@ primary:	lvalue											{$$ = Manage_primary__lvalue(); }
 			| const											{$$ = Manage_primary__const(); }
 			;
 
-lvalue:	IDENTIFIER					{$$ = Manage_lvalue__IDENTIFIER(sym_table, $1, scope, yylineno); }
+lvalue:	IDENTIFIER					{$$ = Manage_lvalue__IDENTIFIER(sym_table, $1, scope, yylineno, func_scope_stack.top()); }
 		| LOCAL IDENTIFIER			{$$ = Manage_lvalue__LOCAL_IDENTIFIER(sym_table, $2, scope, yylineno); }
 		| DOUBLE_COLON IDENTIFIER	{$$ = Manage_lvalue__DOUBLE_COLON_IDENTIFIER(sym_table, $2, yylineno); }
 		| member					{$$ = Manage_lvalue__member(); }
 		;
 
-member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER(sym_table, $3, scope, yylineno);}
+member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER(sym_table, $3, scope, yylineno, func_scope_stack.top());}
 		| lvalue LEFT_BRACKET expr RIGHT_BRACKET	{$$=Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET();}
-		| call DOT IDENTIFIER						{$$=Manage_member__call_DOT_IDENTIFIER(sym_table, $3, scope, yylineno);}
+		| call DOT IDENTIFIER						{$$=Manage_member__call_DOT_IDENTIFIER(sym_table, $3, scope, yylineno, func_scope_stack.top());}
 		| call LEFT_BRACKET expr RIGHT_BRACKET		{$$=Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();}
 		;
 
@@ -148,7 +155,7 @@ callsuffix:	normcall		{$$ = Manage_callsuffix_normcall();}
 normcall:	LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_normcall_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();}
 			;
 
-methodcall:	DOUBLE_DOT IDENTIFIER LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(sym_table, $2, scope, yylineno); }
+methodcall:	DOUBLE_DOT IDENTIFIER LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(sym_table, $2, scope, yylineno, func_scope_stack.top()); }
 			;
 
 tmp_elist:	tmp_elist COMMA expr	{$$ = Manage_tmp_elist_tmp_elist_COMMA_expr();}
@@ -185,7 +192,8 @@ tmp_funcdef:	IDENTIFIER	{$$ = Manage_tmp_funcdef__IDENTIFIER($1); }
 				| %empty	{$$ = Manage_tmp_funcdef__empty();}
 				;  
 
-funcdef:	FUNCTION tmp_funcdef {$<voidVal>$ = Manage_funcdef__FUNCTION_tmp_funcdef(sym_table, $2, scope, yylineno);} LEFT_PARENTHESIS {scope++;} idlist RIGHT_PARENTHESIS {scope--;} block
+funcdef:	FUNCTION tmp_funcdef {$<voidVal>$ = Manage_funcdef__FUNCTION_tmp_funcdef(sym_table, $2, scope, yylineno);} LEFT_PARENTHESIS {scope++;} idlist RIGHT_PARENTHESIS {scope--;}
+			{func_scope_stack.push(scope);} block {func_scope_stack.pop();}
 			{$$ = Manage_funcdef__FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block();}
 			;
 

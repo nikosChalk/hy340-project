@@ -60,17 +60,21 @@ namespace syntax_analyzer {
     void_t Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS();
     void_t Manage_primary__const();
 
-	symbol_table::entry::lvalue_type Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int scope, unsigned int lineno);
-	symbol_table::entry::lvalue_type Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int scope, unsigned int lineno);
+	symbol_table::entry::lvalue_type Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const std::string &identifier,
+                                                               unsigned int scope, unsigned int lineno, unsigned int active_function_scope);
+	symbol_table::entry::lvalue_type Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const std::string &identifier,
+                                                                     unsigned int scope, unsigned int lineno);
     /**
      * This rule NEVER inserts to the symbol table
      */
 	symbol_table::entry::lvalue_type Manage_lvalue__DOUBLE_COLON_IDENTIFIER(const symbol_table &sym_table, const std::string &identifier, unsigned int lineno);
 	symbol_table::entry::lvalue_type Manage_lvalue__member();
 
-    void_t Manage_member__lvalue_DOT_IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int scope, unsigned int lineno);
+    void_t Manage_member__lvalue_DOT_IDENTIFIER(symbol_table &sym_table, const std::string &identifier,
+                                                unsigned int scope, unsigned int lineno, unsigned int active_function_scope);
     void_t Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET();
-    void_t Manage_member__call_DOT_IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int scope, unsigned int lineno);
+    void_t Manage_member__call_DOT_IDENTIFIER(symbol_table &sym_table, const std::string &identifier,
+                                              unsigned int scope, unsigned int lineno, unsigned int active_function_scope);
     void_t Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();
 
 	/* Manage_call() */
@@ -88,7 +92,8 @@ namespace syntax_analyzer {
 	/* Manage_methodcall() */
     void_t Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(symbol_table &sym_table,
                                                                                              const std::string &identifier,
-                                                                                             unsigned int scope, unsigned int lineno);
+                                                                                             unsigned int scope, unsigned int lineno,
+                                                                                             unsigned int active_function_scope);
 
     /* Manage_elist() */
 	void_t Manage_tmp_elist_tmp_elist_COMMA_expr();

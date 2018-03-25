@@ -1,8 +1,8 @@
 function f() {
 	function f() {}
-	function f() {}
+	//function f() {}
 }
 x = 1;
-function x() {}
-function sin() {}
+//function x() {}
+//function sin() {}
 y(1, 2);

@@ -154,31 +154,19 @@ namespace syntax_analyzer {
         return v;
     }
 
-    symbol_table::entry::lvalue_type symbol_table::exists_accessible_symbol(const string &key, unsigned int scope) const {
+    symbol_table::entry::lvalue_type symbol_table::exists_accessible_symbol(const string &key, unsigned int key_scope,
+                                                                            unsigned int active_func_scope) const {
         bool reached_funcdef = false;
 
         //Search scopes until any formal args
-        while(scope>0 && !reached_funcdef) {
-            if(sym_tables.size() > scope) { //Check if this scope's symbol table exists
-
-                //Check if this scope is accessible. This is done by checking if scope contains ANY VISIBLE user function.
-                //If a user visible function is found, then that means that we have crossed the function's bounds
-                for(const auto &scope_pairs : this->sym_tables.at(scope))
-                    for(const auto &pair_value : scope_pairs.second)
-                        if(pair_value.is_visible() && pair_value.get_sym_type() == symbol_table::entry::USER_FUNC)
-                            reached_funcdef = true;
-
-                if(!reached_funcdef) {
-                    //We didn't cross a function. Check if this symbol already exists
-                    vector<entry> scope_entries = this->lookup(key, scope);
-                    if (!scope_entries.empty())
-                        return scope_entries.at(0).get_lvalue_type();
-                }
-            }
-            scope--;
+        while(key_scope>0 && key_scope>active_func_scope) {
+            vector<entry> scope_entries = this->lookup(key, key_scope);
+            if(!scope_entries.empty())
+                return scope_entries.at(0).get_lvalue_type();
+            key_scope--;
         }
 
-        //Not found in outer scopes without crossing a function. Check global scope
+        //Not found in outer scopes without crossing a function. Check global key_scope
         vector<entry> global_entries = this->lookup(key, entry::GLOBAL_SCOPE);
         if(!global_entries.empty())
             return global_entries.at(0).get_lvalue_type();

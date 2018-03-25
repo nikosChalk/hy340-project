@@ -177,11 +177,11 @@ namespace syntax_analyzer {
          * Note that if the key does not match with a visible value within the symbol table, then that key is
          * also considered unaccessible (returns false)
          * @param key The key to check for accessible entries
-         * @param scope The key's scope
+         * @param key_scope The key's scope
          * @return The first found accessible symbol's table entry type
          * @throws std::runtime_error if no accessible entry was found
          */
-        entry::lvalue_type exists_accessible_symbol(const std::string &key, unsigned int scope) const;
+        entry::lvalue_type exists_accessible_symbol(const std::string &key, unsigned int key_scope, unsigned int active_func_scope) const;
 
         /**
          * Sets all the symbol table entries in the given scope to invisible.

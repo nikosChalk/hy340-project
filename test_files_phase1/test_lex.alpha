@@ -3,7 +3,7 @@
 /* /*nested /*some more nested comments*/ comments /*nested comments3 */ */ /*nested comments3 */ */
 
 string = "tralala\n\t";
-quoteInString = "\"foo\"-\"bar\""
+quoteInString = "\"foo\"-\"bar\"";
 commentsInString = "/*(**)/**/lala/ / ///****";
 
 function /*some comment*/ foo() {
@@ -12,7 +12,7 @@ function /*some comment*/ foo() {
 	local y = 123.456;
 	for(local /*another comment here*/ i = 0; i < 10; ++i) {
 		if (::string == quoteInString)
-			y += 5.4;
+			y = y+5.4;
 		else if (y > 1000)
 			break;
 		local t_a_b_l_e = [1, 2, 3];

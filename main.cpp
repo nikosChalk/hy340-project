@@ -36,12 +36,11 @@ int main (int argc, char *argv[]) {
 
     try {
         ret_val = yyparse(sym_table);
-        if(ret_val == 0) {
-            fprintf(yyout, "%s", sym_table.to_string().c_str());
+        fprintf(yyout, "%s", sym_table.to_string().c_str());
+        if(ret_val == 0)
             fprintf(yyout, "EOF reached. Success!\n");
-        } else {
+        else
             fprintf(yyout, "Error while parsing. yyparse returned %d\n", ret_val);
-        }
     } catch(runtime_error &err) {
         cerr << "Current Symbol Table Is: " << endl;
         cerr << sym_table;
