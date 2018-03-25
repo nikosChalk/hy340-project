@@ -1,5 +1,5 @@
 x;
 print(::x);
-print(::y);
-function f() {return ::x}
+//print(::y); //error should occur.
+function f() {return ::x;}
 { print(::f());}

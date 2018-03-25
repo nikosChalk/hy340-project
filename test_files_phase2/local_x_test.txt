@@ -4,7 +4,7 @@ local print;
 local x;
 {
 	local f;
-	local print;
+	//local print; //should occur error
 
 }
 function g(a,b) { local a = local b;}

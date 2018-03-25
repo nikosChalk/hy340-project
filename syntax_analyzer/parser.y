@@ -168,7 +168,7 @@ tmp_indexed:	tmp_indexed COMMA indexedelem	{$$ = Manage_tmp_indexed_tmp_indexed_
 				;
 
 indexed:	indexedelem tmp_indexed	{$$ = Manage_indexed__indexedelem_tmp_indexed();}
-			| %empty				{$$ = Manage_indexed_empty();}
+/*			| %empty				{$$ = Manage_indexed_empty();} //We changed the grammar because it was disambiguous*/
 			;
 
 indexedelem:	LEFT_BRACE expr COLON expr RIGHT_BRACE {$$ = Manage_indexedelem_LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE();}

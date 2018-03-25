@@ -4,11 +4,13 @@ x = y = 1;
 	a = 3;
 	function f (z) {
 		x = 4;
-		a = 5;
+		//a = 5; //error should occur here.
 		y = 6;
 		{
 			z = 7;
-			function g() { return z; }
+			function g() { 
+				//return z; //error should occur
+			}
 		}
 	}
 }

@@ -160,15 +160,19 @@ namespace syntax_analyzer {
         //Search scopes until any formal args
         while(scope>0 && !reached_funcdef) {
             if(sym_tables.size() > scope) { //Check if this scope's symbol table exists
-                vector<entry> scope_entries = this->lookup(key, scope);
-                if (!scope_entries.empty()) {
-                    return scope_entries.at(0).get_lvalue_type();
-                } else {
-                    //Check if we reached the formal args ==> reached function declaration
-                    for (const auto &scope_pairs : this->sym_tables.at(scope))
-                        for (const auto &pair_value : scope_pairs.second)
-                            if (pair_value.get_sym_type() == symbol_table::entry::FORMAL_ARG)
-                                reached_funcdef = true;
+
+                //Check if this scope is accessible. This is done by checking if scope contains ANY VISIBLE user function.
+                //If a user visible function is found, then that means that we have crossed the function's bounds
+                for(const auto &scope_pairs : this->sym_tables.at(scope))
+                    for(const auto &pair_value : scope_pairs.second)
+                        if(pair_value.is_visible() && pair_value.get_sym_type() == symbol_table::entry::USER_FUNC)
+                            reached_funcdef = true;
+
+                if(!reached_funcdef) {
+                    //We didn't cross a function. Check if this symbol already exists
+                    vector<entry> scope_entries = this->lookup(key, scope);
+                    if (!scope_entries.empty())
+                        return scope_entries.at(0).get_lvalue_type();
                 }
             }
             scope--;
