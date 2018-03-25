@@ -6,6 +6,8 @@
 #include "symbol_table.h"
 #include <vector>
 #include <iostream>
+#include <cassert>
+#include <typeinfo>
 #include "../not_implemented_error.h"
 #include "syntax_error.h"
 
@@ -22,18 +24,24 @@ namespace syntax_analyzer {
      * member -> call.id
      * etc.
      * But not for ::id or local id.
+     * @return The identifier's symbol_table::entry::lvalue_type
+     * @throws syntax_analyzer::syntax_error
      */
-    static void handle_identifier(symbol_table &sym_table, const string &identifier, unsigned int scope, unsigned int lineno) {
+    static symbol_table::entry::lvalue_type handle_identifier(symbol_table &sym_table, const string &identifier, unsigned int scope, unsigned int lineno) {
         vector<symbol_table::entry> all_entries = sym_table.recursive_lookup(identifier, scope);
 
         if (all_entries.empty()) { /* This identifier was not found in any enclosing scope. ==> Insert new symbol */
             sym_table.insert(symbol_table::var_entry(
                     scope, lineno, identifier, symbol_table::entry::LOCAL
             ));
+            return symbol_table::entry::lvalue_type::VAR;
         } else {
             /* We need to check if there is an accessible reference in all_entries */
-            if (!sym_table.is_var_accessible(identifier, scope))
+            try {
+                return sym_table.exists_accessible_symbol(identifier, scope);
+            } catch(runtime_error &err) {
                 throw syntax_error("Variable \'" + identifier + "\' does not refer to any accessible symbol.", lineno);
+            }
         }
     }
 
@@ -138,11 +146,11 @@ namespace syntax_analyzer {
         return void_value;
     }
     void_t Manage_expr__expr_AND_expr() {
-        fprintf(yyout, "expr -> expr and expr\n");
+        fprintf(yyout, "expr -> expr AND expr\n");
         return void_value;
     }
     void_t Manage_expr__expr_OR_expr() {
-        fprintf(yyout, "expr -> expr or expr\n");
+        fprintf(yyout, "expr -> expr OR expr\n");
         return void_value;
     }
     void_t Manage_expr__term() {
@@ -151,31 +159,39 @@ namespace syntax_analyzer {
     }
 
 	void_t Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(){
-		fprintf(yyout, "term -> ( expr )\n");
+		fprintf(yyout, "term -> (expr)\n");
         return void_value;
 	}
 	void_t Manage_term__MINUS_expr(){
-		fprintf(yyout, "term -> - expr\n");
+		fprintf(yyout, "term -> -expr\n");
         return void_value;
 	}
 	void_t Manage_term__NOT_expr(){
-		fprintf(yyout, "term -> not expr\n");
+		fprintf(yyout, "term -> NOT expr\n");
         return void_value;
 	}
-	void_t Manage_term__PLUS_PLUS_lvalue(){
-		fprintf(yyout, "term -> ++ lvalue\n");
+	void_t Manage_term__PLUS_PLUS_lvalue(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno){
+		fprintf(yyout, "term -> ++lvalue\n");
+        if(lvalueType == symbol_table::entry::lvalue_type::FUNC)
+            throw syntax_error("Function id cannot be used as an l-value", lineno);
         return void_value;
 	}
-	void_t Manage_term__lvalue_PLUS_PLUS(){
-		fprintf(yyout, "term -> lvalue ++\n");
+	void_t Manage_term__lvalue_PLUS_PLUS(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno){
+		fprintf(yyout, "term ->lvalue ++\n");
+        if(lvalueType == symbol_table::entry::lvalue_type::FUNC)
+            throw syntax_error("Function id cannot be used as an l-value", lineno);
         return void_value;
 	}
-	void_t Manage_term__MINUS_MINUS_lvalue(){
-		fprintf(yyout, "term -> -- lvalue\n");
+	void_t Manage_term__MINUS_MINUS_lvalue(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno){
+		fprintf(yyout, "term -> --lvalue\n");
+        if(lvalueType == symbol_table::entry::lvalue_type::FUNC)
+            throw syntax_error("Function id cannot be used as an l-value", lineno);
         return void_value;
 	}
-	void_t Manage_term__lvalue_MINUS_MINUS(){
-		fprintf(yyout, "term -> lvalue --\n");
+	void_t Manage_term__lvalue_MINUS_MINUS(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno){
+		fprintf(yyout, "term -> lvalue--\n");
+        if(lvalueType == symbol_table::entry::lvalue_type::FUNC)
+            throw syntax_error("Function id cannot be used as an l-value", lineno);
         return void_value;
 	}
 	void_t Manage_term__primary(){
@@ -183,8 +199,10 @@ namespace syntax_analyzer {
         return void_value;
 	}
 	
-    void_t Manage_assignexpr__lvalue_ASSIGN_expr() {
+    void_t Manage_assignexpr__lvalue_ASSIGN_expr(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno) {
         fprintf(yyout, "assignexpr -> lvalue = expr\n");
+        if(lvalueType == symbol_table::entry::lvalue_type::FUNC)
+            throw syntax_error("Function id cannot be used as an l-value", lineno);
         return void_value;
     }
 
@@ -210,15 +228,15 @@ namespace syntax_analyzer {
         return void_value;
     }
 
-    void_t Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int scope, unsigned int lineno) {
+    symbol_table::entry::lvalue_type Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int scope, unsigned int lineno) {
         fprintf(yyout, "lvalue -> IDENTIFIER\n");
-        handle_identifier(sym_table, identifier, scope, lineno);
-        return void_value;
+        return handle_identifier(sym_table, identifier, scope, lineno);
     }
-    void_t Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int scope, unsigned int lineno) {
+    symbol_table::entry::lvalue_type Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int scope, unsigned int lineno) {
         fprintf(yyout, "lvalue -> local IDENTIFIER\n");
         vector<symbol_table::entry> scope_entries = sym_table.lookup(identifier, scope);
         vector<symbol_table::entry> global_entries = sym_table.lookup(identifier, symbol_table::entry::GLOBAL_SCOPE);
+        symbol_table::entry::lvalue_type ret_val;
 
         if(scope_entries.empty()) {
             //Check if it shadows a library function
@@ -233,10 +251,14 @@ namespace syntax_analyzer {
             sym_table.insert(symbol_table::var_entry(
                scope, lineno, identifier, symbol_table::entry::LOCAL
             ));
+            ret_val = symbol_table::entry::lvalue_type::VAR;
+        } else {
+            assert(scope_entries.size() == 1);
+            ret_val = scope_entries.at(0).get_lvalue_type();
         }
-        return void_value;
+        return ret_val;
     }
-    void_t Manage_lvalue__DOUBLE_COLON_IDENTIFIER(const symbol_table &sym_table, const string &identifier, unsigned int lineno) {
+    symbol_table::entry::lvalue_type Manage_lvalue__DOUBLE_COLON_IDENTIFIER(const symbol_table &sym_table, const string &identifier, unsigned int lineno) {
         fprintf(yyout, "lvalue -> ::IDENTIFIER\n");
 
         /* This rule NEVER inserts to the symbol table */
@@ -244,11 +266,12 @@ namespace syntax_analyzer {
         if(global_entries.empty())
             throw syntax_error("No global symbol \'" + identifier + "\' found.", lineno);
 
-        return void_value;
+        assert(global_entries.size() == 1);
+        return global_entries.at(0).get_lvalue_type();
     }
-    void_t Manage_lvalue__member() {
+    symbol_table::entry::lvalue_type Manage_lvalue__member() {
         fprintf(yyout, "lvalue -> member\n");
-        return void_value;
+        return symbol_table::entry::lvalue_type::VAR;
     }
 
 

@@ -46,13 +46,13 @@ namespace syntax_analyzer {
 	void_t Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS();
 	void_t Manage_term__MINUS_expr();
 	void_t Manage_term__NOT_expr();
-	void_t Manage_term__PLUS_PLUS_lvalue();
-	void_t Manage_term__lvalue_PLUS_PLUS();
-	void_t Manage_term__MINUS_MINUS_lvalue();
-	void_t Manage_term__lvalue_MINUS_MINUS();
+	void_t Manage_term__PLUS_PLUS_lvalue(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
+	void_t Manage_term__lvalue_PLUS_PLUS(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
+	void_t Manage_term__MINUS_MINUS_lvalue(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
+	void_t Manage_term__lvalue_MINUS_MINUS(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
 	void_t Manage_term__primary();
 	
-    void_t Manage_assignexpr__lvalue_ASSIGN_expr();
+    void_t Manage_assignexpr__lvalue_ASSIGN_expr(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
 
     void_t Manage_primary__lvalue();
     void_t Manage_primary__call();
@@ -60,13 +60,13 @@ namespace syntax_analyzer {
     void_t Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS();
     void_t Manage_primary__const();
 
-    void_t Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int scope, unsigned int lineno);
-    void_t Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int scope, unsigned int lineno);
+	symbol_table::entry::lvalue_type Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int scope, unsigned int lineno);
+	symbol_table::entry::lvalue_type Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int scope, unsigned int lineno);
     /**
      * This rule NEVER inserts to the symbol table
      */
-    void_t Manage_lvalue__DOUBLE_COLON_IDENTIFIER(const symbol_table &sym_table, const std::string &identifier, unsigned int lineno);
-    void_t Manage_lvalue__member();
+	symbol_table::entry::lvalue_type Manage_lvalue__DOUBLE_COLON_IDENTIFIER(const symbol_table &sym_table, const std::string &identifier, unsigned int lineno);
+	symbol_table::entry::lvalue_type Manage_lvalue__member();
 
     void_t Manage_member__lvalue_DOT_IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int scope, unsigned int lineno);
     void_t Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET();

@@ -4,5 +4,7 @@ function g(x,y) {
 	print(x+y);
 }
 
+g = 3;
+
 add = (function(x,y) {return x+y;} );
 

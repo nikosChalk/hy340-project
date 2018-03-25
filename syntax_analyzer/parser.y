@@ -18,7 +18,7 @@
 	static unsigned int scope=0;
 	static value_stack_t *lvalue = new value_stack_t();
 
-	int yyerror (const symbol_table &sym_table, char *msg);
+	int yyerror (const symbol_table &sym_table, char const *msg);
 %}
 
 /* bison parameters */
@@ -28,7 +28,6 @@
 %defines
 %parse-param {syntax_analyzer::symbol_table &sym_table}
 %debug
-/*%verbose*/
 %start program	/*start symbol*/
 
 /*declaration of terminal symbols*/
@@ -45,7 +44,8 @@
 
 /* type declaration of non-terminal symbols, defined b the grammar */
 %type <strVector> idlist
-%type <voidVal> program stmt expr term assignexpr primary lvalue member
+%type <lvalueType> lvalue
+%type <voidVal> program stmt expr term assignexpr primary member
 %type <voidVal> call callsuffix normcall methodcall elist objectdef indexed indexedelem block
 %type <voidVal> funcdef const ifstmt whilestmt forstmt returnstmt
 
@@ -105,14 +105,14 @@ expr:	assignexpr 			{$$ = Manage_expr__assignexpr();}
 term:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS		{$$ = Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS();}
     	| MINUS expr %prec UMINUS 					{$$ = Manage_term__MINUS_expr();}	/* Special precedence for this rule */
 		| NOT expr 									{$$ = Manage_term__NOT_expr();}
-		| PLUS_PLUS lvalue 							{$$ = Manage_term__PLUS_PLUS_lvalue();}
-		| lvalue PLUS_PLUS 							{$$ = Manage_term__lvalue_PLUS_PLUS();}
-		| MINUS_MINUS lvalue 						{$$ = Manage_term__MINUS_MINUS_lvalue();}
-		| lvalue MINUS_MINUS 						{$$ = Manage_term__lvalue_MINUS_MINUS();}
+		| PLUS_PLUS lvalue 							{$$ = Manage_term__PLUS_PLUS_lvalue($2, yylineno);}
+		| lvalue PLUS_PLUS 							{$$ = Manage_term__lvalue_PLUS_PLUS($1, yylineno);}
+		| MINUS_MINUS lvalue 						{$$ = Manage_term__MINUS_MINUS_lvalue($2, yylineno);}
+		| lvalue MINUS_MINUS 						{$$ = Manage_term__lvalue_MINUS_MINUS($1, yylineno);}
 		| primary 									{$$ = Manage_term__primary();}
 		;
 
-assignexpr:	lvalue ASSIGN expr {$$ = Manage_assignexpr__lvalue_ASSIGN_expr();}
+assignexpr:	lvalue ASSIGN expr {$$ = Manage_assignexpr__lvalue_ASSIGN_expr($1, yylineno);}
 			;
 
 primary:	lvalue											{$$ = Manage_primary__lvalue(); }
@@ -133,8 +133,6 @@ member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER(sym_
 		| call DOT IDENTIFIER						{$$=Manage_member__call_DOT_IDENTIFIER(sym_table, $3, scope, yylineno);}
 		| call LEFT_BRACKET expr RIGHT_BRACKET		{$$=Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();}
 		;
-
-/*************GIWRGOS*************/
 
 call:	call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS	{$$ = Manage_call_call_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();}
 		| lvalue callsuffix								{$$ = Manage_call_lvalue_callsuffix();}
@@ -223,7 +221,7 @@ returnstmt:	RETURN SEMICOLON		{$$ = Manage_RETURN_SEMICOLON();}
 
 %%
 
-int yyerror (const symbol_table &sym_table, char* msg){
+int yyerror (const symbol_table &sym_table, char const *msg){
 	std::cerr << msg << ": at line " << std::to_string(yylineno) << ", before token: " << yytext << std::endl;
 	std::cerr << "INPUT NOT VALID" << std::endl;
 }

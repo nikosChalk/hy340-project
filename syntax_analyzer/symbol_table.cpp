@@ -4,6 +4,7 @@
 #include <sstream>
 #include <cassert>
 #include "symbol_table.h"
+#include "../not_implemented_error.h"
 
 
 using namespace std;
@@ -59,8 +60,19 @@ namespace syntax_analyzer {
         return name;
     }
 
+    symbol_table::entry::sym_type symbol_table::entry::get_sym_type() const {
+        return this->symbol_type;
+    }
+
     void symbol_table::entry::set_visible(bool visible) {
         this->visible = visible;
+    }
+
+    symbol_table::entry::lvalue_type symbol_table::entry::get_lvalue_type() const {
+        if(this->symbol_type == sym_type::LIB_FUNC || this->symbol_type == sym_type::USER_FUNC)
+            return lvalue_type::FUNC;
+        else
+            return lvalue_type::VAR;
     }
 
     /* ~~~~~~ symbol_table::var_entry implementation ~~~~~~ */
@@ -68,10 +80,6 @@ namespace syntax_analyzer {
         : entry(scope, line, name, (scope == GLOBAL_SCOPE ? GLOBAL :  symbol_type)) {
         if(symbol_type != GLOBAL && symbol_type != LOCAL && symbol_type != FORMAL_ARG)
             throw std::runtime_error("Invalid symbol type");
-    }
-
-    symbol_table::entry::sym_type symbol_table::entry::get_sym_type() const {
-        return this->symbol_type;
     }
 
     /* ~~~~~~ symbol_table::func_entry implementation ~~~~~~ */
@@ -146,7 +154,7 @@ namespace syntax_analyzer {
         return v;
     }
 
-    bool symbol_table::is_var_accessible(const string &key, unsigned int scope) const {
+    symbol_table::entry::lvalue_type symbol_table::exists_accessible_symbol(const string &key, unsigned int scope) const {
         bool reached_funcdef = false;
 
         //Search scopes until any formal args
@@ -154,7 +162,7 @@ namespace syntax_analyzer {
             if(sym_tables.size() > scope) { //Check if this scope's symbol table exists
                 vector<entry> scope_entries = this->lookup(key, scope);
                 if (!scope_entries.empty()) {
-                    return true;
+                    return scope_entries.at(0).get_lvalue_type();
                 } else {
                     //Check if we reached the formal args ==> reached function declaration
                     for (const auto &scope_pairs : this->sym_tables.at(scope))
@@ -168,7 +176,11 @@ namespace syntax_analyzer {
 
         //Not found in outer scopes without crossing a function. Check global scope
         vector<entry> global_entries = this->lookup(key, entry::GLOBAL_SCOPE);
-        return !global_entries.empty();
+        if(!global_entries.empty())
+            return global_entries.at(0).get_lvalue_type();
+
+        //No accessible symbol found
+        throw std::runtime_error("No accessible symbol found");
     }
 
     void symbol_table::hide(unsigned int scope) {

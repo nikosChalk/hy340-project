@@ -21,6 +21,7 @@ namespace syntax_analyzer {
         class entry {
         public:
             enum sym_type {GLOBAL, LOCAL, FORMAL_ARG, USER_FUNC, LIB_FUNC};
+            enum lvalue_type{VAR, FUNC};
 
             /**
              * Returns the string representation of the symbol_type
@@ -75,6 +76,12 @@ namespace syntax_analyzer {
              * @param visible True to set it visible when lookup() is invoked on a symbol table. False to set it invisible.
              */
             void set_visible(bool visible);
+
+            /**
+             * Returns the type of this symbol table entry as if it were an lvalue
+             * @return The type of this symbol
+             */
+            lvalue_type get_lvalue_type() const;
 
         protected:
             /**
@@ -171,9 +178,10 @@ namespace syntax_analyzer {
          * also considered unaccessible (returns false)
          * @param key The key to check for accessible entries
          * @param scope The key's scope
-         * @return True, if there is at least one visible variable_entry to which this key refer to. False otherwise
+         * @return The first found accessible symbol's table entry type
+         * @throws std::runtime_error if no accessible entry was found
          */
-        bool is_var_accessible(const std::string &key, unsigned int scope) const;
+        entry::lvalue_type exists_accessible_symbol(const std::string &key, unsigned int scope) const;
 
         /**
          * Sets all the symbol table entries in the given scope to invisible.
