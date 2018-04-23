@@ -4,7 +4,6 @@
 #include <sstream>
 #include <cassert>
 #include "symbol_table.h"
-#include "../not_implemented_error.h"
 
 
 using namespace std;
@@ -38,6 +37,10 @@ namespace syntax_analyzer {
             throw runtime_error("SymbolTable's entry name must not be the empty string");
         this->name = name;
         this->symbol_type = symbol_type;
+    }
+    symbol_table::entry::entry() {
+        /* Disable default constructor */
+        assert(false);
     }
 
     unsigned int symbol_table::entry::get_scope() const {
@@ -90,83 +93,88 @@ namespace syntax_analyzer {
     }
 
     /* ~~~~~~ symbol_table implementation ~~~~~~ */
+    vector<string> symbol_table::lib_func_names = vector<string> {
+        "print", "input", "objectmemberkeys", "objecttotalmembers", "objectcopy",
+        "totalarguments", "argument", "typeof", "strtonum", "sqrt", "cos", "sin"
+    };
+
     symbol_table::symbol_table() {
         this->sym_tables = vector<
-                unordered_map<string, vector<entry>>
+                unordered_map<string, vector<entry*>>
         >();
 
-        vector<string> lib_func_names = {"print", "input", "objectmemberkeys", "objecttotalmembers", "objectcopy",
-                            "totalarguments", "argument", "typeof", "strtonum", "sqrt", "cos", "sin"};
-
-        this->sym_tables.push_back(unordered_map<string, vector<entry>>());
+        this->sym_tables.push_back(unordered_map<string, vector<entry*>>());
         for(const string &lib_func_name : lib_func_names)
-            this->sym_tables.at(entry::GLOBAL_SCOPE)[lib_func_name].push_back(func_entry(
+            this->sym_tables.at(entry::GLOBAL_SCOPE)[lib_func_name].push_back(new func_entry(
                     entry::GLOBAL_SCOPE, 0, lib_func_name, entry::LIB_FUNC
             ));
     }
 
-    void symbol_table::insert(const entry &sym_entry) {
-        unsigned int scope = sym_entry.get_scope();
+    void symbol_table::insert(entry *sym_entry) {
+        unsigned int scope = sym_entry->get_scope();
 
         /* Add symbol tables for scopes not yet encountered */
         while(this->sym_tables.size() <= scope)  /* Max scope is less than the entry's scope. Add symbol tables */
-            this->sym_tables.push_back(unordered_map<string, vector<entry>>());
+            this->sym_tables.push_back(unordered_map<string, vector<entry*>>());
 
         /* Check if there is already a visible entry in scope */
-        if(!(this->lookup(sym_entry.get_name(), scope).empty()))
-            throw runtime_error("A visible entry with the given name (" + sym_entry.get_name() + ") already exists in that" +
-                                "scope(" + std::to_string(sym_entry.get_scope()) + ")");
+        if(!(this->lookup(sym_entry->get_name(), scope).empty()))
+            throw runtime_error("A visible entry with the given name (" + sym_entry->get_name() + ") already exists in that" +
+                                "scope(" + std::to_string(sym_entry->get_scope()) + ")");
 
         /* Insert given entry in the symbol table */
-        this->sym_tables[scope][sym_entry.get_name()].push_back(sym_entry);
+        this->sym_tables[scope][sym_entry->get_name()].push_back(sym_entry);
     }
 
-    vector<symbol_table::entry> symbol_table::lookup(const string &key, unsigned int scope) const {
+    vector<symbol_table::entry*> symbol_table::lookup(const string &key, unsigned int scope) const {
         if(scope >= this->sym_tables.size())    /* The requested scope does not even have a symbol table */
-            return vector<entry>();
+            return vector<entry*>();
 
         /* Get the symbol table for the given scope */
-        const unordered_map<string, vector<entry>>& scope_map = this->sym_tables.at(scope);
+        const unordered_map<string, vector<entry*>>& scope_map = this->sym_tables.at(scope);
         if(scope_map.find(key) == scope_map.end())  /* The key does not exist in the given scope */
-            return vector<entry>();
+            return vector<entry*>();
 
         /* The key exists within the given scope. Get all visible entries */
-        const vector<entry>& scope_vector = scope_map.at(key);   /* Vector with all entries which have the given key and are in the given scope */
-        vector<entry> v = vector<entry>();
+        const vector<entry*> &scope_vector = scope_map.at(key);   /* Vector with all entries which have the given key and are in the given scope */
+        vector<entry*> ret_val = vector<entry*>();
 
-        for(unsigned long i=0; i<scope_vector.size(); i++)
-            if(scope_vector.at(i).is_visible())
-                v.push_back(scope_vector.at(i));
-        return v;
+        for(auto const &item : scope_vector)
+            if(item->is_visible())
+                ret_val.push_back(item);
+        return ret_val;
     }
 
-    vector<symbol_table::entry> symbol_table::recursive_lookup(const string &key, unsigned int scope) const {
-        vector<entry> v = vector<entry>();
+    vector<symbol_table::entry*> symbol_table::recursive_lookup(const string &key, unsigned int scope) const {
+        vector<entry*> ret_val = vector<entry*>();
 
+        //Search all copes
         while(scope >= entry::GLOBAL_SCOPE) {
-            vector<entry> scope_vector = this->lookup(key, scope);
-            v.insert(v.end(), scope_vector.begin(), scope_vector.end());
+            vector<entry*> scope_vector = this->lookup(key, scope);
+            ret_val.insert(ret_val.end(), scope_vector.begin(), scope_vector.end());
             if(scope != 0)
                 scope--;
             else
                 break;
         }
-        return v;
+        return ret_val;
     }
 
-    symbol_table::entry::lvalue_type symbol_table::exists_accessible_symbol(const string &key, unsigned int key_scope,
+    symbol_table::entry* symbol_table::exists_accessible_symbol(const string &key, unsigned int key_scope,
                                                                             unsigned int active_func_scope) const {
 
-        //Search scopes until any formal args
+        //Search scopes until we find an entry or we run out of symbol table entris
         while(true) {
-            vector<entry> scope_entries = this->lookup(key, key_scope);
+            vector<entry*> scope_entries = this->lookup(key, key_scope);
             if(!scope_entries.empty()) {
+                entry *found_entry = scope_entries.at(0);
+
                 if(key_scope>active_func_scope || key_scope == entry::GLOBAL_SCOPE) { //Symbol found is accessible
-                    return scope_entries.at(0).get_lvalue_type();
+                    return found_entry;
                 } else {
                     //Scope now is outside of the function. Only function symbols are now accessible
-                    if(scope_entries.at(0).get_lvalue_type() == entry::lvalue_type::FUNC)
-                        return entry::lvalue_type::FUNC;
+                    if(found_entry->get_lvalue_type() == entry::lvalue_type::FUNC)
+                        return found_entry;
                     else
                         throw std::runtime_error("Symbol found but not accessible");
                 }
@@ -184,9 +192,9 @@ namespace syntax_analyzer {
             return;
 
         /* Symbol table for the given scope exists */
-        for(auto &map_iterator : this->sym_tables.at(scope))    /* Iterate over the entries of the symbol table */
-            for(auto &entries_iterator : map_iterator.second)    /* Iterate over entries with the same key */
-                entries_iterator.set_visible(false);
+        for(auto &scope_map : this->sym_tables.at(scope))    /* Iterate over the entries of the symbol table */
+            for(auto &entry : scope_map.second)    /* Iterate over entries with the same key */
+                entry->set_visible(false);
     }
 
     std::string symbol_table::to_string() const {
@@ -194,10 +202,10 @@ namespace syntax_analyzer {
 
         for(unsigned int i=0; i<this->sym_tables.size(); i++) {
             ss << "~~~~~~~~~~~~~~~~      SCOPE #" + std::to_string(i) + "      ~~~~~~~~~~~~~~~~" << endl;
-            for(const auto &pair : this->sym_tables[i]) {
-                for(const auto &sym_entry : pair.second) {
-                    ss << "\"" << sym_entry.get_name() << "\" [" << entry::sym_type_to_string(sym_entry.get_sym_type()) << "] "
-                        << "(line " << sym_entry.get_line() << ") (scope " << sym_entry.get_scope() << ")" << endl;
+            for(const auto &scope_map : this->sym_tables.at(i)) {
+                for(const auto &entry : scope_map.second) {
+                    ss << "\"" << entry->get_name() << "\" [" << entry::sym_type_to_string(entry->get_sym_type()) << "] "
+                        << "(line " << entry->get_line() << ") (scope " << entry->get_scope() << ")" << endl;
                 }
             }
             ss << endl;

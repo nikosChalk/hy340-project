@@ -95,6 +95,8 @@ namespace syntax_analyzer {
             entry(unsigned int scope, unsigned int line, const std::string &name, sym_type symbol_type);
 
         private:
+            entry();    /* Disable default constructor */
+
             unsigned int scope, line;
             bool visible;
             std::string name;
@@ -106,12 +108,13 @@ namespace syntax_analyzer {
          */
         class var_entry:public entry {
         public:
+            enum scope_space {PROGRAM_VAR, FUNCTION_LOCAL_VAR, FORMAL_ARGUMENT_VAR};
 
             /**
              * Same as entry class
              * @param scope If scope is GLOBAL_SCOPE, then symbol_type is ignored and this entry has GLOBAL symbol_type
              * @param symbol_type Must be GLOBAL, LOCAL or FORMAL_ARG.
-             * @throws std::runtime_error if symbol_type has is wrong
+             * @throws std::runtime_error if symbol_type is not one of the above
              */
             var_entry(unsigned int scope, unsigned int line, const std::string &name, sym_type symbol_type);
         };
@@ -146,7 +149,7 @@ namespace syntax_analyzer {
          * @param entry The entry to insert
          * @throws std::runtime_error if the entry already exists in its scope and that entry is visible
          */
-        void insert(const entry &entry);
+        void insert(entry *entry);
 
         /**
          * Searches the given key in the given scope. Note that symbol table entries which have been set to invisible,
@@ -156,7 +159,7 @@ namespace syntax_analyzer {
          * @return A vector with visible symbol table entries for each match. If no visible value was found with the given key,
          * an empty vector is returned.
          */
-        std::vector<entry> lookup(const std::string &key, unsigned int scope) const;
+        std::vector<entry*> lookup(const std::string &key, unsigned int scope) const;
 
         /**
          * Same as lookup, except that it searches from the given scope, up to the global scope (entry::GLOBAL_SCOPE)
@@ -165,7 +168,7 @@ namespace syntax_analyzer {
          * @return A vector with visible symbol table entries for each match. If no visible value was found with the given key,
          * an empty vector is returned.
          */
-        std::vector<entry> recursive_lookup(const std::string &key, unsigned int scope) const;
+        std::vector<entry*> recursive_lookup(const std::string &key, unsigned int scope) const;
 
         /**
          * Checks whether or not there is a visible symbol_table entry for which the given key can refer/has access to
@@ -177,10 +180,10 @@ namespace syntax_analyzer {
          * also considered unaccessible (returns false)
          * @param key The key to check for accessible entries
          * @param key_scope The key's scope
-         * @return The first found accessible symbol's table entry type
+         * @return The first found accessible symbol
          * @throws std::runtime_error if no accessible entry was found
          */
-        entry::lvalue_type exists_accessible_symbol(const std::string &key, unsigned int key_scope, unsigned int active_func_scope) const;
+        entry* exists_accessible_symbol(const std::string &key, unsigned int key_scope, unsigned int active_func_scope) const;
 
         /**
          * Sets all the symbol table entries in the given scope to invisible.
@@ -193,12 +196,14 @@ namespace syntax_analyzer {
         friend std::ostream& operator<<(std::ostream &os, const symbol_table &x);
 
     private:
+        static std::vector<std::string> lib_func_names;
+
         /**
          * For each scope we have a symbol table. sym_tables[i] gives the symbol table for scope i.
          * A given symbol_table is just a hash table with names as keys and entry* as values.
          */
         std::vector<
-                std::unordered_map<std::string, std::vector<entry>>
+                std::unordered_map<std::string, std::vector<entry*>>
         > sym_tables;
     };
 }

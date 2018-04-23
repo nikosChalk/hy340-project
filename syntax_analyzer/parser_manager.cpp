@@ -210,17 +210,17 @@ namespace syntax_analyzer {
         fprintf(yyout, "lvalue -> IDENTIFIER\n");
 
         //bellow code used to be the "handle" function during phase2
-        vector<symbol_table::entry> all_entries = sym_table.recursive_lookup(identifier, scope);
+        vector<symbol_table::entry*> all_entries = sym_table.recursive_lookup(identifier, scope);
 
         if (all_entries.empty()) { /* This identifier was not found in any enclosing scope. ==> Insert new symbol */
-            sym_table.insert(symbol_table::var_entry(
+            sym_table.insert(new symbol_table::var_entry(
                     scope, lineno, identifier, symbol_table::entry::LOCAL
             ));
             return symbol_table::entry::lvalue_type::VAR;
         } else {
             /* We need to check if there is an accessible reference in all_entries */
             try {
-                return sym_table.exists_accessible_symbol(identifier, scope, active_function_scope);
+                return sym_table.exists_accessible_symbol(identifier, scope, active_function_scope)->get_lvalue_type();
             } catch(runtime_error &err) {
                 throw syntax_error("Variable \'" + identifier + "\': " + err.what(), lineno);
             }
@@ -228,27 +228,27 @@ namespace syntax_analyzer {
     }
     symbol_table::entry::lvalue_type Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int scope, unsigned int lineno) {
         fprintf(yyout, "lvalue -> local IDENTIFIER\n");
-        vector<symbol_table::entry> scope_entries = sym_table.lookup(identifier, scope);
-        vector<symbol_table::entry> global_entries = sym_table.lookup(identifier, symbol_table::entry::GLOBAL_SCOPE);
+        vector<symbol_table::entry*> scope_entries = sym_table.lookup(identifier, scope);
+        vector<symbol_table::entry*> global_entries = sym_table.lookup(identifier, symbol_table::entry::GLOBAL_SCOPE);
         symbol_table::entry::lvalue_type ret_val;
 
         if(scope_entries.empty()) {
             //Check if it shadows a library function
             bool lib_func_clash = false;
             for(const auto &global_entry: global_entries)
-                if(global_entry.get_sym_type() == symbol_table::entry::LIB_FUNC)
+                if(global_entry->get_sym_type() == symbol_table::entry::LIB_FUNC)
                     lib_func_clash = true;
             if(lib_func_clash)
                 throw syntax_error("Local variable \'" + identifier + "\' name shadows library function", lineno);
 
             //Identifier is okay. Add it to the symbol table
-            sym_table.insert(symbol_table::var_entry(
+            sym_table.insert(new symbol_table::var_entry(
                scope, lineno, identifier, symbol_table::entry::LOCAL
             ));
             ret_val = symbol_table::entry::lvalue_type::VAR;
         } else {
             assert(scope_entries.size() == 1);
-            ret_val = scope_entries.at(0).get_lvalue_type();
+            ret_val = scope_entries.at(0)->get_lvalue_type();
         }
         return ret_val;
     }
@@ -256,12 +256,12 @@ namespace syntax_analyzer {
         fprintf(yyout, "lvalue -> ::IDENTIFIER\n");
 
         /* This rule NEVER inserts to the symbol table */
-        vector<symbol_table::entry> global_entries = sym_table.lookup(identifier, symbol_table::entry::GLOBAL_SCOPE);
+        vector<symbol_table::entry*> global_entries = sym_table.lookup(identifier, symbol_table::entry::GLOBAL_SCOPE);
         if(global_entries.empty())
             throw syntax_error("No global symbol \'" + identifier + "\' found.", lineno);
 
         assert(global_entries.size() == 1);
-        return global_entries.at(0).get_lvalue_type();
+        return global_entries.at(0)->get_lvalue_type();
     }
     symbol_table::entry::lvalue_type Manage_lvalue__member() {
         fprintf(yyout, "lvalue -> member\n");
@@ -402,8 +402,8 @@ namespace syntax_analyzer {
     }
 
     void_t Manage_funcdef__FUNCTION_tmp_funcdef(symbol_table &sym_table, const std::string &id, unsigned int scope, unsigned int lineno) {
-        vector<symbol_table::entry> cur_scope_entries = sym_table.lookup(id, scope);  /* Look up only at the current scope */
-        vector<symbol_table::entry> global_entries = sym_table.lookup(id, symbol_table::entry::GLOBAL_SCOPE);  /* Look up only at the global scope */
+        vector<symbol_table::entry*> cur_scope_entries = sym_table.lookup(id, scope);  /* Look up only at the current scope */
+        vector<symbol_table::entry*> global_entries = sym_table.lookup(id, symbol_table::entry::GLOBAL_SCOPE);  /* Look up only at the global scope */
 
         //Sanity checks
         if(!cur_scope_entries.empty())
@@ -411,11 +411,11 @@ namespace syntax_analyzer {
                                + "\' name clashes with already defined function or variable name in the same scope", lineno);
 
         for(const auto &entry : global_entries)
-            if(entry.get_sym_type() == symbol_table::entry::LIB_FUNC)
+            if(entry->get_sym_type() == symbol_table::entry::LIB_FUNC)
                 throw syntax_error("Function definition \'" + id + "\' name shadows library function", lineno);
 
         //Insert in the symbol table
-        sym_table.insert(symbol_table::func_entry(
+        sym_table.insert(new symbol_table::func_entry(
            scope, lineno, id, symbol_table::entry::USER_FUNC
         ));
 
@@ -465,14 +465,16 @@ namespace syntax_analyzer {
 	}
     vector<string> Manage_idlist__IDENTIFIER_tmp_idlist(symbol_table &sym_table, vector<string> tmp_id_list, string identifier,
                                                 unsigned int scope, unsigned int lineno) {
+        //The gammer rule idlist-> (zero, one, or more "id") is used only by the grammar rule funcdef
+
         fprintf(yyout, "idlist -> IDENTIFIER tmp_idlist\n");
         tmp_id_list.push_back(identifier);
         for(const auto &cur_id : tmp_id_list) {
-            vector<symbol_table::entry> cur_scope_entries = sym_table.lookup(cur_id, scope);  /* Look up only at the current scope */
-            vector<symbol_table::entry> global_entries = sym_table.lookup(cur_id, symbol_table::entry::GLOBAL_SCOPE);  /* Look up only at the global scope */
+            vector<symbol_table::entry*> cur_scope_entries = sym_table.lookup(cur_id, scope);  /* Look up only at the current scope */
+            vector<symbol_table::entry*> global_entries = sym_table.lookup(cur_id, symbol_table::entry::GLOBAL_SCOPE);  /* Look up only at the global scope */
 
             if(cur_scope_entries.empty()) {
-                sym_table.insert(symbol_table::var_entry(
+                sym_table.insert(new symbol_table::var_entry(
                     scope, lineno, cur_id, symbol_table::entry::FORMAL_ARG
                 ));
             } else {
@@ -480,7 +482,7 @@ namespace syntax_analyzer {
             }
 
             for(const auto &entry : global_entries)
-                if(entry.get_sym_type() == symbol_table::entry::LIB_FUNC)
+                if(entry->get_sym_type() == symbol_table::entry::LIB_FUNC)
                     throw syntax_error("Formal Argument \'" + cur_id + "\' shadows library function", lineno);
         }
         return tmp_id_list;
