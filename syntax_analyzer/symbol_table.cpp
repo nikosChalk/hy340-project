@@ -79,10 +79,21 @@ namespace syntax_analyzer {
     }
 
     /* ~~~~~~ symbol_table::var_entry implementation ~~~~~~ */
-    symbol_table::var_entry::var_entry(unsigned int scope, unsigned int line, const string &name, sym_type symbol_type)
+    symbol_table::var_entry::var_entry(unsigned int scope, unsigned int line, const string &name, sym_type symbol_type,
+                                       scope_space ss, unsigned int ss_offset)
         : entry(scope, line, name, (scope == GLOBAL_SCOPE ? GLOBAL :  symbol_type)) {
         if(symbol_type != GLOBAL && symbol_type != LOCAL && symbol_type != FORMAL_ARG)
             throw std::runtime_error("Invalid symbol type");
+        this->ss = ss;
+        this->ss_offset = ss_offset;
+    }
+
+    scope_space symbol_table::var_entry::get_scope_space() const {
+        return this->ss;
+    }
+
+    unsigned int symbol_table::var_entry::get_scope_space_offset() const {
+        return this->ss_offset;
     }
 
     /* ~~~~~~ symbol_table::func_entry implementation ~~~~~~ */

@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include "scope_handler.h"
 
 namespace syntax_analyzer {
 
@@ -24,16 +25,16 @@ namespace syntax_analyzer {
             enum lvalue_type{VAR, FUNC};
 
             /**
+             * Variable to indicate global scoping
+             */
+            static const unsigned int GLOBAL_SCOPE;
+
+            /**
              * Returns the string representation of the symbol_type
              * @param symbol_type The symbole type
              * @return The symbol type's string representation
              */
             static std::string sym_type_to_string(sym_type symbol_type);
-
-            /**
-             * Variable to indicate global scoping
-             */
-            static const unsigned int GLOBAL_SCOPE;
 
             /**
              * Returns the scope of this entry.
@@ -108,15 +109,33 @@ namespace syntax_analyzer {
          */
         class var_entry:public entry {
         public:
-            enum scope_space {PROGRAM_VAR, FUNCTION_LOCAL_VAR, FORMAL_ARGUMENT_VAR};
 
             /**
              * Same as entry class
              * @param scope If scope is GLOBAL_SCOPE, then symbol_type is ignored and this entry has GLOBAL symbol_type
              * @param symbol_type Must be GLOBAL, LOCAL or FORMAL_ARG.
+             * @param ss The variable's scope space. (Opws orizetai sto frondhsthrio)
+             * @param ss_offset The variable's offset within its scope. (Opws orizetai sto frondhsthrio)
              * @throws std::runtime_error if symbol_type is not one of the above
              */
-            var_entry(unsigned int scope, unsigned int line, const std::string &name, sym_type symbol_type);
+            var_entry(unsigned int scope, unsigned int line, const std::string &name, sym_type symbol_type,
+                      scope_space ss, unsigned int ss_offset);
+
+            /**
+             * Returns the scope space of the variable
+             * @return The scope space of the variable
+             */
+            scope_space get_scope_space() const;
+
+            /**
+             * Returns the variable's offset within its scope
+             * @return The variable's offset within its scope
+             */
+            unsigned int get_scope_space_offset() const;
+
+        private:
+            unsigned int ss_offset;
+            scope_space ss;
         };
 
         /**
@@ -180,6 +199,8 @@ namespace syntax_analyzer {
          * also considered unaccessible (returns false)
          * @param key The key to check for accessible entries
          * @param key_scope The key's scope
+         * @param active_func_scope The scope of the function which contains the id with name "key". If no function
+         * is active, entry::GLOBAL_SCOPE should be passed.
          * @return The first found accessible symbol
          * @throws std::runtime_error if no accessible entry was found
          */
