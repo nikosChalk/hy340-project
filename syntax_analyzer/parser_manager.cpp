@@ -1,6 +1,4 @@
-//
-// Created by nikos on 3/20/18.
-//
+
 
 #include "parser_manager.h"
 #include "symbol_table.h"
@@ -8,8 +6,8 @@
 #include <iostream>
 #include <cassert>
 #include <typeinfo>
-#include "../not_implemented_error.h"
 #include "syntax_error.h"
+#include "scope_handler.h"
 
 using namespace std;
 
@@ -17,10 +15,7 @@ extern FILE *yyout;
 
 namespace syntax_analyzer {
 
-
-    static symbol_table::entry::lvalue_type handle_identifier(symbol_table &sym_table, const string &identifier,
-                                                              unsigned int scope, unsigned int lineno, unsigned int active_func_scope) {
-    }
+    static scope_handler scope_handler; /*Default constructor called*/
 
     void_t Manage_program__stmt_program() {
 		fprintf(yyout, "program -> program stmt\n");
@@ -205,11 +200,11 @@ namespace syntax_analyzer {
         return void_value;
     }
 
-    symbol_table::entry::lvalue_type Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const string &identifier,
-                                                               unsigned int scope, unsigned int lineno, unsigned int active_function_scope) {
+    symbol_table::entry::lvalue_type Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int lineno) {
         fprintf(yyout, "lvalue -> IDENTIFIER\n");
 
-        //bellow code used to be the "handle" function during phase2
+        unsigned int scope = scope_handler.get_current_scope();
+        unsigned int active_function_scope = scope_handler.get_active_function_scope();
         vector<symbol_table::entry*> all_entries = sym_table.recursive_lookup(identifier, scope);
 
         if (all_entries.empty()) { /* This identifier was not found in any enclosing scope. ==> Insert new symbol */
@@ -226,8 +221,10 @@ namespace syntax_analyzer {
             }
         }
     }
-    symbol_table::entry::lvalue_type Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int scope, unsigned int lineno) {
+    symbol_table::entry::lvalue_type Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int lineno) {
         fprintf(yyout, "lvalue -> local IDENTIFIER\n");
+
+        unsigned int scope = scope_handler.get_current_scope();
         vector<symbol_table::entry*> scope_entries = sym_table.lookup(identifier, scope);
         vector<symbol_table::entry*> global_entries = sym_table.lookup(identifier, symbol_table::entry::GLOBAL_SCOPE);
         symbol_table::entry::lvalue_type ret_val;
@@ -376,32 +373,45 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_block() */
-    void_t Manage_tmp_block__tmp_block_stmt() {
-        fprintf(yyout, "tmp_block -> tmp_block stmt\n");
+    void_t Manage_stmts__stmts_stmt() {
+        fprintf(yyout, "stmts -> stmts stmt\n");
         return void_value;
     }
-    void_t Manage_tmp_block__empty() {
-        fprintf(yyout, "tmp_block -> <empty>\n");
+    void_t Manage_stmts__empty() {
+        fprintf(yyout, "stmts -> <empty>\n");
         return void_value;
     }
-	void_t Manage_block__LEFT_BRACE_tmp_block_RIGHT_BRACE(symbol_table &sym_table, unsigned int scope) {
-		sym_table.hide(scope);
-		fprintf(yyout, "block -> { stmt }\n");
+    void_t Manage_block_open__LEFT_BRACE() {
+        fprintf(yyout, "block_open -> {\n");
+        scope_handler.increase_scope();
+        return void_value;
+    }
+    void_t Manage_block_close__RIGHT_BRACE() {
+        fprintf(yyout, "block_close -> }\n");
+        scope_handler.decrease_scope();
+        return void_value;
+    }
+	void_t Manage_block__block_open_stmts_block_close(symbol_table &sym_table) {
+		sym_table.hide(scope_handler.get_current_scope()+1);    //+1 because the block closed and thus we exited that scope
+		fprintf(yyout, "block -> { stmts }\n");
 		return void_value;
 	}
 
 	/* Manage_funcdef() */
-    string Manage_tmp_funcdef__IDENTIFIER(const string &id) {
+    string Manage_funcname__IDENTIFIER(const string &id) {
         /* Lookup operation is done by Manage_funcdef__FUNCTION_tmp_funcdef */
-        fprintf(yyout, "tmp_funcdef -> IDENTIFIER\n");
+        fprintf(yyout, "funcname -> IDENTIFIER\n");
         return id;
     }
-    string Manage_tmp_funcdef__empty() {
-        fprintf(yyout, "tmp_funcdef -> <empty>\n");
+    string Manage_funcname__empty() {
+        fprintf(yyout, "funcname -> <empty>\n");
         return string();    /* Empty string */
     }
 
-    void_t Manage_funcdef__FUNCTION_tmp_funcdef(symbol_table &sym_table, const std::string &id, unsigned int scope, unsigned int lineno) {
+    void_t Manage_funcprefix__FUNCTION_funcname(symbol_table &sym_table, const std::string &id, unsigned int lineno) {
+        fprintf(yyout, "funcprefix -> FUNCTION funcname\n");
+
+        unsigned int scope = scope_handler.get_current_scope();
         vector<symbol_table::entry*> cur_scope_entries = sym_table.lookup(id, scope);  /* Look up only at the current scope */
         vector<symbol_table::entry*> global_entries = sym_table.lookup(id, symbol_table::entry::GLOBAL_SCOPE);  /* Look up only at the global scope */
 
@@ -419,9 +429,27 @@ namespace syntax_analyzer {
            scope, lineno, id, symbol_table::entry::USER_FUNC
         ));
 
+        scope_handler.enter_formal_arg_ss();
+        scope_handler.increase_scope();
 		return void_value;
 	}
-    void_t Manage_funcdef__FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block() {
+    void_t Manage_funcargs__LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS() {
+        fprintf(yyout, "funcars -> ( idlist )\n");
+        scope_handler.exit_formal_arg_ss();
+        scope_handler.decrease_scope();
+
+        scope_handler.enter_function_ss();
+        //"block" grammar rule will increase scope again
+        return void_value;
+    };
+
+    void_t Manage_funcbody__block() {
+        fprintf(yyout, "funcbody -> block\n");
+        scope_handler.exit_function_ss();
+        //scope already reduced by "block" grammar rule
+        return void_value;
+    }
+    void_t Manage_funcdef__funcprefix_funcargs_funcbody() {
         fprintf(yyout, "funcdef -> FUNCTION IDENTIFIER (idlist) block\n");
         return void_value;
     }
@@ -463,11 +491,12 @@ namespace syntax_analyzer {
 		fprintf(yyout, "tmp_idlist -> tmp_idlist , IDENTIFIER\n");
         return tmp_id_list;
 	}
-    vector<string> Manage_idlist__IDENTIFIER_tmp_idlist(symbol_table &sym_table, vector<string> tmp_id_list, string identifier,
-                                                unsigned int scope, unsigned int lineno) {
+    vector<string> Manage_idlist__IDENTIFIER_tmp_idlist(symbol_table &sym_table, vector<string> tmp_id_list, string identifier, unsigned int lineno) {
         //The gammer rule idlist-> (zero, one, or more "id") is used only by the grammar rule funcdef
 
         fprintf(yyout, "idlist -> IDENTIFIER tmp_idlist\n");
+        unsigned int scope = scope_handler.get_current_scope();
+
         tmp_id_list.push_back(identifier);
         for(const auto &cur_id : tmp_id_list) {
             vector<symbol_table::entry*> cur_scope_entries = sym_table.lookup(cur_id, scope);  /* Look up only at the current scope */

@@ -119,13 +119,13 @@ namespace syntax_analyzer {
              * @throws std::runtime_error if symbol_type is not one of the above
              */
             var_entry(unsigned int scope, unsigned int line, const std::string &name, sym_type symbol_type,
-                      scope_space ss, unsigned int ss_offset);
+                      scope_handler::scope_space ss, unsigned int ss_offset);
 
             /**
              * Returns the scope space of the variable
              * @return The scope space of the variable
              */
-            scope_space get_scope_space() const;
+            scope_handler::scope_space get_scope_space() const;
 
             /**
              * Returns the variable's offset within its scope
@@ -135,7 +135,7 @@ namespace syntax_analyzer {
 
         private:
             unsigned int ss_offset;
-            scope_space ss;
+            scope_handler::scope_space ss;
         };
 
         /**

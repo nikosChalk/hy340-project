@@ -16,10 +16,9 @@
 	extern int yylex();
 	extern int yylineno;
 	extern char *yytext;
-	static unsigned int scope=0;
-	static value_stack_t *lvalue = new value_stack_t();
-	static std::stack<unsigned int> func_scope_stack = std::stack<unsigned int>();
-	static bool is_func_open = false;
+
+//	static value_stack_t *lvalue = new value_stack_t();
+	
 
 	int yyerror (const symbol_table &sym_table, char const *msg);
 %}
@@ -34,7 +33,7 @@
 %start program	/*start symbol*/
 
 %initial-action {
-	func_scope_stack.push(symbol_table::entry::GLOBAL_SCOPE);
+	
 }
 
 /*declaration of terminal symbols*/
@@ -59,7 +58,8 @@
 /* type declaration of non-terminal helper symbols, defined by us */
 %type <strVector> tmp_idlist
 %type <strVal> tmp_funcdef
-%type <voidVal> tmp_elist tmp_indexed tmp_block
+%type <voidVal> tmp_elist tmp_indexed
+%type <voidVal> block_open stmts block_close
 
 /* Define the priority of tokens */
 %right		ASSIGN
@@ -129,8 +129,8 @@ primary:	lvalue											{$$ = Manage_primary__lvalue(); }
 			| const											{$$ = Manage_primary__const(); }
 			;
 
-lvalue:	IDENTIFIER					{$$ = Manage_lvalue__IDENTIFIER(sym_table, $1, scope, yylineno, func_scope_stack.top()); }
-		| LOCAL IDENTIFIER			{$$ = Manage_lvalue__LOCAL_IDENTIFIER(sym_table, $2, scope, yylineno); }
+lvalue:	IDENTIFIER					{$$ = Manage_lvalue__IDENTIFIER(sym_table, $1, yylineno); }
+		| LOCAL IDENTIFIER			{$$ = Manage_lvalue__LOCAL_IDENTIFIER(sym_table, $2, yylineno); }
 		| DOUBLE_COLON IDENTIFIER	{$$ = Manage_lvalue__DOUBLE_COLON_IDENTIFIER(sym_table, $2, yylineno); }
 		| member					{$$ = Manage_lvalue__member(); }
 		;
@@ -175,26 +175,38 @@ tmp_indexed:	tmp_indexed COMMA indexedelem	{$$ = Manage_tmp_indexed_tmp_indexed_
 				;
 
 indexed:	indexedelem tmp_indexed	{$$ = Manage_indexed__indexedelem_tmp_indexed();}
-/*			| %empty				{$$ = Manage_indexed_empty();} //We changed the grammar because it was disambiguous*/
 			;
 
 indexedelem:	LEFT_BRACE expr COLON expr RIGHT_BRACE {$$ = Manage_indexedelem_LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE();}
 				;
 
-tmp_block:	tmp_block stmt	{$$ = Manage_tmp_block__tmp_block_stmt();}
-			| %empty		{$$ = Manage_tmp_block__empty();}
+stmts:		stmts stmt		{$$ = Manage_stmts__stmts_stmt();}
+			| %empty		{$$ = Manage_stmts__empty();}
 			;	 
 
-block:	LEFT_BRACE {scope++;} tmp_block RIGHT_BRACE {$$ = Manage_block__LEFT_BRACE_tmp_block_RIGHT_BRACE(sym_table, scope); scope--;}  
+block_open:		LEFT_BRACE	{$$ = Manage_block_open__LEFT_BRACE();}
+				;
+
+block_close:	RIGHT_BRACE {$$ = Manage_block_close__RIGHT_BRACE();}
+				;
+
+block:	block_open stmts block_close {$$ = Manage_block__block_open_stmts_block_close(sym_table);}
 		;
 
-tmp_funcdef:	IDENTIFIER	{$$ = Manage_tmp_funcdef__IDENTIFIER($1); }
-				| %empty	{$$ = Manage_tmp_funcdef__empty();}
-				;  
+funcname:	IDENTIFIER	{$$ = Manage_funcname__IDENTIFIER($1); }
+			| %empty	{$$ = Manage_funcname__empty();}
+			;
 
-funcdef:	FUNCTION tmp_funcdef {$<voidVal>$ = Manage_funcdef__FUNCTION_tmp_funcdef(sym_table, $2, scope, yylineno);} LEFT_PARENTHESIS {scope++;} idlist RIGHT_PARENTHESIS {scope--;}
-			{func_scope_stack.push(scope);} block {func_scope_stack.pop();}
-			{$$ = Manage_funcdef__FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block();}
+funcprefix:	FUNCTION funcname {$$ = Manage_funcprefix__FUNCTION_funcname(sym_table, $2, yylineno);}
+			;
+
+funcargs:	LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS	{$$ = Manage_funcargs__LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS();}
+			;
+
+funcbody:	block {$$ = Manage_funcbody__block();}
+			;
+
+funcdef:	funcprefix funcargs funcbody	{$$ = Manage_funcdef__funcprefix_funcargs_funcbody();}
 			;
 
 const:	CONST_INT 		{$$ = Manage_const_CONST_INT();}
@@ -209,7 +221,7 @@ tmp_idlist:	tmp_idlist COMMA IDENTIFIER {$$ = Manage_tmp_idlist__tmp_idlist_COMM
 			| %empty					{$$ = Manage_tmp_idlist__empty();}
 			;
 
-idlist:	IDENTIFIER tmp_idlist {$$ = Manage_idlist__IDENTIFIER_tmp_idlist(sym_table, $2, $1, scope, yylineno);}
+idlist:	IDENTIFIER tmp_idlist {$$ = Manage_idlist__IDENTIFIER_tmp_idlist(sym_table, $2, $1, yylineno);}
 		| %empty {$$ = Manage_idlist__empty();}
 		;
 

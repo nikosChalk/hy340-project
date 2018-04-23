@@ -65,10 +65,8 @@ namespace syntax_analyzer {
      * @throws syntax_error if no accessible entry was found for the given identifier
      * @return The identifier's symbol_table::entry::lvalue_type
      */
-	symbol_table::entry::lvalue_type Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const std::string &identifier,
-                                                               unsigned int scope, unsigned int lineno, unsigned int active_function_scope);
-	symbol_table::entry::lvalue_type Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const std::string &identifier,
-                                                                     unsigned int scope, unsigned int lineno);
+	symbol_table::entry::lvalue_type Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int lineno);
+	symbol_table::entry::lvalue_type Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int lineno);
     /**
      * This rule NEVER inserts to the symbol table
      */
@@ -115,19 +113,28 @@ namespace syntax_analyzer {
 	void_t Manage_indexedelem_LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE();
 
 	/* Manage_block() */
-    void_t Manage_tmp_block__tmp_block_stmt();
-    void_t Manage_tmp_block__empty();
-	void_t Manage_block__LEFT_BRACE_tmp_block_RIGHT_BRACE(symbol_table &sym_table, unsigned int);
+    void_t Manage_stmts__stmts_stmt();
+    void_t Manage_stmts__empty();
+    void_t Manage_block_open__LEFT_BRACE();
+    void_t Manage_block_close__RIGHT_BRACE();
+
+	void_t Manage_block__block_open_stmts_block_close(symbol_table &sym_table);
 
 	/* Manage_funcdef() */
-    std::string Manage_tmp_funcdef__IDENTIFIER(const std::string &id);
-    std::string Manage_tmp_funcdef__empty();
+    std::string Manage_funcname__IDENTIFIER(const std::string &id);
+    std::string Manage_funcname__empty();
     /**
      * This is needed because once we have identified "block" in the grammar rule, first the block's semantic will be called
      * and AFTERWARDS the "funcdef" semantic rule will be called. Calling a "block" semantic rule, hides symbols and changes scopes.
+     *
+     * Also enters into scope space: formal arguments and changes scope
      */
-	void_t Manage_funcdef__FUNCTION_tmp_funcdef(symbol_table &sym_table, const std::string &id, unsigned int scope, unsigned int lineno);
-    void_t Manage_funcdef__FUNCTION_IDENTIFIER_LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS_block();
+	void_t Manage_funcprefix__FUNCTION_funcname(symbol_table &sym_table, const std::string &id, unsigned int lineno);
+	/**
+	 * Changes scope space from formal arguments to function scope space.
+	 */
+    void_t Manage_funcargs__LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS();
+    void_t Manage_funcdef__funcprefix_funcargs_funcbody();
 
 
 	/* Manage_const() */
@@ -139,10 +146,13 @@ namespace syntax_analyzer {
 	void_t Manage_const_BOOL_FALSE();
 
 	/* Manage_idlist() */
+    /**
+     * "idlist" grammar rule appears only within grammar rule "funcargs"
+     */
     std::vector<std::string> Manage_tmp_idlist__empty();
     std::vector<std::string> Manage_tmp_idlist__tmp_idlist_COMMA_IDENTIFIER(std::vector<std::string> &tmp_id_list, const std::string &identifier);
     std::vector<std::string> Manage_idlist__IDENTIFIER_tmp_idlist(symbol_table &sym_table, std::vector<std::string> tmp_id_list,
-                                                                  std::string identifier, unsigned int scope, unsigned int lineno);
+                                                                  std::string identifier, unsigned int lineno);
     std::vector<std::string> Manage_idlist__empty();
 
 	/* Manage_ifstmt() */
@@ -158,6 +168,9 @@ namespace syntax_analyzer {
 	/* Manage_returnstmt() */
 	void_t Manage_RETURN_SEMICOLON();
 	void_t Manage_RETURN_expr_SEMICOLON();
+
+    void_t Manage__left_par_LEFT_PARENTHESIS();
+    void_t Manage__right_par_RIGHT_PARENTHESIS();
 };
 
 
