@@ -17,9 +17,6 @@
 	extern int yylineno;
 	extern char *yytext;
 
-//	static value_stack_t *lvalue = new value_stack_t();
-	
-
 	int yyerror (const symbol_table &sym_table, char const *msg);
 %}
 
@@ -32,9 +29,6 @@
 %debug
 %start program	/*start symbol*/
 
-%initial-action {
-	
-}
 
 /*declaration of terminal symbols*/
 %token <voidVal>	IF ELSE WHILE FOR FUNCTION RETURN BREAK CONTINUE AND NOT OR LOCAL BOOL_TRUE BOOL_FALSE NIL
@@ -57,7 +51,8 @@
 
 /* type declaration of non-terminal helper symbols, defined by us */
 %type <strVector> tmp_idlist
-%type <strVal> tmp_funcdef
+%type <strVal> funcname
+%type <voidVal> funcprefix funcargs funcbody
 %type <voidVal> tmp_elist tmp_indexed
 %type <voidVal> block_open stmts block_close
 

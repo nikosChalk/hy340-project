@@ -25,11 +25,6 @@ namespace syntax_analyzer {
             enum lvalue_type{VAR, FUNC};
 
             /**
-             * Variable to indicate global scoping
-             */
-            static const unsigned int GLOBAL_SCOPE;
-
-            /**
              * Returns the string representation of the symbol_type
              * @param symbol_type The symbole type
              * @return The symbol type's string representation
@@ -112,7 +107,7 @@ namespace syntax_analyzer {
 
             /**
              * Same as entry class
-             * @param scope If scope is GLOBAL_SCOPE, then symbol_type is ignored and this entry has GLOBAL symbol_type
+             * @param scope If scope is scope_handler::GLOBAL_SCOPE, then symbol_type is ignored and this entry has GLOBAL symbol_type
              * @param symbol_type Must be GLOBAL, LOCAL or FORMAL_ARG.
              * @param ss The variable's scope space. (Opws orizetai sto frondhsthrio)
              * @param ss_offset The variable's offset within its scope. (Opws orizetai sto frondhsthrio)
@@ -158,7 +153,7 @@ namespace syntax_analyzer {
 
 
         /**
-         * Creates a new symbol table with only the library functions at GLOBAL_SCOPE
+         * Creates a new symbol table with only the library functions at scope_handler::GLOBAL_SCOPE
          */
         symbol_table();
 
@@ -181,7 +176,7 @@ namespace syntax_analyzer {
         std::vector<entry*> lookup(const std::string &key, unsigned int scope) const;
 
         /**
-         * Same as lookup, except that it searches from the given scope, up to the global scope (entry::GLOBAL_SCOPE)
+         * Same as lookup, except that it searches from the given scope, up to the global scope (scope_handler::GLOBAL_SCOPE)
          * @param key An entry.get_name() string
          * @param scope The scope to search the given key. Searching starts from scope and goes up to global scope (inclusive)
          * @return A vector with visible symbol table entries for each match. If no visible value was found with the given key,
@@ -200,7 +195,7 @@ namespace syntax_analyzer {
          * @param key The key to check for accessible entries
          * @param key_scope The key's scope
          * @param active_func_scope The scope of the function which contains the id with name "key". If no function
-         * is active, entry::GLOBAL_SCOPE should be passed.
+         * is active, scope_handler::GLOBAL_SCOPE should be passed.
          * @return The first found accessible symbol
          * @throws std::runtime_error if no accessible entry was found
          */

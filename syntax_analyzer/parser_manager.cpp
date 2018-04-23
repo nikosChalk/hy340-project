@@ -209,7 +209,7 @@ namespace syntax_analyzer {
 
         if (all_entries.empty()) { /* This identifier was not found in any enclosing scope. ==> Insert new symbol */
             sym_table.insert(new symbol_table::var_entry(
-                    scope, lineno, identifier, symbol_table::entry::LOCAL
+                    scope, lineno, identifier, symbol_table::entry::LOCAL, scope_handler.get_current_ss(), scope_handler.fetch_and_incr_cur_ssoffset()
             ));
             return symbol_table::entry::lvalue_type::VAR;
         } else {
@@ -226,7 +226,7 @@ namespace syntax_analyzer {
 
         unsigned int scope = scope_handler.get_current_scope();
         vector<symbol_table::entry*> scope_entries = sym_table.lookup(identifier, scope);
-        vector<symbol_table::entry*> global_entries = sym_table.lookup(identifier, symbol_table::entry::GLOBAL_SCOPE);
+        vector<symbol_table::entry*> global_entries = sym_table.lookup(identifier, scope_handler::GLOBAL_SCOPE);
         symbol_table::entry::lvalue_type ret_val;
 
         if(scope_entries.empty()) {
@@ -240,7 +240,7 @@ namespace syntax_analyzer {
 
             //Identifier is okay. Add it to the symbol table
             sym_table.insert(new symbol_table::var_entry(
-               scope, lineno, identifier, symbol_table::entry::LOCAL
+               scope, lineno, identifier, symbol_table::entry::LOCAL, scope_handler.get_current_ss(), scope_handler.fetch_and_incr_cur_ssoffset()
             ));
             ret_val = symbol_table::entry::lvalue_type::VAR;
         } else {
@@ -253,7 +253,7 @@ namespace syntax_analyzer {
         fprintf(yyout, "lvalue -> ::IDENTIFIER\n");
 
         /* This rule NEVER inserts to the symbol table */
-        vector<symbol_table::entry*> global_entries = sym_table.lookup(identifier, symbol_table::entry::GLOBAL_SCOPE);
+        vector<symbol_table::entry*> global_entries = sym_table.lookup(identifier, scope_handler::GLOBAL_SCOPE);
         if(global_entries.empty())
             throw syntax_error("No global symbol \'" + identifier + "\' found.", lineno);
 
@@ -357,10 +357,6 @@ namespace syntax_analyzer {
 		fprintf(yyout, "indexed -> indexedelem\n");
 		return void_value;
 	}
-	void_t Manage_indexed_empty(){
-		fprintf(yyout, "indexed -> empty\n");
-		return void_value;
-	}
     void_t Manage_indexed__indexedelem_tmp_indexed() {
         fprintf(yyout, "indexed -> indexelem tmp_indexed\n");
         return void_value;
@@ -413,7 +409,7 @@ namespace syntax_analyzer {
 
         unsigned int scope = scope_handler.get_current_scope();
         vector<symbol_table::entry*> cur_scope_entries = sym_table.lookup(id, scope);  /* Look up only at the current scope */
-        vector<symbol_table::entry*> global_entries = sym_table.lookup(id, symbol_table::entry::GLOBAL_SCOPE);  /* Look up only at the global scope */
+        vector<symbol_table::entry*> global_entries = sym_table.lookup(id, scope_handler::GLOBAL_SCOPE);  /* Look up only at the global scope */
 
         //Sanity checks
         if(!cur_scope_entries.empty())
@@ -500,11 +496,11 @@ namespace syntax_analyzer {
         tmp_id_list.push_back(identifier);
         for(const auto &cur_id : tmp_id_list) {
             vector<symbol_table::entry*> cur_scope_entries = sym_table.lookup(cur_id, scope);  /* Look up only at the current scope */
-            vector<symbol_table::entry*> global_entries = sym_table.lookup(cur_id, symbol_table::entry::GLOBAL_SCOPE);  /* Look up only at the global scope */
+            vector<symbol_table::entry*> global_entries = sym_table.lookup(cur_id, scope_handler::GLOBAL_SCOPE);  /* Look up only at the global scope */
 
             if(cur_scope_entries.empty()) {
                 sym_table.insert(new symbol_table::var_entry(
-                    scope, lineno, cur_id, symbol_table::entry::FORMAL_ARG
+                    scope, lineno, cur_id, symbol_table::entry::FORMAL_ARG, scope_handler.get_current_ss(), scope_handler.fetch_and_incr_cur_ssoffset()
                 ));
             } else {
                 throw syntax_error("Formal Argument \'" + cur_id + "\' defined multiple times", lineno);

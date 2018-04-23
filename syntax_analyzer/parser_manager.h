@@ -106,7 +106,6 @@ namespace syntax_analyzer {
 	/* Manage_indexed() */
 	void_t Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem();
 	void_t Manage_tmp_indexed_empty();
-	void_t Manage_indexed_empty();
     void_t Manage_indexed__indexedelem_tmp_indexed();
 
 	/* Manage_indexedelem() */
@@ -115,7 +114,13 @@ namespace syntax_analyzer {
 	/* Manage_block() */
     void_t Manage_stmts__stmts_stmt();
     void_t Manage_stmts__empty();
+    /**
+     * Increases scope
+     */
     void_t Manage_block_open__LEFT_BRACE();
+    /**
+     * Decreases scope
+     */
     void_t Manage_block_close__RIGHT_BRACE();
 
 	void_t Manage_block__block_open_stmts_block_close(symbol_table &sym_table);
@@ -127,13 +132,17 @@ namespace syntax_analyzer {
      * This is needed because once we have identified "block" in the grammar rule, first the block's semantic will be called
      * and AFTERWARDS the "funcdef" semantic rule will be called. Calling a "block" semantic rule, hides symbols and changes scopes.
      *
-     * Also enters into scope space: formal arguments and changes scope
+     * Also enters into scope space: formal arguments and increases scope
      */
 	void_t Manage_funcprefix__FUNCTION_funcname(symbol_table &sym_table, const std::string &id, unsigned int lineno);
 	/**
-	 * Changes scope space from formal arguments to function scope space.
+	 * Exits scope space formal arguments, decreases scope and then enters to function scope space.
 	 */
     void_t Manage_funcargs__LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS();
+    /**
+     * Exits function scope space
+     */
+    void_t Manage_funcbody__block();
     void_t Manage_funcdef__funcprefix_funcargs_funcbody();
 
 
@@ -168,9 +177,6 @@ namespace syntax_analyzer {
 	/* Manage_returnstmt() */
 	void_t Manage_RETURN_SEMICOLON();
 	void_t Manage_RETURN_expr_SEMICOLON();
-
-    void_t Manage__left_par_LEFT_PARENTHESIS();
-    void_t Manage__right_par_RIGHT_PARENTHESIS();
 };
 
 

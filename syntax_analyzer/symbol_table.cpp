@@ -11,7 +11,6 @@ using namespace std;
 namespace syntax_analyzer {
 
     /* ~~~~~~ symbol_table::entry implementation ~~~~~~ */
-    const unsigned int symbol_table::entry::GLOBAL_SCOPE = 0;
     unsigned int symbol_table::func_entry::generic_names = 0;
 
     std::string symbol_table::entry::sym_type_to_string(sym_type symbol_type) {
@@ -81,7 +80,7 @@ namespace syntax_analyzer {
     /* ~~~~~~ symbol_table::var_entry implementation ~~~~~~ */
     symbol_table::var_entry::var_entry(unsigned int scope, unsigned int line, const string &name, sym_type symbol_type,
                                        scope_handler::scope_space ss, unsigned int ss_offset)
-        : entry(scope, line, name, (scope == GLOBAL_SCOPE ? GLOBAL :  symbol_type)) {
+        : entry(scope, line, name, (scope == scope_handler::GLOBAL_SCOPE ? GLOBAL :  symbol_type)) {
         if(symbol_type != GLOBAL && symbol_type != LOCAL && symbol_type != FORMAL_ARG)
             throw std::runtime_error("Invalid symbol type");
         this->ss = ss;
@@ -116,8 +115,8 @@ namespace syntax_analyzer {
 
         this->sym_tables.push_back(unordered_map<string, vector<entry*>>());
         for(const string &lib_func_name : lib_func_names)
-            this->sym_tables.at(entry::GLOBAL_SCOPE)[lib_func_name].push_back(new func_entry(
-                    entry::GLOBAL_SCOPE, 0, lib_func_name, entry::LIB_FUNC
+            this->sym_tables.at(scope_handler::GLOBAL_SCOPE)[lib_func_name].push_back(new func_entry(
+                    scope_handler::GLOBAL_SCOPE, 0, lib_func_name, entry::LIB_FUNC
             ));
     }
 
@@ -160,7 +159,7 @@ namespace syntax_analyzer {
         vector<entry*> ret_val = vector<entry*>();
 
         //Search all copes
-        while(scope >= entry::GLOBAL_SCOPE) {
+        while(scope >= scope_handler::GLOBAL_SCOPE) {
             vector<entry*> scope_vector = this->lookup(key, scope);
             ret_val.insert(ret_val.end(), scope_vector.begin(), scope_vector.end());
             if(scope != 0)
@@ -180,7 +179,7 @@ namespace syntax_analyzer {
             if(!scope_entries.empty()) {
                 entry *found_entry = scope_entries.at(0);
 
-                if(key_scope>active_func_scope || key_scope == entry::GLOBAL_SCOPE) { //Symbol found is accessible
+                if(key_scope>active_func_scope || key_scope == scope_handler::GLOBAL_SCOPE) { //Symbol found is accessible
                     return found_entry;
                 } else {
                     //Scope now is outside of the function. Only function symbols are now accessible
@@ -191,7 +190,7 @@ namespace syntax_analyzer {
                 }
             }
 
-            if(key_scope == entry::GLOBAL_SCOPE)
+            if(key_scope == scope_handler::GLOBAL_SCOPE)
                 throw std::runtime_error("No symbol found with the given key");
             else
                 key_scope--;
