@@ -4,7 +4,7 @@ x = y = 1;
 	a = 3;
 	function f (z) {
 		x = 4;
-		//a = 5; //error should occur here.
+		a = 5; //error should occur here.
 		y = 6;
 		{
 			z = 7;

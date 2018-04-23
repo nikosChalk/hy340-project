@@ -135,9 +135,9 @@ lvalue:	IDENTIFIER					{$$ = Manage_lvalue__IDENTIFIER(sym_table, $1, scope, yyl
 		| member					{$$ = Manage_lvalue__member(); }
 		;
 
-member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER(sym_table, $3, scope, yylineno, func_scope_stack.top());}
+member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER();}
 		| lvalue LEFT_BRACKET expr RIGHT_BRACKET	{$$=Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET();}
-		| call DOT IDENTIFIER						{$$=Manage_member__call_DOT_IDENTIFIER(sym_table, $3, scope, yylineno, func_scope_stack.top());}
+		| call DOT IDENTIFIER						{$$=Manage_member__call_DOT_IDENTIFIER();}
 		| call LEFT_BRACKET expr RIGHT_BRACKET		{$$=Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();}
 		;
 
@@ -155,7 +155,7 @@ callsuffix:	normcall		{$$ = Manage_callsuffix_normcall();}
 normcall:	LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_normcall_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();}
 			;
 
-methodcall:	DOUBLE_DOT IDENTIFIER LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(sym_table, $2, scope, yylineno, func_scope_stack.top()); }
+methodcall:	DOUBLE_DOT IDENTIFIER LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(); }
 			;
 
 tmp_elist:	tmp_elist COMMA expr	{$$ = Manage_tmp_elist_tmp_elist_COMMA_expr();}

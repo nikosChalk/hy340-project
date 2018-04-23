@@ -17,33 +17,9 @@ extern FILE *yyout;
 
 namespace syntax_analyzer {
 
-    /**
-     * Handles an identifier when it appears within a grammar rule. For example:
-     * lvalue -> id
-     * member -> lvalue.id
-     * member -> call.id
-     * etc.
-     * But not for ::id or local id.
-     * @return The identifier's symbol_table::entry::lvalue_type
-     * @throws syntax_analyzer::syntax_error
-     */
+
     static symbol_table::entry::lvalue_type handle_identifier(symbol_table &sym_table, const string &identifier,
                                                               unsigned int scope, unsigned int lineno, unsigned int active_func_scope) {
-        vector<symbol_table::entry> all_entries = sym_table.recursive_lookup(identifier, scope);
-
-        if (all_entries.empty()) { /* This identifier was not found in any enclosing scope. ==> Insert new symbol */
-            sym_table.insert(symbol_table::var_entry(
-                    scope, lineno, identifier, symbol_table::entry::LOCAL
-            ));
-            return symbol_table::entry::lvalue_type::VAR;
-        } else {
-            /* We need to check if there is an accessible reference in all_entries */
-            try {
-                return sym_table.exists_accessible_symbol(identifier, scope, active_func_scope);
-            } catch(runtime_error &err) {
-                throw syntax_error("Variable \'" + identifier + "\' does not refer to any accessible symbol.", lineno);
-            }
-        }
     }
 
     void_t Manage_program__stmt_program() {
@@ -232,7 +208,23 @@ namespace syntax_analyzer {
     symbol_table::entry::lvalue_type Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const string &identifier,
                                                                unsigned int scope, unsigned int lineno, unsigned int active_function_scope) {
         fprintf(yyout, "lvalue -> IDENTIFIER\n");
-        return handle_identifier(sym_table, identifier, scope, lineno, active_function_scope);
+
+        //bellow code used to be the "handle" function during phase2
+        vector<symbol_table::entry> all_entries = sym_table.recursive_lookup(identifier, scope);
+
+        if (all_entries.empty()) { /* This identifier was not found in any enclosing scope. ==> Insert new symbol */
+            sym_table.insert(symbol_table::var_entry(
+                    scope, lineno, identifier, symbol_table::entry::LOCAL
+            ));
+            return symbol_table::entry::lvalue_type::VAR;
+        } else {
+            /* We need to check if there is an accessible reference in all_entries */
+            try {
+                return sym_table.exists_accessible_symbol(identifier, scope, active_function_scope);
+            } catch(runtime_error &err) {
+                throw syntax_error("Variable \'" + identifier + "\': " + err.what(), lineno);
+            }
+        }
     }
     symbol_table::entry::lvalue_type Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int scope, unsigned int lineno) {
         fprintf(yyout, "lvalue -> local IDENTIFIER\n");
@@ -277,8 +269,7 @@ namespace syntax_analyzer {
     }
 
 
-    void_t Manage_member__lvalue_DOT_IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int scope,
-                                                unsigned int lineno, unsigned int active_function_scope) {
+    void_t Manage_member__lvalue_DOT_IDENTIFIER() {
         fprintf(yyout, "member -> .IDENTIFIER\n");
         return void_value;
     }
@@ -286,8 +277,7 @@ namespace syntax_analyzer {
         fprintf(yyout, "member -> lvalue[expr]\n");
         return void_value;
     }
-    void_t Manage_member__call_DOT_IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int scope,
-                                              unsigned int lineno, unsigned int active_function_scope) {
+    void_t Manage_member__call_DOT_IDENTIFIER() {
         fprintf(yyout, "member -> call.IDENTIFIER\n");
         return void_value;
     }
@@ -328,10 +318,7 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_methodcall() */
-	void_t Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(symbol_table &sym_table,
-                                                                                             const string &identifier,
-                                                                                             unsigned int scope, unsigned int lineno,
-                                                                                             unsigned int active_function_scope) {
+	void_t Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS() {
 		fprintf(yyout, "methodcall -> ..id(elist)\n");
 		return void_value;
 	}

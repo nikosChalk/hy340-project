@@ -156,23 +156,27 @@ namespace syntax_analyzer {
 
     symbol_table::entry::lvalue_type symbol_table::exists_accessible_symbol(const string &key, unsigned int key_scope,
                                                                             unsigned int active_func_scope) const {
-        bool reached_funcdef = false;
 
         //Search scopes until any formal args
-        while(key_scope>0 && key_scope>active_func_scope) {
+        while(true) {
             vector<entry> scope_entries = this->lookup(key, key_scope);
-            if(!scope_entries.empty())
-                return scope_entries.at(0).get_lvalue_type();
-            key_scope--;
+            if(!scope_entries.empty()) {
+                if(key_scope>active_func_scope || key_scope == entry::GLOBAL_SCOPE) { //Symbol found is accessible
+                    return scope_entries.at(0).get_lvalue_type();
+                } else {
+                    //Scope now is outside of the function. Only function symbols are now accessible
+                    if(scope_entries.at(0).get_lvalue_type() == entry::lvalue_type::FUNC)
+                        return entry::lvalue_type::FUNC;
+                    else
+                        throw std::runtime_error("Symbol found but not accessible");
+                }
+            }
+
+            if(key_scope == entry::GLOBAL_SCOPE)
+                throw std::runtime_error("No symbol found with the given key");
+            else
+                key_scope--;
         }
-
-        //Not found in outer scopes without crossing a function. Check global key_scope
-        vector<entry> global_entries = this->lookup(key, entry::GLOBAL_SCOPE);
-        if(!global_entries.empty())
-            return global_entries.at(0).get_lvalue_type();
-
-        //No accessible symbol found
-        throw std::runtime_error("No accessible symbol found");
     }
 
     void symbol_table::hide(unsigned int scope) {

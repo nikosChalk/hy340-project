@@ -168,8 +168,7 @@ namespace syntax_analyzer {
         std::vector<entry> recursive_lookup(const std::string &key, unsigned int scope) const;
 
         /**
-         * Checks whether or not there is a visible symbol_table entry for which the given key can refer/has access to and
-         * that entry is a var_entry.
+         * Checks whether or not there is a visible symbol_table entry for which the given key can refer/has access to
          *
          * Vlepe prosvasimothta symvolwn gia to pws orizetai oti ena symvolo (key) borei na exei prosvash (reference)
          * se kapoio hdh dhlwmeno symvolo (metavlhth or function)
