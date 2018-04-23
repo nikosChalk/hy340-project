@@ -280,7 +280,6 @@ namespace syntax_analyzer {
     void_t Manage_member__lvalue_DOT_IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int scope,
                                                 unsigned int lineno, unsigned int active_function_scope) {
         fprintf(yyout, "member -> .IDENTIFIER\n");
-        handle_identifier(sym_table, identifier, scope, lineno, active_function_scope);
         return void_value;
     }
     void_t Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET() {
@@ -290,7 +289,6 @@ namespace syntax_analyzer {
     void_t Manage_member__call_DOT_IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int scope,
                                               unsigned int lineno, unsigned int active_function_scope) {
         fprintf(yyout, "member -> call.IDENTIFIER\n");
-        handle_identifier(sym_table, identifier, scope, lineno, active_function_scope);
         return void_value;
     }
     void_t Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET() {
@@ -335,7 +333,6 @@ namespace syntax_analyzer {
                                                                                              unsigned int scope, unsigned int lineno,
                                                                                              unsigned int active_function_scope) {
 		fprintf(yyout, "methodcall -> ..id(elist)\n");
-        handle_identifier(sym_table, identifier, scope, lineno, active_function_scope);
 		return void_value;
 	}
 
