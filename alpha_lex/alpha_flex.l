@@ -10,7 +10,7 @@
 	#include <stack>
 	#include <stdexcept>
 	#include "../utilities.h"
-	#include "../syntax_analyzer/alpha_bison.hpp"
+	#include "../syntax_analyzer/alpha_bison.h"
 	#include "../syntax_analyzer/types.h"
 	#define YY_DECL int yylex()
 

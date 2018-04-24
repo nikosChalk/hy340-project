@@ -17,17 +17,14 @@ namespace intermediate_code {
         icode_generator();
 
         /**
-         * Emits the given quad
+         * Stores the given quad and changes its label field to match the position of the quad within the
+         * quad_vector.
          * @param quad The quad to emit. Must not be NULL/nullptr
          */
         void emit_quad(quad *quad);
 
     private:
         std::vector<quad*> quad_vector;
-
-        unsigned long total_quads() const;
-
-        unsigned long next_quad_label() const;  /*TODO:???????? what is ths?*/
 
         void patch_label(unsigned long quadno, unsigned int label) const;
     };

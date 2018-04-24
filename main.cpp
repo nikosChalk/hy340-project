@@ -3,7 +3,7 @@
 #include <iostream>
 #include "alpha_lex/alpha_flex.h"
 #include "syntax_analyzer/symbol_table.h"
-#include "syntax_analyzer/alpha_bison.hpp"
+#include "syntax_analyzer/alpha_bison.h"
 
 using namespace std;
 

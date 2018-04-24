@@ -24,7 +24,7 @@
 %define api.value.type { syntax_analyzer::value_stack_t }
 %language "C"
 %output "alpha_bison.cpp"
-%defines
+%defines "alpha_bison.h"
 %parse-param {syntax_analyzer::symbol_table &sym_table}
 %debug
 %start program	/*start symbol*/
@@ -71,8 +71,11 @@
 
 %%
 
-program:	program	stmt		{$$ = Manage_program__stmt_program();}
-       		| %empty			{$$ = Manage_program();}
+program:	stmts	{$$ = Manage_program__stmts();}
+			;
+
+stmts:		stmts stmt		{$$ = Manage_stmts__stmts_stmt();}
+			| %empty		{$$ = Manage_stmts__empty();}
 			;
 
 stmt:	expr SEMICOLON			{$$ = Manage_stmt__expr_SEMICOLON(); 	}
@@ -174,10 +177,6 @@ indexed:	indexedelem tmp_indexed	{$$ = Manage_indexed__indexedelem_tmp_indexed()
 
 indexedelem:	LEFT_BRACE expr COLON expr RIGHT_BRACE {$$ = Manage_indexedelem_LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE();}
 				;
-
-stmts:		stmts stmt		{$$ = Manage_stmts__stmts_stmt();}
-			| %empty		{$$ = Manage_stmts__empty();}
-			;	 
 
 block_open:		LEFT_BRACE	{$$ = Manage_block_open__LEFT_BRACE();}
 				;

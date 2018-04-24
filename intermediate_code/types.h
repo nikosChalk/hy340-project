@@ -7,6 +7,9 @@
 
 namespace intermediate_code {
 
+    /**
+     * Available opcodes for the intermediate code instruction set
+     */
     enum iopcode {
         assign,     add,        sub,            mul,            div,
         mod,        uminus,     logical_and,    logical_or,     logical_not,
@@ -45,13 +48,22 @@ namespace intermediate_code {
         static expr* make_lvalue_expr(syntax_analyzer::symbol_table::entry *sym_entry);
     };
 
+    /**
+     * Representation of an intermediate code instruction
+     */
     struct quad {
         iopcode opcode;
         expr *result;
         expr *arg1;
         expr *arg2;
-        unsigned int label;
+
+        unsigned int label; //Position within the quad array
         unsigned int lineno;
+
+        /**
+         * Creates a quad with the given attributes and with a default label equal to 0.
+         */
+        quad(iopcode opcode, expr *result, expr *arg1, expr *arg2, unsigned int lineno, unsigned int label=0);
     };
 };
 

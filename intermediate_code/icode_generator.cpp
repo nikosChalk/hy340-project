@@ -12,19 +12,11 @@ icode_generator::icode_generator() {
 
 void icode_generator::emit_quad(quad *quad) {
     assert(quad);
+    quad->label=(unsigned int)quad_vector.size();
     quad_vector.push_back(quad);
 }
 
-unsigned long icode_generator::total_quads() const {
-    return quad_vector.size();
-}
-
-unsigned long icode_generator::next_quad_label() const {
-    /*TODO:???????? what is ths?*/
-    return quad_vector.size();
-}
-
 void icode_generator::patch_label(unsigned long quadno, unsigned int label) const {
-    assert(quadno < total_quads());
+    assert(quadno < quad_vector.size());
     quad_vector[quadno]->label = label;
 }
