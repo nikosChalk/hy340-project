@@ -8,6 +8,7 @@
 #include <typeinfo>
 #include "syntax_error.h"
 #include "scope_handler.h"
+#include "hidden_var_handler.h"
 
 using namespace std;
 
@@ -18,23 +19,9 @@ namespace syntax_analyzer {
 /**************** static variables & functions ****************/
 
     static scope_handler scope_handler; /*Default constructor called*/
+    static hidden_var_handler hidden_var_handler; /*Default constructor called*/
 
-    /**
-     * Creates a new hidden variable in the current scopespace and in the current scope which does not clash
-     * with a user id or a hidden function name, and inserts that variable in the symbol table.
-     * If a hidden variable already exists due to a previos reset, then that hidden variable is used and no insertion
-     * occurs within the symbol table.
-     *
-     * @param sym_table The symbol table to use.
-     * @param reset Whether to reset this generator, in order to recycle hidden variables. A working heuristic is
-     * to reset this generator whenever the grammar rule "stmt -> expr;" is reduced.
-     * @return The symbol table entry to the hidden variable.
-     */
-    static symbol_table::entry* new_temp_var(symbol_table &sym_table, bool reset=false) {
-        /*TODO: implement */
-    }
 /************************* end *********************************/
-
 
 
     void_t Manage_program__stmts() {
@@ -53,6 +40,7 @@ namespace syntax_analyzer {
 
     void_t Manage_stmt__expr_SEMICOLON() {
         fprintf(yyout, "stmt -> expr ;\n");
+        hidden_var_handler.reset_count();
         return void_value;
     }
     void_t Manage_stmt__ifstmt() {

@@ -1,6 +1,4 @@
-//
-// Created by nikos on 3/19/18.
-//
+
 
 #ifndef HY340_PROJECT_PARSER_MANAGER_H
 #define HY340_PROJECT_PARSER_MANAGER_H
@@ -10,9 +8,11 @@
 
 namespace syntax_analyzer {
 
-    void_t Manage_program__stmt_program();
-    void_t Manage_program();
+	void_t Manage_program__stmts();
 
+	/**
+	 * Resets the hidden variable count
+	 */
     void_t Manage_stmt__expr_SEMICOLON();
     void_t Manage_stmt__ifstmt();
     void_t Manage_stmt__whilestmt();
