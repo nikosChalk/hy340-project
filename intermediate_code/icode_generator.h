@@ -23,6 +23,10 @@ namespace intermediate_code {
          */
         void emit_quad(quad *quad);
 
+		void emit_quad(quad *quad, unsigned int label);
+
+		unsigned int next_quad_label();
+
     private:
         std::vector<quad*> quad_vector;
 

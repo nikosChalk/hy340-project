@@ -9,8 +9,10 @@
 #include "syntax_error.h"
 #include "scope_handler.h"
 #include "hidden_var_handler.h"
+#include "../intermediate_code/types.h"
 
 using namespace std;
+using namespace intermediate_code;
 
 extern FILE *yyout;
 
@@ -20,6 +22,7 @@ namespace syntax_analyzer {
 
     static scope_handler scope_handler; /*Default constructor called*/
     static hidden_var_handler hidden_var_handler; /*Default constructor called*/
+	static icode_generator icode_generator;	/*Default constructor called*/
 
 /************************* end *********************************/
 
@@ -424,10 +427,14 @@ namespace syntax_analyzer {
             if(entry->get_sym_type() == symbol_table::entry::LIB_FUNC)
                 throw syntax_error("Function definition \'" + id + "\' name shadows library function", lineno);
 
-        //Insert in the symbol table
-        sym_table.insert(new symbol_table::func_entry(
-           scope, lineno, id, symbol_table::entry::USER_FUNC
-        ));
+		//Insert in the symbol table
+		symbol_table::entry *new_func_entry = new symbol_table::func_entry(
+			scope, lineno, id, symbol_table::entry::USER_FUNC
+		);
+		sym_table.insert(new_func_entry);
+
+		quad* new_quad = new quad(iopcode::funcstart, expr::make_lvalue_expr(new_func_entry), NULL, NULL, lineno);
+		icode_generator.emit_quad(new_quad);
 
         scope_handler.enter_formal_arg_ss();
         scope_handler.increase_scope();
@@ -451,7 +458,9 @@ namespace syntax_analyzer {
     }
     void_t Manage_funcdef__funcprefix_funcargs_funcbody() {
         fprintf(yyout, "funcdef -> FUNCTION IDENTIFIER (idlist) block\n");
-        return void_value;
+		quad* new_quad = new quad(iopcode::funcend, expr::make_lvalue_expr($1), NULL, NULL, lineno);
+		icode_generator.emit_quad(new_quad);
+        return $1;
     }
 
 	/* Manage_const() */
