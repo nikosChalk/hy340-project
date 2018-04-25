@@ -96,11 +96,11 @@ stmt:	expr SEMICOLON			{$$ = Manage_stmt__expr_SEMICOLON(); 	}
 		;
 
 expr:	assignexpr 			{$$ = Manage_expr__assignexpr();}
-    	| expr PLUS expr 	{$$ = Manage_expr__expr_PLUS_expr();}
-		| expr MINUS expr 	{$$ = Manage_expr__expr_MINUS_expr();} 
-		| expr MUL expr 	{$$ = Manage_expr__expr_MUL_expr();}
-		| expr DIV expr 	{$$ = Manage_expr__expr_DIV_expr();}
-		| expr MOD expr 	{$$ = Manage_expr__expr_MOD_expr();}
+    	| expr PLUS expr 	{$$ = Manage_expr__expr_PLUS_expr(sym_table,$1,$2,yylineno);} /* we must change expr type */
+		| expr MINUS expr 	{$$ = Manage_expr__expr_MINUS_expr(sym_table,$1,$2,yylineno);} 
+		| expr MUL expr 	{$$ = Manage_expr__expr_MUL_expr(sym_table,$1,$2,yylineno);}
+		| expr DIV expr 	{$$ = Manage_expr__expr_DIV_expr(sym_table,$1,$2,yylineno);}
+		| expr MOD expr 	{$$ = Manage_expr__expr_MOD_expr(sym_table,$1,$2,yylineno);}
 		| expr GT expr 		{$$ = Manage_expr__expr_GT_expr();}
 		| expr GE expr 		{$$ = Manage_expr__expr_GE_expr();}
 		| expr LT expr 		{$$ = Manage_expr__expr_LT_expr();}

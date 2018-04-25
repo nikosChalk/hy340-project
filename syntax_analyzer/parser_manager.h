@@ -26,13 +26,13 @@ namespace syntax_analyzer {
 
     /* Manage_expr__assignexpr() */
    
-    void_t Manage_expr__assignexpr();
-    void_t Manage_expr__expr_PLUS_expr();
-    void_t Manage_expr__expr_MINUS_expr();
-    void_t Manage_expr__expr_MUL_expr();
-    void_t Manage_expr__expr_DIV_expr();
-    void_t Manage_expr__expr_MOD_expr();
-    void_t Manage_expr__expr_GT_expr();
+	void_t Manage_expr__assignexpr();
+	struct expr* Manage_expr__expr_PLUS_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno);
+	struct expr* Manage_expr__expr_MINUS_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno);
+	struct expr* Manage_expr__expr_MUL_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno);
+	struct expr* Manage_expr__expr_DIV_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno);
+	struct expr* Manage_expr__expr_MOD_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno);
+	void_t Manage_expr__expr_GT_expr();
     void_t Manage_expr__expr_GE_expr();
     void_t Manage_expr__expr_LT_expr();
     void_t Manage_expr__expr_LE_expr();

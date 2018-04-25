@@ -32,7 +32,9 @@ namespace intermediate_code {
 
         CONST_NUM_E,
         CONST_BOOL_E,
-        CONST_STR_E
+        CONST_STR_E,
+
+		NIL_E
     };
 
     struct expr {
