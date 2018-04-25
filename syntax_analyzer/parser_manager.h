@@ -134,7 +134,7 @@ namespace syntax_analyzer {
      *
      * Also enters into scope space: formal arguments and increases scope
      */
-	void_t Manage_funcprefix__FUNCTION_funcname(symbol_table &sym_table, const std::string &id, unsigned int lineno);
+	symbol_table::func_entry* Manage_funcprefix__FUNCTION_funcname(symbol_table &sym_table, const std::string &id, unsigned int lineno);
 	/**
 	 * Exits scope space formal arguments, decreases scope and then enters to function scope space.
 	 */
@@ -142,8 +142,14 @@ namespace syntax_analyzer {
     /**
      * Exits function scope space
      */
-    void_t Manage_funcbody__block();
-    void_t Manage_funcdef__funcprefix_funcargs_funcbody();
+    unsigned int Manage_funcbody__block();
+    /**
+     * @param func_entry The function's entry within the symbol table
+     * @param total_func_locals The function's total local variables
+     * @return The function's entry within the symbol table
+     */
+    symbol_table::func_entry* Manage_funcdef__funcprefix_funcargs_funcbody(symbol_table::func_entry *func_entry,
+                                                                           unsigned int lineno, unsigned int total_func_locals);
 
 
 	/* Manage_const() */

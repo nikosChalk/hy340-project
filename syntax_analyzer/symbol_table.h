@@ -141,14 +141,45 @@ namespace syntax_analyzer {
 
             /**
              * Same as entry class.
-             * @param name. Same as entry except that i the name is empty, then a generic name is instead used
+             * Note that total_locals fields are set to zero (0).
+             * @param name. Same as entry except that if the name is empty, then a generic name is instead used
              * @param symbol_type Must be either USER_FUNC or LIB_FUNC
-             * @throws std::runtime_error if symbol_type has is wrong
+             * @param iaddress The quad number of this function, i.e. its address within the intermediate code
+             * @throws std::runtime_error if symbol_type has wrong value
              */
-            func_entry(unsigned int scope, unsigned int line, const std::string &name, sym_type symbol_type);
+            func_entry(unsigned int scope, unsigned int line, const std::string &name, sym_type symbol_type, unsigned int iaddress);
+
+            /**
+             * Returns the quad number of the function, i.e. its address within the intermediate code
+             * @return The quad number
+             */
+            unsigned int get_iaddress() const;
+
+            /**
+             * Returns the number of total local variables that this function uses
+             * @return The number of total local variables
+             */
+            unsigned int get_total_locals() const;
+
+
+            /**
+             * Sets the number of total local variables that this function uses
+             * @param total_locals The number of total local variables
+             */
+            void set_total_locals(unsigned int total_locals);
 
         private:
             static unsigned int generic_names;
+
+            /**
+             * Quad number of the function, i.e. its address within the intermediate code
+             */
+            unsigned int iaddress;
+
+            /**
+             * Number of
+             */
+            unsigned int total_locals;
         };
 
 

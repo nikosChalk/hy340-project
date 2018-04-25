@@ -10,6 +10,7 @@
 #include "scope_handler.h"
 #include "hidden_var_handler.h"
 #include "../intermediate_code/types.h"
+#include "../intermediate_code/icode_generator.h"
 
 using namespace std;
 using namespace intermediate_code;
@@ -20,9 +21,9 @@ namespace syntax_analyzer {
 
 /**************** static variables & functions ****************/
 
-    static scope_handler scope_handler; /*Default constructor called*/
-    static hidden_var_handler hidden_var_handler; /*Default constructor called*/
-	static icode_generator icode_generator;	/*Default constructor called*/
+    static scope_handler scp_handler = scope_handler();
+    static hidden_var_handler hvar_handler = hidden_var_handler();
+	static icode_generator icode_gen = icode_generator();
 
 /************************* end *********************************/
 
@@ -43,7 +44,7 @@ namespace syntax_analyzer {
 
     void_t Manage_stmt__expr_SEMICOLON() {
         fprintf(yyout, "stmt -> expr ;\n");
-        hidden_var_handler.reset_count();
+        hvar_handler.reset_count();
         return void_value;
     }
     void_t Manage_stmt__ifstmt() {
@@ -218,13 +219,13 @@ namespace syntax_analyzer {
     symbol_table::entry::lvalue_type Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int lineno) {
         fprintf(yyout, "lvalue -> IDENTIFIER\n");
 
-        unsigned int scope = scope_handler.get_current_scope();
-        unsigned int active_function_scope = scope_handler.get_active_function_scope();
+        unsigned int scope = scp_handler.get_current_scope();
+        unsigned int active_function_scope = scp_handler.get_active_function_scope();
         vector<symbol_table::entry*> all_entries = sym_table.recursive_lookup(identifier, scope);
 
         if (all_entries.empty()) { /* This identifier was not found in any enclosing scope. ==> Insert new symbol */
             sym_table.insert(new symbol_table::var_entry(
-                    scope, lineno, identifier, symbol_table::entry::LOCAL, scope_handler.get_current_ss(), scope_handler.fetch_and_incr_cur_ssoffset()
+                    scope, lineno, identifier, symbol_table::entry::LOCAL, scp_handler.get_current_ss(), scp_handler.fetch_and_incr_cur_ssoffset()
             ));
             return symbol_table::entry::lvalue_type::VAR;
         } else {
@@ -239,7 +240,7 @@ namespace syntax_analyzer {
     symbol_table::entry::lvalue_type Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int lineno) {
         fprintf(yyout, "lvalue -> local IDENTIFIER\n");
 
-        unsigned int scope = scope_handler.get_current_scope();
+        unsigned int scope = scp_handler.get_current_scope();
         vector<symbol_table::entry*> scope_entries = sym_table.lookup(identifier, scope);
         vector<symbol_table::entry*> global_entries = sym_table.lookup(identifier, scope_handler::GLOBAL_SCOPE);
         symbol_table::entry::lvalue_type ret_val;
@@ -255,7 +256,7 @@ namespace syntax_analyzer {
 
             //Identifier is okay. Add it to the symbol table
             sym_table.insert(new symbol_table::var_entry(
-               scope, lineno, identifier, symbol_table::entry::LOCAL, scope_handler.get_current_ss(), scope_handler.fetch_and_incr_cur_ssoffset()
+               scope, lineno, identifier, symbol_table::entry::LOCAL, scp_handler.get_current_ss(), scp_handler.fetch_and_incr_cur_ssoffset()
             ));
             ret_val = symbol_table::entry::lvalue_type::VAR;
         } else {
@@ -386,16 +387,16 @@ namespace syntax_analyzer {
 	/* Manage_block() */
     void_t Manage_block_open__LEFT_BRACE() {
         fprintf(yyout, "block_open -> {\n");
-        scope_handler.increase_scope();
+        scp_handler.increase_scope();
         return void_value;
     }
     void_t Manage_block_close__RIGHT_BRACE() {
         fprintf(yyout, "block_close -> }\n");
-        scope_handler.decrease_scope();
+        scp_handler.decrease_scope();
         return void_value;
     }
 	void_t Manage_block__block_open_stmts_block_close(symbol_table &sym_table) {
-		sym_table.hide(scope_handler.get_current_scope()+1);    //+1 because the block closed and thus we exited that scope
+		sym_table.hide(scp_handler.get_current_scope()+1);    //+1 because the block closed and thus we exited that scope
 		fprintf(yyout, "block -> { stmts }\n");
 		return void_value;
 	}
@@ -411,10 +412,10 @@ namespace syntax_analyzer {
         return string();    /* Empty string */
     }
 
-    void_t Manage_funcprefix__FUNCTION_funcname(symbol_table &sym_table, const std::string &id, unsigned int lineno) {
+    symbol_table::func_entry* Manage_funcprefix__FUNCTION_funcname(symbol_table &sym_table, const std::string &id, unsigned int lineno) {
         fprintf(yyout, "funcprefix -> FUNCTION funcname\n");
 
-        unsigned int scope = scope_handler.get_current_scope();
+        unsigned int scope = scp_handler.get_current_scope();
         vector<symbol_table::entry*> cur_scope_entries = sym_table.lookup(id, scope);  /* Look up only at the current scope */
         vector<symbol_table::entry*> global_entries = sym_table.lookup(id, scope_handler::GLOBAL_SCOPE);  /* Look up only at the global scope */
 
@@ -428,39 +429,37 @@ namespace syntax_analyzer {
                 throw syntax_error("Function definition \'" + id + "\' name shadows library function", lineno);
 
 		//Insert in the symbol table
-		symbol_table::entry *new_func_entry = new symbol_table::func_entry(
-			scope, lineno, id, symbol_table::entry::USER_FUNC
+		symbol_table::func_entry *new_func_entry = new symbol_table::func_entry(
+			scope, lineno, id, symbol_table::entry::USER_FUNC, icode_gen.next_quad_label()
 		);
 		sym_table.insert(new_func_entry);
+        icode_gen.emit_quad(new quad(iopcode::funcstart, expr::make_lvalue_expr(new_func_entry), nullptr, nullptr, lineno));
 
-		quad* new_quad = new quad(iopcode::funcstart, expr::make_lvalue_expr(new_func_entry), NULL, NULL, lineno);
-		icode_generator.emit_quad(new_quad);
-
-        scope_handler.enter_formal_arg_ss();
-        scope_handler.increase_scope();
-		return void_value;
+        scp_handler.enter_formal_arg_ss();
+        scp_handler.increase_scope();
+		return new_func_entry;
 	}
     void_t Manage_funcargs__LEFT_PARENTHESIS_idlist_RIGHT_PARENTHESIS() {
         fprintf(yyout, "funcars -> ( idlist )\n");
-        scope_handler.exit_formal_arg_ss();
-        scope_handler.decrease_scope();
+        scp_handler.exit_formal_arg_ss();
+        scp_handler.decrease_scope();
 
-        scope_handler.enter_function_ss();
+        scp_handler.enter_function_ss();
         //"block" grammar rule will increase scope again
         return void_value;
     };
 
-    void_t Manage_funcbody__block() {
+    unsigned int Manage_funcbody__block() {
         fprintf(yyout, "funcbody -> block\n");
-        scope_handler.exit_function_ss();
-        //scope already reduced by "block" grammar rule
-        return void_value;
+        return scp_handler.exit_function_ss();    //scope already reduced by "block" grammar rule
     }
-    void_t Manage_funcdef__funcprefix_funcargs_funcbody() {
-        fprintf(yyout, "funcdef -> FUNCTION IDENTIFIER (idlist) block\n");
-		quad* new_quad = new quad(iopcode::funcend, expr::make_lvalue_expr($1), NULL, NULL, lineno);
-		icode_generator.emit_quad(new_quad);
-        return $1;
+    symbol_table::func_entry* Manage_funcdef__funcprefix_funcargs_funcbody(symbol_table::func_entry *func_entry,
+                                                                           unsigned int lineno, unsigned int total_func_locals) {
+        fprintf(yyout, "funcdef -> funcprefix funcargs funcbody\n");
+        func_entry->set_total_locals(total_func_locals);
+
+        icode_gen.emit_quad(new quad(iopcode::funcend, expr::make_lvalue_expr(func_entry), nullptr, nullptr, lineno));
+        return func_entry;
     }
 
 	/* Manage_const() */
@@ -504,7 +503,7 @@ namespace syntax_analyzer {
         //The gammer rule idlist-> (zero, one, or more "id") is used only by the grammar rule funcdef
 
         fprintf(yyout, "idlist -> IDENTIFIER tmp_idlist\n");
-        unsigned int scope = scope_handler.get_current_scope();
+        unsigned int scope = scp_handler.get_current_scope();
 
         tmp_id_list.push_back(identifier);
         for(const auto &cur_id : tmp_id_list) {
@@ -513,7 +512,7 @@ namespace syntax_analyzer {
 
             if(cur_scope_entries.empty()) {
                 sym_table.insert(new symbol_table::var_entry(
-                    scope, lineno, cur_id, symbol_table::entry::FORMAL_ARG, scope_handler.get_current_ss(), scope_handler.fetch_and_incr_cur_ssoffset()
+                    scope, lineno, cur_id, symbol_table::entry::FORMAL_ARG, scp_handler.get_current_ss(), scp_handler.fetch_and_incr_cur_ssoffset()
                 ));
             } else {
                 throw syntax_error("Formal Argument \'" + cur_id + "\' defined multiple times", lineno);

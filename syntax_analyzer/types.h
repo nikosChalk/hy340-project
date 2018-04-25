@@ -4,8 +4,8 @@
  * Header file needed by Bison (parser.y)
  */
 
-#ifndef HY340_PROJECT_TYPES_H
-#define HY340_PROJECT_TYPES_H
+#ifndef HY340_PROJECT_SYNTAX_ANALYZER_TYPES_H
+#define HY340_PROJECT_SYNTAX_ANALYZER_TYPES_H
 
 #include <string>
 #include <cstdlib>
@@ -20,14 +20,19 @@ namespace syntax_analyzer {
      * Type needed for the Value Stack of the Bison parser (LR parser.)
      */
     typedef struct {
-        bool boolVal;   /*BOOL_TRUE, BOOL_FALSE*/
-        int intVal;     /*CONST_INT*/
-        double realVal; /*CONST_REAL */
-        std::string strVal; /*CONST_STR, IDENTIFIER */
-        std::vector<std::string> strVector; /*idlist*/
-        symbol_table::entry::lvalue_type lvalueType;     /*lvalue*/
+        bool boolVal;                   /*BOOL_TRUE, BOOL_FALSE*/
+        int intVal;                     /*CONST_INT*/
+        unsigned int unsignedIntVal;    /*funcbody*/
+        double realVal;                 /*CONST_REAL */
+
+        std::string strVal;                 /*CONST_STR, IDENTIFIER, funcname */
+        std::vector<std::string> strVector; /*idlist, tmp_idlist*/
+
+        symbol_table::func_entry *funcEntryPtr;         /* funcdef, funcprefix */
+        symbol_table::entry::lvalue_type lvalueType;    /*lvalue*/
+
         void_t voidVal;
     } value_stack_t;
 };
 
-#endif //HY340_PROJECT_TYPES_H
+#endif //HY340_PROJECT_SYNTAX_ANALYZER_TYPES_H

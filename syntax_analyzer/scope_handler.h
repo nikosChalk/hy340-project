@@ -72,8 +72,9 @@ namespace syntax_analyzer {
         /**
          * Exits a function scope space and restores the function offset to previous old value (if any such value exists)
          * Note that the scope is not changed
+         * @return The number of local variables that were created within the function scope space that we exit
          */
-        void exit_function_ss();
+        unsigned int exit_function_ss();
 
         /**
          * Enters a formal argument scope space and resets the formal argument offset to zero(0)

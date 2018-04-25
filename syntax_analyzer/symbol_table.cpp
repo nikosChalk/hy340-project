@@ -96,10 +96,22 @@ namespace syntax_analyzer {
     }
 
     /* ~~~~~~ symbol_table::func_entry implementation ~~~~~~ */
-    symbol_table::func_entry::func_entry(unsigned int scope, unsigned int line, const string &name, sym_type symbol_type)
+    symbol_table::func_entry::func_entry(unsigned int scope, unsigned int line, const string &name, sym_type symbol_type, unsigned int iaddress)
         : entry(scope, line, (name.empty() ? ("__gfunc" + std::to_string(generic_names++)) : name), symbol_type) {
         if(symbol_type != LIB_FUNC && symbol_type != USER_FUNC)
             throw std::runtime_error("Invalid symbol type");
+        this->iaddress = iaddress;
+    }
+
+    unsigned int symbol_table::func_entry::get_iaddress() const {
+        return this->iaddress;
+    }
+
+    unsigned int symbol_table::func_entry::get_total_locals() const {
+        return this->total_locals;
+    }
+    void symbol_table::func_entry::set_total_locals(unsigned int total_locals) {
+        this->total_locals = total_locals;
     }
 
     /* ~~~~~~ symbol_table implementation ~~~~~~ */
@@ -116,7 +128,7 @@ namespace syntax_analyzer {
         this->sym_tables.push_back(unordered_map<string, vector<entry*>>());
         for(const string &lib_func_name : lib_func_names)
             this->sym_tables.at(scope_handler::GLOBAL_SCOPE)[lib_func_name].push_back(new func_entry(
-                    scope_handler::GLOBAL_SCOPE, 0, lib_func_name, entry::LIB_FUNC
+                    scope_handler::GLOBAL_SCOPE, 0, lib_func_name, entry::LIB_FUNC, 0
             ));
     }
 

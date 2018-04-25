@@ -1,7 +1,7 @@
 
 
-#ifndef HY340_PROJECT_TYPES_H
-#define HY340_PROJECT_TYPES_H
+#ifndef HY340_PROJECT_INTERMEDIATE_TYPES_H
+#define HY340_PROJECT_INTERMEDIATE_TYPES_H
 
 #include "../syntax_analyzer/symbol_table.h"
 
@@ -62,10 +62,11 @@ namespace intermediate_code {
 
         /**
          * Creates a quad with the given attributes and with a default label equal to 0.
+         * @param lineno The line in the source file which triggered the creation of the quad
          */
         quad(iopcode opcode, expr *result, expr *arg1, expr *arg2, unsigned int lineno, unsigned int label=0);
     };
 };
 
 
-#endif //HY340_PROJECT_TYPES_H
+#endif //HY340_PROJECT_INTERMEDIATE_TYPES_H

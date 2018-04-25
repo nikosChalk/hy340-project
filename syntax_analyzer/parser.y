@@ -42,17 +42,22 @@
 %token <intVal>		CONST_INT
 %token <realVal>	CONST_REAL
 
-/* type declaration of non-terminal symbols, defined b the grammar */
+/* type declaration of non-terminal symbols, defined by the grammar */
 %type <strVector> idlist
 %type <lvalueType> lvalue
+%type <funcEntryPtr> funcdef
+
 %type <voidVal> program stmt expr term assignexpr primary member
 %type <voidVal> call callsuffix normcall methodcall elist objectdef indexed indexedelem block
-%type <voidVal> funcdef const ifstmt whilestmt forstmt returnstmt
+%type <voidVal> const ifstmt whilestmt forstmt returnstmt
 
 /* type declaration of non-terminal helper symbols, defined by us */
 %type <strVector> tmp_idlist
 %type <strVal> funcname
-%type <voidVal> funcprefix funcargs funcbody
+%type <intVal> funcbody	/* contains the number of local variables within the function */
+%type <funcEntryPtr> funcprefix
+
+%type <voidVal> funcargs
 %type <voidVal> tmp_elist tmp_indexed
 %type <voidVal> block_open stmts block_close
 
@@ -200,7 +205,7 @@ funcargs:	LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS	{$$ = Manage_funcargs__LEFT_
 funcbody:	block {$$ = Manage_funcbody__block();}
 			;
 
-funcdef:	funcprefix funcargs funcbody	{$$ = Manage_funcdef__funcprefix_funcargs_funcbody();}
+funcdef:	funcprefix funcargs funcbody	{$$ = Manage_funcdef__funcprefix_funcargs_funcbody($1, yylineno, $3);}
 			;
 
 const:	CONST_INT 		{$$ = Manage_const_CONST_INT();}

@@ -54,10 +54,15 @@ void scope_handler::enter_function_ss() {
     func_scope_stack.push(scope);
 }
 
-void scope_handler::exit_function_ss() {
+unsigned int scope_handler::exit_function_ss() {
+    assert(ss_stack.top() == FUNCTION_LOCALS_SS);
+    unsigned int ret_val = ss_offset_stack.top();
+
     ss_stack.pop();
     ss_offset_stack.pop();
     func_scope_stack.pop();
+
+    return ret_val;
 }
 
 void scope_handler::enter_formal_arg_ss() {
@@ -66,6 +71,7 @@ void scope_handler::enter_formal_arg_ss() {
 }
 
 void scope_handler::exit_formal_arg_ss() {
+    assert(ss_stack.top() == FORMAL_ARGUMENTS_SS);
     ss_stack.pop();
     ss_offset_stack.pop();
 }
