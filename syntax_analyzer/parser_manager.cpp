@@ -88,32 +88,26 @@ namespace syntax_analyzer {
     void_t Manage_expr__assignexpr() {
         fprintf(yyout, "expr -> assignexpr\n");
         return void_value;
-    }
-    intermediate_code::expr* Manage_expr__expr_PLUS_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
+
+	}
+
+	/* arithop */
+	intermediate_code::expr* Manage_expr__expr_PLUS_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
         fprintf(yyout, "expr -> expr + expr\n");
-		if ((arg1->type == expression_type::PROGRAM_FUNC_E) ||
-			(arg1->type == expression_type::LIBRARY_FUNC_E) ||
-			(arg1->type == expression_type::BOOL_E) ||
-			(arg1->type == expression_type::NEW_TABLE_E) ||
-			(arg1->type == expression_type::CONST_BOOL_E) ||
-			(arg1->type == expression_type::CONST_STR_E) ||
-			(arg1->type == expression_type::NIL_E) ||
-			(arg2->type == expression_type::PROGRAM_FUNC_E) ||
-			(arg2->type == expression_type::LIBRARY_FUNC_E) ||
-			(arg2->type == expression_type::BOOL_E) ||
-			(arg2->type == expression_type::NEW_TABLE_E) ||
-			(arg2->type == expression_type::CONST_BOOL_E) ||
-			(arg2->type == expression_type::CONST_STR_E) ||
-			(arg2->type == expression_type::NIL_E))
+		if ((arg1->type == expression_type::PROGRAM_FUNC_E) || (arg2->type == expression_type::PROGRAM_FUNC_E) ||
+			(arg1->type == expression_type::LIBRARY_FUNC_E) || (arg2->type == expression_type::LIBRARY_FUNC_E) ||
+			(arg1->type == expression_type::BOOL_E) || (arg2->type == expression_type::BOOL_E) ||
+			(arg1->type == expression_type::NEW_TABLE_E) || (arg2->type == expression_type::NEW_TABLE_E) ||
+			(arg1->type == expression_type::CONST_BOOL_E) || (arg2->type == expression_type::CONST_BOOL_E) ||
+			(arg1->type == expression_type::CONST_STR_E) || (arg2->type == expression_type::CONST_STR_E) ||
+			(arg1->type == expression_type::NIL_E) || (arg2->type == expression_type::NIL_E))	
 		{
 			throw syntax_error("", lineno);
 		}
 		/* Make new expr and emit a new quad */
 		intermediate_code::expr* new_expr = new intermediate_code::expr();
-		if (((arg1->type == expression_type::CONST_NUM_E) && 
-			     (arg2->type == expression_type::CONST_NUM_E)) ||
-				 ((arg2->type == expression_type::CONST_NUM_E) &&
-				 (arg1->type == expression_type::CONST_NUM_E)))
+		if (((arg1->type == expression_type::CONST_NUM_E) && (arg2->type == expression_type::CONST_NUM_E)) ||
+			((arg2->type == expression_type::CONST_NUM_E) &&(arg1->type == expression_type::CONST_NUM_E)))
 		{
 			new_expr->type = expression_type::CONST_NUM_E;
 			new_expr->const_val.number = arg1->const_val.number + arg2->const_val.number;
@@ -127,29 +121,20 @@ namespace syntax_analyzer {
     }
     intermediate_code::expr* Manage_expr__expr_MINUS_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
         fprintf(yyout, "expr -> expr - expr\n");
-		if ((arg1->type == expression_type::PROGRAM_FUNC_E) ||
-			(arg1->type == expression_type::LIBRARY_FUNC_E) ||
-			(arg1->type == expression_type::BOOL_E) ||
-			(arg1->type == expression_type::NEW_TABLE_E) ||
-			(arg1->type == expression_type::CONST_BOOL_E) ||
-			(arg1->type == expression_type::CONST_STR_E) ||
-			(arg1->type == expression_type::NIL_E) ||
-			(arg2->type == expression_type::PROGRAM_FUNC_E) ||
-			(arg2->type == expression_type::LIBRARY_FUNC_E) ||
-			(arg2->type == expression_type::BOOL_E) ||
-			(arg2->type == expression_type::NEW_TABLE_E) ||
-			(arg2->type == expression_type::CONST_BOOL_E) ||
-			(arg2->type == expression_type::CONST_STR_E) ||
-			(arg2->type == expression_type::NIL_E))
+		if ((arg1->type == expression_type::PROGRAM_FUNC_E) || (arg2->type == expression_type::PROGRAM_FUNC_E) ||
+			(arg1->type == expression_type::LIBRARY_FUNC_E) || (arg2->type == expression_type::LIBRARY_FUNC_E) ||
+			(arg1->type == expression_type::BOOL_E) || (arg2->type == expression_type::BOOL_E) ||
+			(arg1->type == expression_type::NEW_TABLE_E) || (arg2->type == expression_type::NEW_TABLE_E) ||
+			(arg1->type == expression_type::CONST_BOOL_E) || (arg2->type == expression_type::CONST_BOOL_E) ||
+			(arg1->type == expression_type::CONST_STR_E) || (arg2->type == expression_type::CONST_STR_E) ||
+			(arg1->type == expression_type::NIL_E) || (arg2->type == expression_type::NIL_E))
 		{
 			throw syntax_error("", lineno);
 		}
 		/* Make new expr and emit a new quad */
 		intermediate_code::expr* new_expr = new intermediate_code::expr();
-		if (((arg1->type == expression_type::CONST_NUM_E) &&
-			(arg2->type == expression_type::CONST_NUM_E)) ||
-			((arg2->type == expression_type::CONST_NUM_E) &&
-			(arg1->type == expression_type::CONST_NUM_E)))
+		if (((arg1->type == expression_type::CONST_NUM_E) && (arg2->type == expression_type::CONST_NUM_E)) ||
+			((arg2->type == expression_type::CONST_NUM_E) && (arg1->type == expression_type::CONST_NUM_E)))
 		{
 			new_expr->type = expression_type::CONST_NUM_E;
 			new_expr->const_val.number = arg1->const_val.number - arg2->const_val.number;
@@ -163,29 +148,20 @@ namespace syntax_analyzer {
     }
     intermediate_code::expr* Manage_expr__expr_MUL_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
         fprintf(yyout, "expr -> expr * expr\n");
-		if ((arg1->type == expression_type::PROGRAM_FUNC_E) ||
-			(arg1->type == expression_type::LIBRARY_FUNC_E) ||
-			(arg1->type == expression_type::BOOL_E) ||
-			(arg1->type == expression_type::NEW_TABLE_E) ||
-			(arg1->type == expression_type::CONST_BOOL_E) ||
-			(arg1->type == expression_type::CONST_STR_E) ||
-			(arg1->type == expression_type::NIL_E) ||
-			(arg2->type == expression_type::PROGRAM_FUNC_E) ||
-			(arg2->type == expression_type::LIBRARY_FUNC_E) ||
-			(arg2->type == expression_type::BOOL_E) ||
-			(arg2->type == expression_type::NEW_TABLE_E) ||
-			(arg2->type == expression_type::CONST_BOOL_E) ||
-			(arg2->type == expression_type::CONST_STR_E) ||
-			(arg2->type == expression_type::NIL_E))
+		if ((arg1->type == expression_type::PROGRAM_FUNC_E) || (arg2->type == expression_type::PROGRAM_FUNC_E) ||
+			(arg1->type == expression_type::LIBRARY_FUNC_E) || (arg2->type == expression_type::LIBRARY_FUNC_E) ||
+			(arg1->type == expression_type::BOOL_E) || (arg2->type == expression_type::BOOL_E) ||
+			(arg1->type == expression_type::NEW_TABLE_E) || (arg2->type == expression_type::NEW_TABLE_E) ||
+			(arg1->type == expression_type::CONST_BOOL_E) || (arg2->type == expression_type::CONST_BOOL_E) ||
+			(arg1->type == expression_type::CONST_STR_E) || (arg2->type == expression_type::CONST_STR_E) ||
+			(arg1->type == expression_type::NIL_E) || (arg2->type == expression_type::NIL_E))
 		{
 			throw syntax_error("", lineno);
 		}
 		/* Make new expr and emit a new quad */
         intermediate_code::expr* new_expr = new intermediate_code::expr();
-		if (((arg1->type == expression_type::CONST_NUM_E) &&
-			(arg2->type == expression_type::CONST_NUM_E)) ||
-			((arg2->type == expression_type::CONST_NUM_E) &&
-			(arg1->type == expression_type::CONST_NUM_E)))
+		if (((arg1->type == expression_type::CONST_NUM_E) && (arg2->type == expression_type::CONST_NUM_E)) ||
+			((arg2->type == expression_type::CONST_NUM_E) && (arg1->type == expression_type::CONST_NUM_E)))
 		{
 			new_expr->type = expression_type::CONST_NUM_E;
 			new_expr->const_val.number = arg1->const_val.number * arg2->const_val.number;
@@ -199,29 +175,20 @@ namespace syntax_analyzer {
     }
     intermediate_code::expr* Manage_expr__expr_DIV_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
         fprintf(yyout, "expr -> expr / expr\n");
-		if ((arg1->type == expression_type::PROGRAM_FUNC_E) ||
-			(arg1->type == expression_type::LIBRARY_FUNC_E) ||
-			(arg1->type == expression_type::BOOL_E) ||
-			(arg1->type == expression_type::NEW_TABLE_E) ||
-			(arg1->type == expression_type::CONST_BOOL_E) ||
-			(arg1->type == expression_type::CONST_STR_E) ||
-			(arg1->type == expression_type::NIL_E) ||
-			(arg2->type == expression_type::PROGRAM_FUNC_E) ||
-			(arg2->type == expression_type::LIBRARY_FUNC_E) ||
-			(arg2->type == expression_type::BOOL_E) ||
-			(arg2->type == expression_type::NEW_TABLE_E) ||
-			(arg2->type == expression_type::CONST_BOOL_E) ||
-			(arg2->type == expression_type::CONST_STR_E) ||
-			(arg2->type == expression_type::NIL_E))
+		if ((arg1->type == expression_type::PROGRAM_FUNC_E) || (arg2->type == expression_type::PROGRAM_FUNC_E) ||
+			(arg1->type == expression_type::LIBRARY_FUNC_E) || (arg2->type == expression_type::LIBRARY_FUNC_E) ||
+			(arg1->type == expression_type::BOOL_E) || (arg2->type == expression_type::BOOL_E) ||
+			(arg1->type == expression_type::NEW_TABLE_E) || (arg2->type == expression_type::NEW_TABLE_E) ||
+			(arg1->type == expression_type::CONST_BOOL_E) || (arg2->type == expression_type::CONST_BOOL_E) ||
+			(arg1->type == expression_type::CONST_STR_E) || (arg2->type == expression_type::CONST_STR_E) ||
+			(arg1->type == expression_type::NIL_E) || (arg2->type == expression_type::NIL_E))
 		{
 			throw syntax_error("", lineno);
 		}
 		/* Make new expr and emit a new quad */
         intermediate_code::expr* new_expr = new intermediate_code::expr();
-		if (((arg1->type == expression_type::CONST_NUM_E) &&
-			(arg2->type == expression_type::CONST_NUM_E)) ||
-			((arg2->type == expression_type::CONST_NUM_E) &&
-			(arg1->type == expression_type::CONST_NUM_E)))
+		if (((arg1->type == expression_type::CONST_NUM_E) && (arg2->type == expression_type::CONST_NUM_E)) ||
+			((arg2->type == expression_type::CONST_NUM_E) && (arg1->type == expression_type::CONST_NUM_E)))
 		{
 			new_expr->type = expression_type::CONST_NUM_E;
 			if (arg2->const_val.number != 0)
@@ -238,29 +205,20 @@ namespace syntax_analyzer {
     }
     intermediate_code::expr* Manage_expr__expr_MOD_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
         fprintf(yyout, "expr -> expr %% expr\n");
-		if ((arg1->type == expression_type::PROGRAM_FUNC_E) ||
-			(arg1->type == expression_type::LIBRARY_FUNC_E) ||
-			(arg1->type == expression_type::BOOL_E) ||
-			(arg1->type == expression_type::NEW_TABLE_E) ||
-			(arg1->type == expression_type::CONST_BOOL_E) ||
-			(arg1->type == expression_type::CONST_STR_E) ||
-			(arg1->type == expression_type::NIL_E) ||
-			(arg2->type == expression_type::PROGRAM_FUNC_E) ||
-			(arg2->type == expression_type::LIBRARY_FUNC_E) ||
-			(arg2->type == expression_type::BOOL_E) ||
-			(arg2->type == expression_type::NEW_TABLE_E) ||
-			(arg2->type == expression_type::CONST_BOOL_E) ||
-			(arg2->type == expression_type::CONST_STR_E) ||
-			(arg2->type == expression_type::NIL_E))
+		if ((arg1->type == expression_type::PROGRAM_FUNC_E) || (arg2->type == expression_type::PROGRAM_FUNC_E) ||
+			(arg1->type == expression_type::LIBRARY_FUNC_E) || (arg2->type == expression_type::LIBRARY_FUNC_E) ||
+			(arg1->type == expression_type::BOOL_E) || (arg2->type == expression_type::BOOL_E) ||
+			(arg1->type == expression_type::NEW_TABLE_E) || (arg2->type == expression_type::NEW_TABLE_E) ||
+			(arg1->type == expression_type::CONST_BOOL_E) || (arg2->type == expression_type::CONST_BOOL_E) ||
+			(arg1->type == expression_type::CONST_STR_E) || (arg2->type == expression_type::CONST_STR_E) ||
+			(arg1->type == expression_type::NIL_E) || (arg2->type == expression_type::NIL_E))
 		{
 			throw syntax_error("", lineno);
 		}
 		/* Make new expr and emit a new quad */
         intermediate_code::expr* new_expr = new intermediate_code::expr();
-		if (((arg1->type == expression_type::CONST_NUM_E) &&
-			(arg2->type == expression_type::CONST_NUM_E)) ||
-			((arg2->type == expression_type::CONST_NUM_E) &&
-			(arg1->type == expression_type::CONST_NUM_E)))
+		if (((arg1->type == expression_type::CONST_NUM_E) && (arg2->type == expression_type::CONST_NUM_E)) ||
+			((arg2->type == expression_type::CONST_NUM_E) && (arg1->type == expression_type::CONST_NUM_E)))
 		{
 			new_expr->type = expression_type::CONST_NUM_E;
 			new_expr->const_val.number = (int)arg1->const_val.number % (int)arg2->const_val.number;
@@ -272,30 +230,290 @@ namespace syntax_analyzer {
 		icode_gen.emit_quad(new quad(iopcode::mod, intermediate_code::expr::make_lvalue_expr(new_expr->sym_entry), arg1, arg2, lineno));
 		return new_expr;
     }
-    void_t Manage_expr__expr_GT_expr() {
-        fprintf(yyout, "expr -> expr > expr\n");
 
-        return void_value;
+	/* relop */
+
+	intermediate_code::expr* Manage_expr__expr_GT_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
+        fprintf(yyout, "expr -> expr > expr\n");
+		if ((arg1->type == expression_type::PROGRAM_FUNC_E) || (arg2->type == expression_type::PROGRAM_FUNC_E) ||
+			(arg1->type == expression_type::LIBRARY_FUNC_E) || (arg2->type == expression_type::LIBRARY_FUNC_E) ||
+			(arg1->type == expression_type::BOOL_E) || (arg2->type == expression_type::BOOL_E) ||
+			(arg1->type == expression_type::NEW_TABLE_E) || (arg2->type == expression_type::NEW_TABLE_E) ||
+			(arg1->type == expression_type::CONST_BOOL_E) || (arg2->type == expression_type::CONST_BOOL_E) ||
+			(arg1->type == expression_type::CONST_STR_E) || (arg2->type == expression_type::CONST_STR_E) ||
+			(arg1->type == expression_type::NIL_E) || (arg2->type == expression_type::NIL_E))
+		{
+			throw syntax_error("", lineno);
+		}
+		/* Make new expr and emit a new quad */
+		intermediate_code::expr* new_expr = new intermediate_code::expr();
+		if (((arg1->type == expression_type::CONST_NUM_E) && (arg2->type == expression_type::CONST_NUM_E)) ||
+			((arg2->type == expression_type::CONST_NUM_E) && (arg1->type == expression_type::CONST_NUM_E)))
+		{
+			new_expr->type = expression_type::CONST_BOOL_E;
+			if (arg1->const_val.number > arg2->const_val.number)
+				new_expr->const_val.boolean = true;
+			else
+				new_expr->const_val.boolean = false;
+		}
+		else{
+			new_expr->type = expression_type::BOOL_E;
+		}
+		new_expr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno); /*new_temp slides function*/
+		icode_gen.emit_quad(new quad(iopcode::if_greater, nullptr, arg1, arg2, lineno,icode_gen.next_quad_label()+3));
+
+		/*new_expr_constbool() sides function*/
+		intermediate_code::expr* new_expr_constbool = new intermediate_code::expr();
+		new_expr_constbool->type = expression_type::CONST_BOOL_E;
+		new_expr_constbool->const_val.boolean = false;
+
+		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, new_expr_constbool, nullptr, lineno));
+		icode_gen.emit_quad(new quad(iopcode::jump, nullptr, nullptr, nullptr, lineno, icode_gen.next_quad_label() + 2));
+
+		/*new_expr_constbool() sides function*/
+		intermediate_code::expr* new_expr_constbool = new intermediate_code::expr();
+		new_expr_constbool->type = expression_type::CONST_BOOL_E;
+		new_expr_constbool->const_val.boolean = true;
+
+		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, new_expr_constbool, nullptr, lineno));
+		return new_expr; 
     }
-    void_t Manage_expr__expr_GE_expr() {
+    intermediate_code::expr* Manage_expr__expr_GE_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
         fprintf(yyout, "expr -> expr >= expr\n");
-        return void_value;
+		if ((arg1->type == expression_type::PROGRAM_FUNC_E) || (arg2->type == expression_type::PROGRAM_FUNC_E) ||
+			(arg1->type == expression_type::LIBRARY_FUNC_E) || (arg2->type == expression_type::LIBRARY_FUNC_E) ||
+			(arg1->type == expression_type::BOOL_E) || (arg2->type == expression_type::BOOL_E) ||
+			(arg1->type == expression_type::NEW_TABLE_E) || (arg2->type == expression_type::NEW_TABLE_E) ||
+			(arg1->type == expression_type::CONST_BOOL_E) || (arg2->type == expression_type::CONST_BOOL_E) ||
+			(arg1->type == expression_type::CONST_STR_E) || (arg2->type == expression_type::CONST_STR_E) ||
+			(arg1->type == expression_type::NIL_E) || (arg2->type == expression_type::NIL_E))
+		{
+			throw syntax_error("", lineno);
+		}
+		/* Make new expr and emit a new quad */
+		intermediate_code::expr* new_expr = new intermediate_code::expr();
+		if (((arg1->type == expression_type::CONST_NUM_E) && (arg2->type == expression_type::CONST_NUM_E)) ||
+			((arg2->type == expression_type::CONST_NUM_E) && (arg1->type == expression_type::CONST_NUM_E)))
+		{
+			new_expr->type = expression_type::CONST_BOOL_E;
+			if (arg1->const_val.number >= arg2->const_val.number)
+				new_expr->const_val.boolean = true;
+			else
+				new_expr->const_val.boolean = false;
+		}
+		else{
+			new_expr->type = expression_type::BOOL_E;
+		}
+		new_expr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno); /*new_temp slides function*/
+		icode_gen.emit_quad(new quad(iopcode::if_greatereq, nullptr, arg1, arg2, lineno, icode_gen.next_quad_label() + 3));
+
+		/*new_expr_constbool() sides function*/
+		intermediate_code::expr* new_expr_constbool = new intermediate_code::expr();
+		new_expr_constbool->type = expression_type::CONST_BOOL_E;
+		new_expr_constbool->const_val.boolean = false;
+
+		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, new_expr_constbool, nullptr, lineno));
+		icode_gen.emit_quad(new quad(iopcode::jump, nullptr, nullptr, nullptr, lineno, icode_gen.next_quad_label() + 2));
+
+		/*new_expr_constbool() sides function*/
+		intermediate_code::expr* new_expr_constbool = new intermediate_code::expr();
+		new_expr_constbool->type = expression_type::CONST_BOOL_E;
+		new_expr_constbool->const_val.boolean = true;
+
+		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, new_expr_constbool, nullptr, lineno));
+		return new_expr;
     }
-    void_t Manage_expr__expr_LT_expr() {
+    intermediate_code::expr* Manage_expr__expr_LT_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
         fprintf(yyout, "expr -> expr < expr\n");
-        return void_value;
+		if ((arg1->type == expression_type::PROGRAM_FUNC_E) || (arg2->type == expression_type::PROGRAM_FUNC_E) ||
+			(arg1->type == expression_type::LIBRARY_FUNC_E) || (arg2->type == expression_type::LIBRARY_FUNC_E) ||
+			(arg1->type == expression_type::BOOL_E) || (arg2->type == expression_type::BOOL_E) ||
+			(arg1->type == expression_type::NEW_TABLE_E) || (arg2->type == expression_type::NEW_TABLE_E) ||
+			(arg1->type == expression_type::CONST_BOOL_E) || (arg2->type == expression_type::CONST_BOOL_E) ||
+			(arg1->type == expression_type::CONST_STR_E) || (arg2->type == expression_type::CONST_STR_E) ||
+			(arg1->type == expression_type::NIL_E) || (arg2->type == expression_type::NIL_E))
+		{
+			throw syntax_error("", lineno);
+		}
+		/* Make new expr and emit a new quad */
+		intermediate_code::expr* new_expr = new intermediate_code::expr();
+		if (((arg1->type == expression_type::CONST_NUM_E) && (arg2->type == expression_type::CONST_NUM_E)) ||
+			((arg2->type == expression_type::CONST_NUM_E) && (arg1->type == expression_type::CONST_NUM_E)))
+		{
+			new_expr->type = expression_type::CONST_BOOL_E;
+			if (arg1->const_val.number < arg2->const_val.number)
+				new_expr->const_val.boolean = true;
+			else
+				new_expr->const_val.boolean = false;
+		}
+		else{
+			new_expr->type = expression_type::BOOL_E;
+		}
+		new_expr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno); /*new_temp slides function*/
+		icode_gen.emit_quad(new quad(iopcode::if_less, nullptr, arg1, arg2, lineno, icode_gen.next_quad_label() + 3));
+
+		/*new_expr_constbool() sides function*/
+		intermediate_code::expr* new_expr_constbool = new intermediate_code::expr();
+		new_expr_constbool->type = expression_type::CONST_BOOL_E;
+		new_expr_constbool->const_val.boolean = false;
+
+		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, new_expr_constbool, nullptr, lineno));
+		icode_gen.emit_quad(new quad(iopcode::jump, nullptr, nullptr, nullptr, lineno, icode_gen.next_quad_label() + 2));
+
+		/*new_expr_constbool() sides function*/
+		intermediate_code::expr* new_expr_constbool = new intermediate_code::expr();
+		new_expr_constbool->type = expression_type::CONST_BOOL_E;
+		new_expr_constbool->const_val.boolean = true;
+
+		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, new_expr_constbool, nullptr, lineno));
+		return new_expr;
     }
-    void_t Manage_expr__expr_LE_expr() {
+    intermediate_code::expr* Manage_expr__expr_LE_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
         fprintf(yyout, "expr -> expr <= expr\n");
-        return void_value;
+		if ((arg1->type == expression_type::PROGRAM_FUNC_E) || (arg2->type == expression_type::PROGRAM_FUNC_E) ||
+			(arg1->type == expression_type::LIBRARY_FUNC_E) || (arg2->type == expression_type::LIBRARY_FUNC_E) ||
+			(arg1->type == expression_type::BOOL_E) || (arg2->type == expression_type::BOOL_E) ||
+			(arg1->type == expression_type::NEW_TABLE_E) || (arg2->type == expression_type::NEW_TABLE_E) ||
+			(arg1->type == expression_type::CONST_BOOL_E) || (arg2->type == expression_type::CONST_BOOL_E) ||
+			(arg1->type == expression_type::CONST_STR_E) || (arg2->type == expression_type::CONST_STR_E) ||
+			(arg1->type == expression_type::NIL_E) || (arg2->type == expression_type::NIL_E))
+		{
+			throw syntax_error("", lineno);
+		}
+		/* Make new expr and emit a new quad */
+		intermediate_code::expr* new_expr = new intermediate_code::expr();
+		if (((arg1->type == expression_type::CONST_NUM_E) && (arg2->type == expression_type::CONST_NUM_E)) ||
+			((arg2->type == expression_type::CONST_NUM_E) && (arg1->type == expression_type::CONST_NUM_E)))
+		{
+			new_expr->type = expression_type::CONST_BOOL_E;
+			if (arg1->const_val.number <= arg2->const_val.number)
+				new_expr->const_val.boolean = true;
+			else
+				new_expr->const_val.boolean = false;
+		}
+		else{
+			new_expr->type = expression_type::BOOL_E;
+		}
+		new_expr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno); /*new_temp slides function*/
+		icode_gen.emit_quad(new quad(iopcode::if_lesseq, nullptr, arg1, arg2, lineno, icode_gen.next_quad_label() + 3));
+
+		/*new_expr_constbool() sides function*/
+		intermediate_code::expr* new_expr_constbool = new intermediate_code::expr();
+		new_expr_constbool->type = expression_type::CONST_BOOL_E;
+		new_expr_constbool->const_val.boolean = false;
+
+		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, new_expr_constbool, nullptr, lineno));
+		icode_gen.emit_quad(new quad(iopcode::jump, nullptr, nullptr, nullptr, lineno, icode_gen.next_quad_label() + 2));
+
+		/*new_expr_constbool() sides function*/
+		intermediate_code::expr* new_expr_constbool = new intermediate_code::expr();
+		new_expr_constbool->type = expression_type::CONST_BOOL_E;
+		new_expr_constbool->const_val.boolean = true;
+
+		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, new_expr_constbool, nullptr, lineno));
+		return new_expr;
     }
-    void_t Manage_expr__expr_EQ_expr() {
+    intermediate_code::expr* Manage_expr__expr_EQ_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
         fprintf(yyout, "expr -> expr == expr\n");
-        return void_value;
+		if ((arg1->type == expression_type::PROGRAM_FUNC_E) || (arg2->type == expression_type::PROGRAM_FUNC_E) ||
+			(arg1->type == expression_type::LIBRARY_FUNC_E) || (arg2->type == expression_type::LIBRARY_FUNC_E) ||
+			(arg1->type == expression_type::NEW_TABLE_E) || (arg2->type == expression_type::NEW_TABLE_E) ||
+			(arg1->type == expression_type::NIL_E) || (arg2->type == expression_type::NIL_E))
+		{
+			throw syntax_error("", lineno);
+		}
+		/* Make new expr and emit a new quad */
+		intermediate_code::expr* new_expr = new intermediate_code::expr();
+		if ((((arg1->type == expression_type::CONST_STR_E) && (arg2->type == expression_type::CONST_STR_E)) ||
+			((arg2->type == expression_type::CONST_STR_E) && (arg1->type == expression_type::CONST_STR_E))) || 
+			(((arg1->type == expression_type::CONST_NUM_E) && (arg2->type == expression_type::CONST_NUM_E)) ||
+			((arg2->type == expression_type::CONST_NUM_E) && (arg1->type == expression_type::CONST_NUM_E))) || 
+			(((arg1->type == expression_type::CONST_BOOL_E) && (arg2->type == expression_type::CONST_BOOL_E)) ||
+			((arg2->type == expression_type::CONST_BOOL_E) && (arg1->type == expression_type::CONST_BOOL_E))))
+		{
+			new_expr->type = expression_type::CONST_BOOL_E;
+			if (arg1->const_val.number == arg2->const_val.number)
+				new_expr->const_val.boolean = true;
+			else
+				new_expr->const_val.boolean = false;
+		}
+		else if ((((arg1->type == expression_type::TABLE_ITEM_E) && (arg2->type == expression_type::NIL_E)) ||
+			((arg2->type == expression_type::NIL_E) && (arg1->type == expression_type::TABLE_ITEM_E)))){
+			new_expr->type = expression_type::CONST_BOOL_E;
+			new_expr->const_val.boolean = false;
+		}
+		else{
+			new_expr->type = expression_type::BOOL_E;
+		}
+		new_expr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno); /*new_temp slides function*/
+		icode_gen.emit_quad(new quad(iopcode::if_eq, nullptr, arg1, arg2, lineno, icode_gen.next_quad_label() + 3));
+
+		/*new_expr_constbool() sides function*/
+		intermediate_code::expr* new_expr_constbool = new intermediate_code::expr();
+		new_expr_constbool->type = expression_type::CONST_BOOL_E;
+		new_expr_constbool->const_val.boolean = false;
+
+		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, new_expr_constbool, nullptr, lineno));
+		icode_gen.emit_quad(new quad(iopcode::jump, nullptr, nullptr, nullptr, lineno, icode_gen.next_quad_label() + 2));
+
+		/*new_expr_constbool() sides function*/
+		intermediate_code::expr* new_expr_constbool = new intermediate_code::expr();
+		new_expr_constbool->type = expression_type::CONST_BOOL_E;
+		new_expr_constbool->const_val.boolean = true;
+
+		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, new_expr_constbool, nullptr, lineno));
+		return new_expr;
     }
-    void_t Manage_expr__expr_NE_expr() {
+    intermediate_code::expr* Manage_expr__expr_NE_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
         fprintf(yyout, "expr -> expr != expr\n");
-        return void_value;
+		if ((arg1->type == expression_type::PROGRAM_FUNC_E) || (arg2->type == expression_type::PROGRAM_FUNC_E) ||
+			(arg1->type == expression_type::LIBRARY_FUNC_E) || (arg2->type == expression_type::LIBRARY_FUNC_E) ||
+			(arg1->type == expression_type::NEW_TABLE_E) || (arg2->type == expression_type::NEW_TABLE_E) ||
+			(arg1->type == expression_type::NIL_E) || (arg2->type == expression_type::NIL_E))
+		{
+			throw syntax_error("", lineno);
+		}
+		/* Make new expr and emit a new quad */
+		intermediate_code::expr* new_expr = new intermediate_code::expr();
+		if ((((arg1->type == expression_type::CONST_STR_E) && (arg2->type == expression_type::CONST_STR_E)) ||
+			((arg2->type == expression_type::CONST_STR_E) && (arg1->type == expression_type::CONST_STR_E))) ||
+			(((arg1->type == expression_type::CONST_NUM_E) && (arg2->type == expression_type::CONST_NUM_E)) ||
+			((arg2->type == expression_type::CONST_NUM_E) && (arg1->type == expression_type::CONST_NUM_E))) ||
+			(((arg1->type == expression_type::CONST_BOOL_E) && (arg2->type == expression_type::CONST_BOOL_E)) ||
+			((arg2->type == expression_type::CONST_BOOL_E) && (arg1->type == expression_type::CONST_BOOL_E))))
+		{
+			new_expr->type = expression_type::CONST_BOOL_E;
+			if (arg1->const_val.number != arg2->const_val.number)
+				new_expr->const_val.boolean = true;
+			else
+				new_expr->const_val.boolean = false;
+		}
+		else if ((((arg1->type == expression_type::TABLE_ITEM_E) && (arg2->type == expression_type::NIL_E)) ||
+			((arg2->type == expression_type::NIL_E) && (arg1->type == expression_type::TABLE_ITEM_E)))){
+			new_expr->type = expression_type::CONST_BOOL_E;
+			new_expr->const_val.boolean = false;
+		}
+		else{
+			new_expr->type = expression_type::BOOL_E;
+		}
+		new_expr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno); /*new_temp slides function*/
+		icode_gen.emit_quad(new quad(iopcode::if_noteq, nullptr, arg1, arg2, lineno, icode_gen.next_quad_label() + 3));
+
+		/*new_expr_constbool() sides function*/
+		intermediate_code::expr* new_expr_constbool = new intermediate_code::expr();
+		new_expr_constbool->type = expression_type::CONST_BOOL_E;
+		new_expr_constbool->const_val.boolean = false;
+
+		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, new_expr_constbool, nullptr, lineno));
+		icode_gen.emit_quad(new quad(iopcode::jump, nullptr, nullptr, nullptr, lineno, icode_gen.next_quad_label() + 2));
+
+		/*new_expr_constbool() sides function*/
+		intermediate_code::expr* new_expr_constbool = new intermediate_code::expr();
+		new_expr_constbool->type = expression_type::CONST_BOOL_E;
+		new_expr_constbool->const_val.boolean = true;
+
+		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, new_expr_constbool, nullptr, lineno));
+		return new_expr;
     }
     void_t Manage_expr__expr_AND_expr() {
         fprintf(yyout, "expr -> expr AND expr\n");

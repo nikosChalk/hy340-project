@@ -15,7 +15,8 @@ namespace intermediate_code {
         mod,        uminus,     logical_and,    logical_or,     logical_not,
         if_eq,      if_noteq,   if_lesseq,      if_greatereq,   if_less,
         if_greater, call,       param,          ret,            getretval,
-        funcstart,  funcend,    tablecreate,    tablegetelem,   tablesetelem
+        funcstart,  funcend,    tablecreate,    tablegetelem,   tablesetelem, 
+		jump
     };
 
     enum expression_type {
