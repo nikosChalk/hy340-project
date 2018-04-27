@@ -125,7 +125,7 @@ term:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS		{$$ = Manage_term__LEFT_PARENTHES
 assignexpr:	lvalue ASSIGN expr {$$ = Manage_assignexpr__lvalue_ASSIGN_expr($1, yylineno);}
 			;
 
-primary:	lvalue											{$$ = Manage_primary__lvalue(); }
+primary:	lvalue											{$$ = Manage_primary__lvalue($1); }
 			| call											{$$ = Manage_primary__call(); }
 			| objectdef										{$$ = Manage_primary__objectdef(); }
 			| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS	{$$ = Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS(); }
@@ -138,8 +138,8 @@ lvalue:	IDENTIFIER					{$$ = Manage_lvalue__IDENTIFIER(sym_table, $1, yylineno);
 		| member					{$$ = Manage_lvalue__member(); }
 		;
 
-member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER();}
-		| lvalue LEFT_BRACKET expr RIGHT_BRACKET	{$$=Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET();}
+member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER($1, $3);}
+		| lvalue LEFT_BRACKET expr RIGHT_BRACKET	{$$=Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET($1, $3);}
 		| call DOT IDENTIFIER						{$$=Manage_member__call_DOT_IDENTIFIER();}
 		| call LEFT_BRACKET expr RIGHT_BRACKET		{$$=Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();}
 		;

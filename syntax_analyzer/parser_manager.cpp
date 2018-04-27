@@ -577,9 +577,9 @@ namespace syntax_analyzer {
     }
 
 
-    void_t Manage_primary__lvalue() {
+    expr* Manage_primary__lvalue(expr* lvalue) {
         fprintf(yyout, "primary -> lvalue\n");
-        return void_value;
+		return emit_iftableitem(lvalue);
     }
     void_t Manage_primary__call() {
         fprintf(yyout, "primary -> call\n");
@@ -664,13 +664,21 @@ namespace syntax_analyzer {
     }
 
 
-    void_t Manage_member__lvalue_DOT_IDENTIFIER() {
+    expr* Manage_member__lvalue_DOT_IDENTIFIER(expr* lvalue, const string &id) {
         fprintf(yyout, "member -> .IDENTIFIER\n");
-        return void_value;
+        lvalue = emit_iftableitem(lvalue); /* Emit code if it is a table item. */
+		expr* item = newexpr(tableitem_e); /*Make a new expression. */
+		item->sym_entry = lvalue->sym_entry;
+		item->index = newexpr_conststring(id); /* Const string index. */
+		return item;
     }
-    void_t Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET() {
+    expr* Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET(expr* lvalue, expr* expr) {
         fprintf(yyout, "member -> lvalue[expr]\n");
-        return void_value;
+        lvalue = emit_iftableitem(lvalue);
+		tableitem = newexpr(tableitem_e);
+		tableitem->sym_entry = lvalue->sym_entry;
+		tableitem_e->index = expr; /* The index is the expression. */		
+		return tableitem;
     }
     void_t Manage_member__call_DOT_IDENTIFIER() {
         fprintf(yyout, "member -> call.IDENTIFIER\n");
