@@ -45,8 +45,22 @@ namespace intermediate_code {
             double number;
             std::string str;
             bool boolean;
+            bool is_nil;
         } const_val;
 
+        /**
+         * Creates a new expr with the given type and with NULL fields index and sym_entry
+         */
+        expr(expression_type type);
+
+        /**
+         * Creates a new expr for the given sym_entry during the reduction of the grammar rule "lvalue -> ..."
+         * Caller is responsible to free the returned object.
+         * @param sym_entry The symbol table entry which is defined during the reduction of the grammar rule
+         * "lvalue -> id | local id | ::id". Must not be NULL/nullptr
+         *
+         * @return The new expr* which should be stored as the semantic value of the rule.
+         */
         static expr* make_lvalue_expr(syntax_analyzer::symbol_table::entry *sym_entry);
     };
 

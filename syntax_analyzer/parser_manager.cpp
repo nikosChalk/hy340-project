@@ -89,7 +89,7 @@ namespace syntax_analyzer {
         fprintf(yyout, "expr -> assignexpr\n");
         return void_value;
     }
-	struct intermediate_code::expr* Manage_expr__expr_PLUS_expr(symbol_table &sym_table, intermediate_code::expr *arg1, intermediate_code::expr *arg2, unsigned int lineno) {
+    intermediate_code::expr* Manage_expr__expr_PLUS_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
         fprintf(yyout, "expr -> expr + expr\n");
 		if ((arg1->type == expression_type::PROGRAM_FUNC_E) ||
 			(arg1->type == expression_type::LIBRARY_FUNC_E) ||
@@ -109,7 +109,7 @@ namespace syntax_analyzer {
 			throw syntax_error("", lineno);
 		}
 		/* Make new expr and emit a new quad */
-		struct intermediate_code::expr* new_expr = new intermediate_code::expr();
+		intermediate_code::expr* new_expr = new intermediate_code::expr();
 		if (((arg1->type == expression_type::CONST_NUM_E) && 
 			     (arg2->type == expression_type::CONST_NUM_E)) ||
 				 ((arg2->type == expression_type::CONST_NUM_E) &&
@@ -125,7 +125,7 @@ namespace syntax_analyzer {
 		icode_gen.emit_quad(new quad(iopcode::add, intermediate_code::expr::make_lvalue_expr(new_expr->sym_entry), arg1, arg2, lineno));
 		return new_expr;
     }
-	struct intermediate_code::expr* Manage_expr__expr_MINUS_expr(symbol_table &sym_table, intermediate_code::expr *arg1, intermediate_code::expr *arg2, unsigned int lineno) {
+    intermediate_code::expr* Manage_expr__expr_MINUS_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
         fprintf(yyout, "expr -> expr - expr\n");
 		if ((arg1->type == expression_type::PROGRAM_FUNC_E) ||
 			(arg1->type == expression_type::LIBRARY_FUNC_E) ||
@@ -145,7 +145,7 @@ namespace syntax_analyzer {
 			throw syntax_error("", lineno);
 		}
 		/* Make new expr and emit a new quad */
-		struct intermediate_code::expr* new_expr = new intermediate_code::expr();
+		intermediate_code::expr* new_expr = new intermediate_code::expr();
 		if (((arg1->type == expression_type::CONST_NUM_E) &&
 			(arg2->type == expression_type::CONST_NUM_E)) ||
 			((arg2->type == expression_type::CONST_NUM_E) &&
@@ -161,7 +161,7 @@ namespace syntax_analyzer {
 		icode_gen.emit_quad(new quad(iopcode::sub, intermediate_code::expr::make_lvalue_expr(new_expr->sym_entry), arg1, arg2, lineno));
 		return new_expr;
     }
-	struct intermediate_code::expr* Manage_expr__expr_MUL_expr(symbol_table &sym_table, intermediate_code::expr *arg1, intermediate_code::expr *arg2, unsigned int lineno) {
+    intermediate_code::expr* Manage_expr__expr_MUL_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
         fprintf(yyout, "expr -> expr * expr\n");
 		if ((arg1->type == expression_type::PROGRAM_FUNC_E) ||
 			(arg1->type == expression_type::LIBRARY_FUNC_E) ||
@@ -181,7 +181,7 @@ namespace syntax_analyzer {
 			throw syntax_error("", lineno);
 		}
 		/* Make new expr and emit a new quad */
-		struct intermediate_code::expr* new_expr = new intermediate_code::expr();
+        intermediate_code::expr* new_expr = new intermediate_code::expr();
 		if (((arg1->type == expression_type::CONST_NUM_E) &&
 			(arg2->type == expression_type::CONST_NUM_E)) ||
 			((arg2->type == expression_type::CONST_NUM_E) &&
@@ -197,7 +197,7 @@ namespace syntax_analyzer {
 		icode_gen.emit_quad(new quad(iopcode::mul, intermediate_code::expr::make_lvalue_expr(new_expr->sym_entry), arg1, arg2, lineno));
 		return new_expr;
     }
-	struct intermediate_code::expr* Manage_expr__expr_DIV_expr(symbol_table &sym_table, intermediate_code::expr *arg1, intermediate_code::expr *arg2, unsigned int lineno) {
+    intermediate_code::expr* Manage_expr__expr_DIV_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
         fprintf(yyout, "expr -> expr / expr\n");
 		if ((arg1->type == expression_type::PROGRAM_FUNC_E) ||
 			(arg1->type == expression_type::LIBRARY_FUNC_E) ||
@@ -217,7 +217,7 @@ namespace syntax_analyzer {
 			throw syntax_error("", lineno);
 		}
 		/* Make new expr and emit a new quad */
-		struct intermediate_code::expr* new_expr = new intermediate_code::expr();
+        intermediate_code::expr* new_expr = new intermediate_code::expr();
 		if (((arg1->type == expression_type::CONST_NUM_E) &&
 			(arg2->type == expression_type::CONST_NUM_E)) ||
 			((arg2->type == expression_type::CONST_NUM_E) &&
@@ -236,7 +236,7 @@ namespace syntax_analyzer {
 		icode_gen.emit_quad(new quad(iopcode::div, intermediate_code::expr::make_lvalue_expr(new_expr->sym_entry), arg1, arg2, lineno));
 		return new_expr;
     }
-	struct intermediate_code::expr* Manage_expr__expr_MOD_expr(symbol_table &sym_table, intermediate_code::expr *arg1, intermediate_code::expr *arg2, unsigned int lineno) {
+    intermediate_code::expr* Manage_expr__expr_MOD_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
         fprintf(yyout, "expr -> expr %% expr\n");
 		if ((arg1->type == expression_type::PROGRAM_FUNC_E) ||
 			(arg1->type == expression_type::LIBRARY_FUNC_E) ||
@@ -256,7 +256,7 @@ namespace syntax_analyzer {
 			throw syntax_error("", lineno);
 		}
 		/* Make new expr and emit a new quad */
-		struct intermediate_code::expr* new_expr = new intermediate_code::expr();
+        intermediate_code::expr* new_expr = new intermediate_code::expr();
 		if (((arg1->type == expression_type::CONST_NUM_E) &&
 			(arg2->type == expression_type::CONST_NUM_E)) ||
 			((arg2->type == expression_type::CONST_NUM_E) &&
@@ -597,7 +597,7 @@ namespace syntax_analyzer {
 			scope, lineno, id, symbol_table::entry::USER_FUNC, icode_gen.next_quad_label()
 		);
 		sym_table.insert(new_func_entry);
-		icode_gen.emit_quad(new quad(iopcode::funcstart, intermediate_code::expr::make_lvalue_expr(new_func_entry), nullptr, nullptr, lineno));
+		icode_gen.emit_quad(new quad(iopcode::funcstart, expr::make_lvalue_expr(new_func_entry), nullptr, nullptr, lineno));
 
         scp_handler.enter_formal_arg_ss();
         scp_handler.increase_scope();
@@ -622,7 +622,7 @@ namespace syntax_analyzer {
         fprintf(yyout, "funcdef -> funcprefix funcargs funcbody\n");
         func_entry->set_total_locals(total_func_locals);
 
-		icode_gen.emit_quad(new quad(iopcode::funcend, intermediate_code::expr::make_lvalue_expr(func_entry), nullptr, nullptr, lineno));
+		icode_gen.emit_quad(new quad(iopcode::funcend, expr::make_lvalue_expr(func_entry), nullptr, nullptr, lineno));
         return func_entry;
     }
 
