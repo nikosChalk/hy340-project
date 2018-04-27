@@ -25,6 +25,31 @@ namespace syntax_analyzer {
     static hidden_var_handler hvar_handler = hidden_var_handler();
 	static icode_generator icode_gen = icode_generator();
 
+    /**
+     * If the given expr is not of type expression_type::TABLE_ITEM_E, then expr is simply returned.
+     * Otherwise, a quad tablegetelem is emitted from the given expr with index possible_table->index and the result is stored
+     * in a hidden var.
+     * e.g. "tablegetelem hidden_var, possible_table, possible_table->index", where hidden_var is the result,
+     * possible_table is arg1 and possible_table->index is arg2.
+     * @param table The table. Must not be NULL/nullptr
+     * @param lineno The line number that triggered the possible emit of a quad
+     * @return On the first case possible_table. On the second case (when the emit occurs), the hidden var where the
+     * result of the emitted quad is stored.
+     */
+	static expr* emit_iftableitem(expr *possible_table, symbol_table &sym_table, unsigned int lineno) {
+        assert(possible_table);
+
+        //See documentation
+        if(possible_table->type != expression_type::TABLE_ITEM_E) {
+            return possible_table;
+        } else {
+            expr *result = expr::make_expr(expression_type::VAR_E);
+            result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+            icode_gen.emit_quad(new quad(iopcode::tablegetelem, result, possible_table, possible_table->index, lineno));
+            return result;
+        }
+    }
+
 /************************* end *********************************/
 
 
@@ -598,34 +623,36 @@ namespace syntax_analyzer {
         return void_value;
     }
 
-    symbol_table::entry::lvalue_type Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int lineno) {
+    expr* Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int lineno) {
         fprintf(yyout, "lvalue -> IDENTIFIER\n");
 
         unsigned int scope = scp_handler.get_current_scope();
         unsigned int active_function_scope = scp_handler.get_active_function_scope();
         vector<symbol_table::entry*> all_entries = sym_table.recursive_lookup(identifier, scope);
+        symbol_table::entry *id_entry;
 
         if (all_entries.empty()) { /* This identifier was not found in any enclosing scope. ==> Insert new symbol */
-            sym_table.insert(new symbol_table::var_entry(
+            id_entry = new symbol_table::var_entry(
                     scope, lineno, identifier, symbol_table::entry::LOCAL, scp_handler.get_current_ss(), scp_handler.fetch_and_incr_cur_ssoffset()
-            ));
-            return symbol_table::entry::lvalue_type::VAR;
+            );
+            sym_table.insert(id_entry);
         } else {
             /* We need to check if there is an accessible reference in all_entries */
             try {
-                return sym_table.exists_accessible_symbol(identifier, scope, active_function_scope)->get_lvalue_type();
+                id_entry = sym_table.exists_accessible_symbol(identifier, scope, active_function_scope);
             } catch(runtime_error &err) {
                 throw syntax_error("Variable \'" + identifier + "\': " + err.what(), lineno);
             }
         }
+        return expr::make_lvalue_expr(id_entry);
     }
-    symbol_table::entry::lvalue_type Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int lineno) {
+    expr* Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int lineno) {
         fprintf(yyout, "lvalue -> local IDENTIFIER\n");
 
         unsigned int scope = scp_handler.get_current_scope();
         vector<symbol_table::entry*> scope_entries = sym_table.lookup(identifier, scope);
         vector<symbol_table::entry*> global_entries = sym_table.lookup(identifier, scope_handler::GLOBAL_SCOPE);
-        symbol_table::entry::lvalue_type ret_val;
+        symbol_table::entry *id_entry;
 
         if(scope_entries.empty()) {
             //Check if it shadows a library function
@@ -637,26 +664,28 @@ namespace syntax_analyzer {
                 throw syntax_error("Local variable \'" + identifier + "\' name shadows library function", lineno);
 
             //Identifier is okay. Add it to the symbol table
-            sym_table.insert(new symbol_table::var_entry(
-               scope, lineno, identifier, symbol_table::entry::LOCAL, scp_handler.get_current_ss(), scp_handler.fetch_and_incr_cur_ssoffset()
-            ));
-            ret_val = symbol_table::entry::lvalue_type::VAR;
+            id_entry = new symbol_table::var_entry(
+                    scope, lineno, identifier, symbol_table::entry::LOCAL, scp_handler.get_current_ss(), scp_handler.fetch_and_incr_cur_ssoffset()
+            );
+            sym_table.insert(id_entry);
         } else {
             assert(scope_entries.size() == 1);
-            ret_val = scope_entries.at(0)->get_lvalue_type();
+            id_entry = scope_entries.at(0);
         }
-        return ret_val;
+        return expr::make_lvalue_expr(id_entry);
     }
-    symbol_table::entry::lvalue_type Manage_lvalue__DOUBLE_COLON_IDENTIFIER(const symbol_table &sym_table, const string &identifier, unsigned int lineno) {
+    expr* Manage_lvalue__DOUBLE_COLON_IDENTIFIER(const symbol_table &sym_table, const string &identifier, unsigned int lineno) {
         fprintf(yyout, "lvalue -> ::IDENTIFIER\n");
 
         /* This rule NEVER inserts to the symbol table */
+        symbol_table::entry *id_entry;
         vector<symbol_table::entry*> global_entries = sym_table.lookup(identifier, scope_handler::GLOBAL_SCOPE);
         if(global_entries.empty())
             throw syntax_error("No global symbol \'" + identifier + "\' found.", lineno);
 
         assert(global_entries.size() == 1);
-        return global_entries.at(0)->get_lvalue_type();
+        id_entry = global_entries.at(0);
+        return expr::make_lvalue_expr(id_entry);
     }
     symbol_table::entry::lvalue_type Manage_lvalue__member() {
         fprintf(yyout, "lvalue -> member\n");

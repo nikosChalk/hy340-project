@@ -26,7 +26,7 @@ namespace syntax_analyzer {
     void_t Manage_stmt__SEMICOLON();
 
     /* Manage_expr__assignexpr() */
-   
+
 	void_t Manage_expr__assignexpr();
 
 	intermediate_code::expr* Manage_expr__expr_PLUS_expr(symbol_table &sym_table, intermediate_code::expr *arg1,
@@ -67,45 +67,45 @@ namespace syntax_analyzer {
     void_t Manage_expr__term();
 
 	/* Manage_term() */
-	void_t Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS();
-	void_t Manage_term__MINUS_expr();
-	void_t Manage_term__NOT_expr();
-	void_t Manage_term__PLUS_PLUS_lvalue(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
-	void_t Manage_term__lvalue_PLUS_PLUS(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
-	void_t Manage_term__MINUS_MINUS_lvalue(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
-	void_t Manage_term__lvalue_MINUS_MINUS(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
-	void_t Manage_term__primary();
-	
-    void_t Manage_assignexpr__lvalue_ASSIGN_expr(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
+    intermediate_code::expr* Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS();
+    intermediate_code::expr* Manage_term__MINUS_expr();
+    intermediate_code::expr* Manage_term__NOT_expr();
+    intermediate_code::expr* Manage_term__PLUS_PLUS_lvalue(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
+    intermediate_code::expr* Manage_term__lvalue_PLUS_PLUS(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
+    intermediate_code::expr* Manage_term__MINUS_MINUS_lvalue(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
+    intermediate_code::expr* Manage_term__lvalue_MINUS_MINUS(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
+    intermediate_code::expr* Manage_term__primary();
 
-    void_t Manage_primary__lvalue();
-    void_t Manage_primary__call();
-    void_t Manage_primary__objectdef();
-    void_t Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS();
-    void_t Manage_primary__const();
+    intermediate_code::expr* Manage_assignexpr__lvalue_ASSIGN_expr(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
+
+    intermediate_code::expr* Manage_primary__lvalue();
+    intermediate_code::expr* Manage_primary__call();
+    intermediate_code::expr* Manage_primary__objectdef();
+    intermediate_code::expr* Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS();
+    intermediate_code::expr* Manage_primary__const();
 
     /**
      * Handles the identifier that appears within the grammar rule.
      * @throws syntax_error if no accessible entry was found for the given identifier
      * @return The identifier's symbol_table::entry::lvalue_type
      */
-	symbol_table::entry::lvalue_type Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int lineno);
-	symbol_table::entry::lvalue_type Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int lineno);
+	intermediate_code::expr* Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int lineno);
+	intermediate_code::expr* Manage_lvalue__LOCAL_IDENTIFIER(symbol_table &sym_table, const std::string &identifier, unsigned int lineno);
     /**
      * This rule NEVER inserts to the symbol table
      */
-	symbol_table::entry::lvalue_type Manage_lvalue__DOUBLE_COLON_IDENTIFIER(const symbol_table &sym_table, const std::string &identifier, unsigned int lineno);
-	symbol_table::entry::lvalue_type Manage_lvalue__member();
+	intermediate_code::expr* Manage_lvalue__DOUBLE_COLON_IDENTIFIER(const symbol_table &sym_table, const std::string &identifier, unsigned int lineno);
+    intermediate_code::expr* Manage_lvalue__member();
 
-    void_t Manage_member__lvalue_DOT_IDENTIFIER();
-    void_t Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET();
-    void_t Manage_member__call_DOT_IDENTIFIER();
-    void_t Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();
+    intermediate_code::expr* Manage_member__lvalue_DOT_IDENTIFIER();
+    intermediate_code::expr* Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET();
+    intermediate_code::expr* Manage_member__call_DOT_IDENTIFIER();
+    intermediate_code::expr* Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();
 
 	/* Manage_call() */
-	void_t Manage_call_call_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
-	void_t Manage_call_lvalue_callsuffix();
-	void_t Manage_call_LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
+    intermediate_code::expr* Manage_call_call_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
+    intermediate_code::expr* Manage_call_lvalue_callsuffix();
+    intermediate_code::expr* Manage_call_LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
 
 	/* Manage_callsuffix() */
 	void_t Manage_callsuffix_normcall();
@@ -124,8 +124,8 @@ namespace syntax_analyzer {
 	void_t Manage_elist__expr_tmp_elist();
 
 	/* Manage_objectdef()*/
-	void_t Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET();
-	void_t Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET();
+    intermediate_code::expr* Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET();
+    intermediate_code::expr* Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET();
 
 	/* Manage_indexed() */
 	void_t Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem();
@@ -177,12 +177,12 @@ namespace syntax_analyzer {
 
 
 	/* Manage_const() */
-	void_t Manage_const_CONST_INT();
-	void_t Manage_const_CONST_REAL();
-	void_t Manage_const_CONST_STR();
-	void_t Manage_const_NIL();
-	void_t Manage_const_BOOL_TRUE();
-	void_t Manage_const_BOOL_FALSE();
+    intermediate_code::expr* Manage_const_CONST_INT();
+    intermediate_code::expr* Manage_const_CONST_REAL();
+    intermediate_code::expr* Manage_const_CONST_STR();
+    intermediate_code::expr* Manage_const_NIL();
+    intermediate_code::expr* Manage_const_BOOL_TRUE();
+    intermediate_code::expr* Manage_const_BOOL_FALSE();
 
 	/* Manage_idlist() */
     /**

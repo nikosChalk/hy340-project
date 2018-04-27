@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <vector>
 #include "symbol_table.h"
+#include "../intermediate_code/types.h"
 
 namespace syntax_analyzer {
     typedef void *void_t;
@@ -30,6 +31,10 @@ namespace syntax_analyzer {
 
         symbol_table::func_entry *funcEntryPtr;         /* funcdef, funcprefix */
         symbol_table::entry::lvalue_type lvalueType;    /*lvalue*/
+
+        intermediate_code::expr *exprPtr;   /*lvalue, member, primary, assignexpr, call, term, objectdef, const*/
+
+        std::vector<unsigned int> uIntVector;   /*break, continue*/
 
         void_t voidVal;
     } value_stack_t;

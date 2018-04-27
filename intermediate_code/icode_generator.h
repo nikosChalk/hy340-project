@@ -5,6 +5,7 @@
 
 #include <vector>
 #include "types.h"
+#include "../syntax_analyzer/hidden_var_handler.h"
 
 namespace intermediate_code {
 
@@ -35,7 +36,7 @@ namespace intermediate_code {
          * @param quadno The quad's number to patch. Must be less than next_quad_label().
          * @param label The new label to set.
          */
-        void patch_label(unsigned long quadno, unsigned int label);
+        void patch_label(unsigned int quadno, unsigned int label);
 
         /**
          * Returns the label of the next quad which will be emitted

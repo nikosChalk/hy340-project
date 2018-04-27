@@ -4,6 +4,7 @@
 #define HY340_PROJECT_SCOPE_HANDLER_H
 
 #include <stack>
+#include <vector>
 
 namespace syntax_analyzer {
 
@@ -87,6 +88,10 @@ namespace syntax_analyzer {
          * Note that the scope is not changed
          */
         void exit_formal_arg_ss();
+
+        /*TODO: otan allazei to scope xrhsimopoiei mia nea list. Otan meithwei to scope adeiazei adiazei thn lista auth???*/
+        void break_list_push(unsigned int quadno);  /*TODO: stabilize this function's API*/
+        std::vector<unsigned int> get_break_list(); /*TODO: stabilize this function's API*/
 
     private:
         /**

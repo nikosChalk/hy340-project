@@ -44,18 +44,19 @@
 
 /* type declaration of non-terminal symbols, defined by the grammar */
 %type <strVector> idlist
-%type <lvalueType> lvalue
 %type <funcEntryPtr> funcdef
+%type <exprPtr> lvalue member primary assignexpr call term objectdef const
 
-%type <voidVal> program stmt expr term assignexpr primary member
-%type <voidVal> call callsuffix normcall methodcall elist objectdef indexed indexedelem block
-%type <voidVal> const ifstmt whilestmt forstmt returnstmt
+%type <voidVal> program stmt expr
+%type <voidVal> callsuffix normcall methodcall elist indexed indexedelem block
+%type <voidVal> ifstmt whilestmt forstmt returnstmt
 
 /* type declaration of non-terminal helper symbols, defined by us */
 %type <strVector> tmp_idlist
 %type <strVal> funcname
 %type <intVal> funcbody	/* contains the number of local variables within the function */
 %type <funcEntryPtr> funcprefix
+%type <uIntVector> break continue
 
 %type <voidVal> funcargs
 %type <voidVal> tmp_elist tmp_indexed

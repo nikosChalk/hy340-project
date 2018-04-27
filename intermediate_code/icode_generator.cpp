@@ -20,7 +20,7 @@ void icode_generator::emit_quad(intermediate_code::quad *quad, unsigned int labe
     quad_vector.push_back(quad);
 }
 
-void icode_generator::patch_label(unsigned long quadno, unsigned int label) {
+void icode_generator::patch_label(unsigned int quadno, unsigned int label) {
     assert(quadno < this->next_quad_label());   //We cannot patch a quad's label if that quad has not been emitted
     quad_vector[quadno]->label = label;
 }
