@@ -54,7 +54,8 @@
 /* type declaration of non-terminal helper symbols, defined by us */
 %type <strVector> tmp_idlist
 %type <strVal> funcname
-%type <intVal> funcbody	/* contains the number of local variables within the function */
+%type <unsignedIntVal> funcbody	/* contains the number of local variables within the function */
+%type <unsignedIntVal> ifprefix elseprefix whilestart whilecond
 %type <funcEntryPtr> funcprefix
 %type <uIntVector> break continue
 
@@ -225,11 +226,23 @@ idlist:	IDENTIFIER tmp_idlist {$$ = Manage_idlist__IDENTIFIER_tmp_idlist(sym_tab
 		| %empty {$$ = Manage_idlist__empty();}
 		;
 
-ifstmt:	IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt				{ $$ = Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt();}
-		| IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt	{ $$ = Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt_ELSE_stmt();}
+ifprefix: IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS { $$ = Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS($3,yylineno);}
+	  ;
+
+elseprefix: ELSE {$$ = Manage_elseprefix_ELSE(yylineno);}
+	    ;
+
+ifstmt:	ifprefix stmt { $$ = Manage_ifprefix_stmt($1);}
+		| ifprefix stmt elseprefix stmt	{ $$ = Manage_ifprefix_stmt_elseprefix_stmt($1,$3);}
 		;
 
-whilestmt:	WHILE LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {$$ = Manage_WHILE_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt();}
+whilestart: WHILE{$$ = Manage_whilestart_WHILE();}
+	    ;
+
+whilecond: LEFT_PARENTHESIS expr RIGHT_PARENTHESIS{$$ = Manage_whilecond_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS($2);}
+	   ;
+
+whilestmt:	whilestart whilecond stmt {$$ = Manage_whilestmt_whilestart_whilecond_stmt($1,$2);}
 			;
 
 forstmt:	FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {$$ = Manage_FOR_LEFT_PARENTHESIS_elist_SEMICLON_expr_SEMICOLON_elist_RIGHT_PARENTHESIS_stmt();}

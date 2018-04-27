@@ -195,11 +195,16 @@ namespace syntax_analyzer {
     std::vector<std::string> Manage_idlist__empty();
 
 	/* Manage_ifstmt() */
-	void_t Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt();
-	void_t Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt_ELSE_stmt();
+
+	unsigned int Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(expr* expr, unsigned int lineno);
+	unsigned int Manage_elseprefix_ELSE(unsigned int lineno);
+	void_t Manage_ifprefix_stmt(unsigned int ifprefix);
+	void_t Manage_ifprefix_stmt_elseprefix_stmt(unsigned int ifprefix, unsigned int elseprefix);
 
 	/* Manage_whilestmt() */
-	void_t Manage_WHILE_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS_stmt();
+	unsigned int Manage_whilestart_WHILE();
+	unsigned int Manage_whilecond_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(expr * expr);
+	void_t Manage_whilestmt_whilestart_whilecond_stmt(unsigned int whilestart, unsigned int whilecond);
 
 	/* Manage_forstmt() */
 	void_t Manage_FOR_LEFT_PARENTHESIS_elist_SEMICLON_expr_SEMICOLON_elist_RIGHT_PARENTHESIS_stmt();
