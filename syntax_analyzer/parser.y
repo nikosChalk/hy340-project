@@ -45,10 +45,12 @@
 /* type declaration of non-terminal symbols, defined by the grammar */
 %type <strVector> idlist
 %type <funcEntryPtr> funcdef
-%type <exprPtr> lvalue member primary assignexpr call term objectdef const
+%type <exprPtr> expr lvalue member primary assignexpr call term objectdef const
+%type <dequeExpr> elist
+%type <callSuffixPtr> callsuffix normcall methodcall
 
-%type <voidVal> program stmt expr
-%type <voidVal> callsuffix normcall methodcall elist indexed indexedelem block
+%type <voidVal> program stmt
+%type <voidVal> indexed indexedelem block
 %type <voidVal> ifstmt whilestmt forstmt returnstmt
 
 /* type declaration of non-terminal helper symbols, defined by us */
@@ -146,21 +148,19 @@ member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER($1, 
 		| call LEFT_BRACKET expr RIGHT_BRACKET		{$$=Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();}
 		;
 
-call:	call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS	{$$ = Manage_call_call_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();}
-		| lvalue callsuffix								{$$ = Manage_call_lvalue_callsuffix();}
-		| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS	{
-			$$ = Manage_call_LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
-		}
+call:	call normcall	{$$ = Manage_call__call_normcall(sym_table, yylineno, $1, $2;}
+		| lvalue callsuffix								{$$ = Manage_call__lvalue_callsuffix(sym_table, yylineno, $1, $2);}
+		| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS normcall	{$$ = Manage_call__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_normcall(sym_table, yylineno, $2, $4);}
 		;
 
-callsuffix:	normcall		{$$ = Manage_callsuffix_normcall();}
-			| methodcall	{$$ = Manage_callsuffix_methodcall();}
+callsuffix:	normcall		{$$ = Manage_callsuffix__normcall($1);}
+			| methodcall	{$$ = Manage_callsuffix__methodcall($1);}
 			;
 
-normcall:	LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_normcall_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();}
+normcall:	LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_normcall__LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS($2);}
 			;
 
-methodcall:	DOUBLE_DOT IDENTIFIER LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(); }
+methodcall:	DOUBLE_DOT IDENTIFIER LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS($2, $4); }
 			;
 
 tmp_elist:	tmp_elist COMMA expr	{$$ = Manage_tmp_elist_tmp_elist_COMMA_expr();}

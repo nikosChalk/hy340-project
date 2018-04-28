@@ -30,9 +30,11 @@ namespace syntax_analyzer {
         std::vector<std::string> strVector; /*idlist, tmp_idlist*/
 
         symbol_table::func_entry *funcEntryPtr;         /* funcdef, funcprefix */
-        symbol_table::entry::lvalue_type lvalueType;    /*lvalue*/
 
         intermediate_code::expr *exprPtr;   /*lvalue, member, primary, assignexpr, call, term, objectdef, const*/
+        std::deque<intermediate_code::expr*> dequeExpr; //double ended queue. Used for elist
+
+        intermediate_code::call_suffix *callSuffixPtr;  //methodcall, normcall, callsuffix
 
         std::vector<unsigned int> uIntVector;   /*break, continue*/
 

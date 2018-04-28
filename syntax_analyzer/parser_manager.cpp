@@ -40,15 +40,42 @@ namespace syntax_analyzer {
         assert(possible_table);
 
         //See documentation
-        if(possible_table->type != expression_type::TABLE_ITEM_E) {
+        if(possible_table->type != expr::type::TABLE_ITEM_E) {
             return possible_table;
         } else {
-            expr *result = expr::make_expr(expression_type::VAR_E);
+            expr *result = expr::make_expr(expr::type::VAR_E);
             result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-            icode_gen.emit_quad(new quad(iopcode::tablegetelem, result, possible_table, possible_table->index, lineno));
+            icode_gen.emit_quad(new quad(quad::iopcode::tablegetelem, result, possible_table, possible_table->index, lineno));
             return result;
         }
     }
+
+    /**
+     * Handles the semantic value of the "call" non-terminal symbol and its intermediate code generation.
+     * Used by grammar rules "call -> ..."
+     * @param func An expr that acts as the function's id (callable object).
+     * @param elist A double ended queue with the parameters of the function in left-to-right order.
+     * e.g.: If we had "f(a,b,c)" then elist should be "a, b, c"
+     * @param lineno The line number which triggered the reduction of the rule "call -> ..."
+     * @return A new expr which represents the returned value of the function and that expr is a hidden variable.
+     */
+    static expr* handle_call_rule(expr *func, deque<expr*> const &elist, symbol_table &sym_table, unsigned int lineno) {
+        func = emit_iftableitem(func, sym_table, lineno);   //emit any dangling TABLE_ITEM_E type quads
+
+        //emit param quads in reverse order. e.g. "param c", "param b", "param a"
+        for(auto rit = elist.rbegin(); rit != elist.rend(); rit++)
+            icode_gen.emit_quad(new quad(quad::iopcode::param, nullptr, *rit, nullptr, lineno));
+
+        //emit call to function quad
+        icode_gen.emit_quad(new quad(quad::iopcode::call, nullptr, func, nullptr, lineno));
+
+        //getretval quad
+        expr *result = expr::make_expr(expr::type::VAR_E);
+        result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+        icode_gen.emit_quad(new quad(quad::iopcode::getretval, result, nullptr, nullptr, lineno));
+
+        return result;
+	}
 
 /************************* end *********************************/
 
@@ -406,40 +433,53 @@ namespace syntax_analyzer {
     }
 
 	/* Manage_call() */
-	void_t Manage_call_call_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(){
-		fprintf(yyout, " call -> call(elist)\n");
-		return void_value;
+	expr* Manage_call__call_normcall(symbol_table &sym_table, unsigned int lineno, expr *call, norm_call *norm_call) {
+		fprintf(yyout, " call -> call normcall\n");
+		return handle_call_rule(call, norm_call->get_elist(), sym_table, lineno);
 	}
-	void_t Manage_call_lvalue_callsuffix(){
+	expr* Manage_call__lvalue_callsuffix(symbol_table &sym_table, unsigned int lineno, expr *lvalue, call_suffix *call_suffix){
 		fprintf(yyout, "call -> lvalue callsuffix\n");
-		return void_value;
+
+        if(call_suffix->get_type() == call_suffix::type::METHOD_CALL) {
+            method_call *method_call;
+            if(!(method_call = dynamic_cast<method_call*>(call_suffix)))    /*TODO: validate that this works*/
+                    assert(false);  //Casting should ALWAYS be possible
+
+            expr *self = lvalue;
+            lvalue = emit_iftableitem(member_item(self, method_call->get_name()));
+            call_suffix->get_elist().push_front(self);
+        }
+		return handle_call_rule(lvalue, call_suffix->get_elist(), sym_table, lineno);
 	}
-	void_t Manage_call_LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(){
+	expr* Manage_call__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_normcall(symbol_table &sym_table, unsigned int lineno,
+                                                                           symbol_table::func_entry *funcdef, norm_call *norm_call) {
 		fprintf(yyout, "call -> (funcdef) (elist)\n");
-		return void_value;
+		expr *func = expr::make_expr(expr::type::PROGRAM_FUNC_E);
+		func->sym_entry = funcdef;
+		return handle_call_rule(func, norm_call->get_elist(), sym_table, lineno);
 	}
 
 	/* Manage_callsuffix() */
 
-	void_t Manage_callsuffix_normcall(){
+    call_suffix* Manage_callsuffix__normcall(norm_call* norm_call){
 		fprintf(yyout, "callsuffix -> normcall\n");
-		return void_value;
+		return norm_call;
 	}
-	void_t Manage_callsuffix_methodcall(){
+    call_suffix* Manage_callsuffix__methodcall(method_call* method_call){
 		fprintf(yyout, "callsuffix -> methodcall\n");
-		return void_value;
+		return method_call;
 	}
 
 	/* Manage_normcall() */
-	void_t Manage_normcall_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(){
+	norm_call* Manage_normcall__LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(deque<expr*> const &elist){
 		fprintf(yyout, "normcall -> (elist)\n");
-		return void_value;
+		return new norm_call(elist);
 	}
 
 	/* Manage_methodcall() */
-	void_t Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS() {
+    method_call* Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(const string &id, deque<expr*> const &elist) {
 		fprintf(yyout, "methodcall -> ..id(elist)\n");
-		return void_value;
+		return new method_call(id, elist);
 	}
 
 	/* Manage_elist() */
@@ -539,7 +579,7 @@ namespace syntax_analyzer {
 			scope, lineno, id, symbol_table::entry::USER_FUNC, icode_gen.next_quad_label()
 		);
 		sym_table.insert(new_func_entry);
-		icode_gen.emit_quad(new quad(iopcode::funcstart, expr::make_lvalue_expr(new_func_entry), nullptr, nullptr, lineno));
+		icode_gen.emit_quad(new quad(quad::iopcode::funcstart, expr::make_lvalue_expr(new_func_entry), nullptr, nullptr, lineno));
 
         scp_handler.enter_formal_arg_ss();
         scp_handler.increase_scope();
@@ -564,7 +604,7 @@ namespace syntax_analyzer {
         fprintf(yyout, "funcdef -> funcprefix funcargs funcbody\n");
         func_entry->set_total_locals(total_func_locals);
 
-		icode_gen.emit_quad(new quad(iopcode::funcend, expr::make_lvalue_expr(func_entry), nullptr, nullptr, lineno));
+		icode_gen.emit_quad(new quad(quad::iopcode::funcend, expr::make_lvalue_expr(func_entry), nullptr, nullptr, lineno));
         return func_entry;
     }
 
@@ -606,7 +646,7 @@ namespace syntax_analyzer {
         return tmp_id_list;
 	}
     vector<string> Manage_idlist__IDENTIFIER_tmp_idlist(symbol_table &sym_table, vector<string> tmp_id_list, string identifier, unsigned int lineno) {
-        //The gammer rule idlist-> (zero, one, or more "id") is used only by the grammar rule funcdef
+        //The grammar rule idlist-> (zero, one, or more "id") is used only by the grammar rule funcdef
 
         fprintf(yyout, "idlist -> IDENTIFIER tmp_idlist\n");
         unsigned int scope = scp_handler.get_current_scope();

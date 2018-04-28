@@ -103,19 +103,26 @@ namespace syntax_analyzer {
     intermediate_code::expr* Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();
 
 	/* Manage_call() */
-    intermediate_code::expr* Manage_call_call_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
-    intermediate_code::expr* Manage_call_lvalue_callsuffix();
-    intermediate_code::expr* Manage_call_LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
+    intermediate_code::expr* Manage_call__call_normcall(symbol_table &sym_table, unsigned int lineno,
+                                                        intermediate_code::expr *call, intermediate_code::norm_call *norm_call);
+
+    intermediate_code::expr* Manage_call__lvalue_callsuffix(symbol_table &sym_table, unsigned int lineno,
+                                                            intermediate_code::expr *lvalue, intermediate_code::call_suffix *call_suffix);
+
+    intermediate_code::expr* Manage_call__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_normcall(symbol_table &sym_table, unsigned int lineno,
+                                                                                             symbol_table::func_entry *funcdef,
+                                                                                             intermediate_code::norm_call *norm_call);
 
 	/* Manage_callsuffix() */
-	void_t Manage_callsuffix_normcall();
-	void_t Manage_callsuffix_methodcall();
+	intermediate_code::call_suffix* Manage_callsuffix__normcall(intermediate_code::norm_call* norm_call);
+	intermediate_code::call_suffix* Manage_callsuffix__methodcall(intermediate_code::method_call* method_call);
 
 	/* Manage_normcall() */
-	void_t Manage_normcall_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
+	intermediate_code::norm_call* Manage_normcall__LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(std::deque<intermediate_code::expr*> const &elist);
 
 	/* Manage_methodcall() */
-    void_t Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS();
+    intermediate_code::method_call* Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS(const std::string &id,
+																													  std::deque<intermediate_code::expr*> const &elist);
 
     /* Manage_elist() */
 	void_t Manage_tmp_elist_tmp_elist_COMMA_expr();
