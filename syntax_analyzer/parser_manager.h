@@ -3,6 +3,7 @@
 #ifndef HY340_PROJECT_PARSER_MANAGER_H
 #define HY340_PROJECT_PARSER_MANAGER_H
 
+#include <deque>
 #include "types.h"
 #include "../intermediate_code/types.h"
 #include "symbol_table.h"
@@ -29,42 +30,45 @@ namespace syntax_analyzer {
 
 	void_t Manage_expr__assignexpr();
 
-	intermediate_code::expr* Manage_expr__expr_PLUS_expr(symbol_table &sym_table, intermediate_code::expr *arg1,
-                                                         intermediate_code::expr *arg2, unsigned int lineno);
+	/* Manage_expr__expr_arithmop_expr */
+	intermediate_code::expr* Manage_expr__expr_PLUS_expr(symbol_table &sym_table, unsigned int lineno,
+                                                         intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
 
-    intermediate_code::expr* Manage_expr__expr_MINUS_expr(symbol_table &sym_table, intermediate_code::expr *arg1,
-                                                          intermediate_code::expr *arg2, unsigned int lineno);
+    intermediate_code::expr* Manage_expr__expr_MINUS_expr(symbol_table &sym_table, unsigned int lineno,
+                                                          intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
 
-    intermediate_code::expr* Manage_expr__expr_MUL_expr(symbol_table &sym_table, intermediate_code::expr *arg1,
-                                                        intermediate_code::expr *arg2, unsigned int lineno);
+    intermediate_code::expr* Manage_expr__expr_MUL_expr(symbol_table &sym_table, unsigned int lineno,
+                                                        intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
 
-    intermediate_code::expr* Manage_expr__expr_DIV_expr(symbol_table &sym_table, intermediate_code::expr *arg1,
-                                                        intermediate_code::expr *arg2, unsigned int lineno);
+    intermediate_code::expr* Manage_expr__expr_DIV_expr(symbol_table &sym_table, unsigned int lineno,
+                                                        intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
 
-    intermediate_code::expr* Manage_expr__expr_MOD_expr(symbol_table &sym_table, intermediate_code::expr *arg1,
-                                                        intermediate_code::expr *arg2, unsigned int lineno);
+    intermediate_code::expr* Manage_expr__expr_MOD_expr(symbol_table &sym_table, unsigned int lineno,
+                                                        intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
 
-	intermediate_code::expr* Manage_expr__expr_GT_expr(symbol_table &sym_table, intermediate_code::expr *arg1,
-													   intermediate_code::expr *arg2, unsigned int lineno);
+    /* Manage_expr__expr_relop_expr */
+	intermediate_code::expr* Manage_expr__expr_GT_expr(symbol_table &sym_table, unsigned int lineno,
+                                                       intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
 
-    intermediate_code::expr* Manage_expr__expr_GE_expr(symbol_table &sym_table, intermediate_code::expr *arg1,
-                                                       intermediate_code::expr *arg2, unsigned int lineno);
+    intermediate_code::expr* Manage_expr__expr_GE_expr(symbol_table &sym_table, unsigned int lineno,
+                                                       intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
 
-    intermediate_code::expr* Manage_expr__expr_LT_expr(symbol_table &sym_table, intermediate_code::expr *arg1,
-                                                       intermediate_code::expr *arg2, unsigned int lineno);
+    intermediate_code::expr* Manage_expr__expr_LT_expr(symbol_table &sym_table, unsigned int lineno,
+                                                       intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
 
-    intermediate_code::expr* Manage_expr__expr_LE_expr(symbol_table &sym_table, intermediate_code::expr *arg1,
-                                                       intermediate_code::expr *arg2, unsigned int lineno);
+    intermediate_code::expr* Manage_expr__expr_LE_expr(symbol_table &sym_table, unsigned int lineno,
+                                                       intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
 
-    intermediate_code::expr* Manage_expr__expr_EQ_expr(symbol_table &sym_table, intermediate_code::expr *arg1,
-                                                       intermediate_code::expr *arg2, unsigned int lineno);
+    intermediate_code::expr* Manage_expr__expr_EQ_expr(symbol_table &sym_table, unsigned int lineno,
+                                                       intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
 
-    intermediate_code::expr* Manage_expr__expr_NE_expr(symbol_table &sym_table, intermediate_code::expr *arg1,
-                                                       intermediate_code::expr *arg2, unsigned int lineno);
+    intermediate_code::expr* Manage_expr__expr_NE_expr(symbol_table &sym_table, unsigned int lineno,
+                                                       intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
 
-    void_t Manage_expr__expr_AND_expr();
-    void_t Manage_expr__expr_OR_expr();
-    void_t Manage_expr__term();
+    /* Manage_expr__expr_boolop_expr */
+    intermediate_code::expr* Manage_expr__expr_AND_expr();
+    intermediate_code::expr* Manage_expr__expr_OR_expr();
+    intermediate_code::expr* Manage_expr__term();
 
 	/* Manage_term() */
     intermediate_code::expr* Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS();
@@ -125,10 +129,12 @@ namespace syntax_analyzer {
 																													  std::deque<intermediate_code::expr*> const &elist);
 
     /* Manage_elist() */
-	void_t Manage_tmp_elist_tmp_elist_COMMA_expr();
-	void_t Manage_tmp_elist_empty();
-	void_t Manage_elist_empty();
-	void_t Manage_elist__expr_tmp_elist();
+	std::deque<intermediate_code::expr*> Manage_tmp_elist__tmp_elist_COMMA_expr(std::deque<intermediate_code::expr*> const &tmp_elist,
+                                                                                intermediate_code::expr *expr);
+	std::deque<intermediate_code::expr*> Manage_tmp_elist__empty();
+	std::deque<intermediate_code::expr*> Manage_elist__empty();
+	std::deque<intermediate_code::expr*> Manage_elist__expr_tmp_elist(intermediate_code::expr *expr,
+                                                                      std::deque<intermediate_code::expr*> const &tmp_elist);
 
 	/* Manage_objectdef()*/
     intermediate_code::expr* Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET();

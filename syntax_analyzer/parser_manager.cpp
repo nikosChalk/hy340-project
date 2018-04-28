@@ -6,11 +6,13 @@
 #include <iostream>
 #include <cassert>
 #include <typeinfo>
+#include <deque>
 #include "syntax_error.h"
 #include "scope_handler.h"
 #include "hidden_var_handler.h"
 #include "../intermediate_code/types.h"
 #include "../intermediate_code/icode_generator.h"
+#include "../intermediate_code/semantic_error.h"
 
 using namespace std;
 using namespace intermediate_code;
@@ -76,6 +78,154 @@ namespace syntax_analyzer {
 
         return result;
 	}
+
+	/**
+	 * Handles the quad emit for the reduction of grammar rules "expr->expr arithmop expr" where arithmop
+	 * is either ADD, SUB, MUL, DIV or MOD token
+	 *
+	 * Note that if both arg1 and arg2 are constants that can participate in an arithmetic operation, then
+	 * no quad is emitted and instead the arithmetic operation is carried out. In that case, arg1 is the left operand
+	 * and arg2 is the right operand. The returned expr is of constant number value.
+	 *
+	 * @param iopcode The intermediate opcode for the arithmetic operation. Must be one of the bellow:
+	 * quad::iopcode::add,sub,mul,div,mod
+	 * @param arg1 The arg1 of the quad which will be emitted. Must not be NULL/nullptr
+	 * @param arg2 The arg2 of the quad which will be emitted. Must not be NULL/nullptr
+	 * @lineno The line number which triggered the reduction of the grammar rule
+	 * @return A new expr which represents the result expr of the operation.
+	 *
+	 * @throws intermediate_code::semantic_error if arg1 and arg2 cannot participate in an arithmetic operation
+	 */
+	static expr* handle_expr_arithmop_expr(quad::iopcode iopcode, expr *arg1, expr *arg2, symbol_table &sym_table, unsigned int lineno) {
+	    assert(arg1 && arg2);
+
+        switch(iopcode) {
+            case quad::iopcode::add:
+            case quad::iopcode::sub:
+            case quad::iopcode::mul:
+            case quad::iopcode::div:
+            case quad::iopcode::mod:
+                break;
+            default:
+                assert(false);  //Invalid iopcode
+        }
+        if(!arg1->can_participate_in_arithmop())
+            throw semantic_error("arg1 cannot participate in arithmetic operation", lineno);
+        if(!arg2->can_participate_in_arithmop())
+            throw semantic_error("arg2 cannot participate in arithmetic operation", lineno);
+
+        expr *result;
+        if(arg1->type == arg2->type && arg2->type == expr::type::CONST_NUM_E) {
+            long double const_val;
+            long double arg1_val = arg1->const_val.number;
+            long double arg2_val = arg2->const_val.number;
+
+            switch(iopcode) {
+                case quad::iopcode::add:
+                    const_val = arg1_val + arg2_val;
+                    break;
+                case quad::iopcode::sub:
+                    const_val = arg1_val - arg2_val;
+                    break;
+                case quad::iopcode::mul:
+                    const_val = arg1_val * arg2_val;
+                    break;
+                case quad::iopcode::div:
+                    const_val = arg1_val / arg2_val;
+                    break;
+                case quad::iopcode::mod:
+                    const_val = (long long int)arg1_val % (long long int)arg2_val;
+                    break;
+                default:
+                    assert(false);  //unreachable statement
+            }
+            result = expr::make_const_num(const_val);
+        } else {
+            result = expr::make_expr(expr::type::ARITHM_E);
+            result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+            icode_gen.emit_quad(new quad(iopcode, result, arg1, arg2, lineno));
+        }
+
+        return result;
+    }
+
+    /**
+     * Handles the quad emit for the reduction of grammar rules "expr->expr relop expr" where relop
+     * is either GT, GE, LT, LE, EQ or NE token.
+     *
+     * Note that if both arg1 and arg2 are constants that can participate in an relational operation, then
+     * no quad is emitted and instead the relational operation is carried out. In that case, arg1 is the left operand
+     * and arg2 is the right operand. The returned expr is of constant bool value.
+     *
+     * @param iopcode The intermediate opcode for the relational operation. Must be one of the bellow:
+     * quad::iopcode::if_eq, if_noteq, if_lesseq, if_greatereq, if_less or if_greater
+     * @param arg1 The arg1 of the quad which will be emitted. Must not be NULL/nullptr
+     * @param arg2 The arg2 of the quad which will be emitted. Must not be NULL/nullptr
+     * @lineno The line number which triggered the reduction of the grammar rule
+     * @return A new expr which represents the result expr of the operation.
+     *
+     * @throws intermediate_code::semantic_error if arg1 and arg2 cannot participate in a relational operation
+     */
+    static expr* handle_expr_relop_expr(quad::iopcode iopcode, expr *arg1, expr *arg2, symbol_table &sym_table, unsigned int lineno) {
+        assert(arg1 && arg2);
+
+        switch(iopcode) {
+            case quad::iopcode::if_greater:
+            case quad::iopcode::if_greatereq:
+            case quad::iopcode::if_less:
+            case quad::iopcode::if_lesseq:
+            case quad::iopcode::if_eq:
+            case quad::iopcode::if_noteq:
+                break;
+            default:
+                assert(false);  //Invalid iopcode
+        }
+        if(!arg1->can_participate_in_relop())
+            throw semantic_error("arg1 cannot participate in relational operation", lineno);
+        if(!arg2->can_participate_in_relop())
+            throw semantic_error("arg2 cannot participate in relational operation", lineno);
+
+        expr *result;
+        if(arg1->type == arg2->type && arg2->type == expr::type::CONST_NUM_E) {
+            bool const_val;
+            long double arg1_val = arg1->const_val.number;
+            long double arg2_val = arg2->const_val.number;
+
+            switch(iopcode) {
+                case quad::iopcode::if_greater:
+                    const_val = arg1_val > arg2_val;
+                    break;
+                case quad::iopcode::if_greatereq:
+                    const_val = arg1_val >= arg2_val;
+                    break;
+                case quad::iopcode::if_less:
+                    const_val = arg1_val < arg2_val;
+                    break;
+                case quad::iopcode::if_lesseq:
+                    const_val = arg1_val <= arg2_val;
+                    break;
+                case quad::iopcode::if_eq:
+                    const_val = arg1_val == arg2_val;
+                    break;
+                case quad::iopcode::if_noteq:
+                    const_val = arg1_val != arg2_val;
+                    break;
+                default:
+                    assert(false);  //unreachable statement
+            }
+            result = expr::make_const_bool(const_val);
+        } else {
+            result = expr::make_expr(expr::type::BOOL_E);
+            result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+
+            icode_gen.emit_quad(new quad(iopcode, result, arg1, arg2, lineno), icode_gen.next_quad_label()+3);  //if relop is true, jump to assign:true
+            icode_gen.emit_quad(new quad(quad::iopcode::assign, result, expr::make_const_bool(false), nullptr, lineno));    //else, assign false
+            icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), icode_gen.next_quad_label()+2);   //and then skip assign:true
+            icode_gen.emit_quad(new quad(quad::iopcode::assign, result, expr::make_const_bool(true), nullptr, lineno)); //assign:true
+        }
+
+        return result;
+    }
 
 /************************* end *********************************/
 
@@ -144,125 +294,63 @@ namespace syntax_analyzer {
 	}
 
 	/* arithop */
-	intermediate_code::expr* Manage_expr__expr_PLUS_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
+	expr* Manage_expr__expr_PLUS_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr + expr\n");
-
-		/* Make new expr and emit a new quad */
-		expr* new_expr = new intermediate_code::expr(expression_type::ARITHM_E);
-		new_expr->sym_entry = hvar_handler.make_new(sym_table,scp_handler,lineno);
-		icode_gen.emit_quad(new quad(iopcode::add, expr::make_lvalue_expr(new_expr->sym_entry), arg1, arg2, lineno));
-		return new_expr;
+        return handle_expr_arithmop_expr(quad::iopcode::add, leftOperand, rightOperand, sym_table, lineno);
     }
-    intermediate_code::expr* Manage_expr__expr_MINUS_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
+    expr* Manage_expr__expr_MINUS_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
 		fprintf(yyout, "expr -> expr - expr\n");
-		/* Make new expr and emit a new quad */
-		expr* new_expr = new intermediate_code::expr(expression_type::ARITHM_E);
-		new_expr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-		icode_gen.emit_quad(new quad(iopcode::sub, expr::make_lvalue_expr(new_expr->sym_entry), arg1, arg2, lineno));
-		return new_expr;
+        return handle_expr_arithmop_expr(quad::iopcode::sub, leftOperand, rightOperand, sym_table, lineno);
     }
-    intermediate_code::expr* Manage_expr__expr_MUL_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
+    expr* Manage_expr__expr_MUL_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr * expr\n");
-		/* Make new expr and emit a new quad */
-	    expr* new_expr = new intermediate_code::expr(expression_type::ARITHM_E);
-		new_expr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-		icode_gen.emit_quad(new quad(iopcode::mul, expr::make_lvalue_expr(new_expr->sym_entry), arg1, arg2, lineno));
-		return new_expr;
+        return handle_expr_arithmop_expr(quad::iopcode::mul, leftOperand, rightOperand, sym_table, lineno);
     }
-    intermediate_code::expr* Manage_expr__expr_DIV_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
+    expr* Manage_expr__expr_DIV_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr / expr\n");
-		/* Make new expr and emit a new quad */
-		expr* new_expr = new intermediate_code::expr(expression_type::ARITHM_E);
-		new_expr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-		icode_gen.emit_quad(new quad(iopcode::div, expr::make_lvalue_expr(new_expr->sym_entry), arg1, arg2, lineno));
-		return new_expr;
+        return handle_expr_arithmop_expr(quad::iopcode::div, leftOperand, rightOperand, sym_table, lineno);
     }
-    intermediate_code::expr* Manage_expr__expr_MOD_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
+    expr* Manage_expr__expr_MOD_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr %% expr\n");
-		/* Make new expr and emit a new quad */
-		expr* new_expr = new intermediate_code::expr(expression_type::ARITHM_E);
-		new_expr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-		icode_gen.emit_quad(new quad(iopcode::mod, expr::make_lvalue_expr(new_expr->sym_entry), arg1, arg2, lineno));
-		return new_expr;
+        return handle_expr_arithmop_expr(quad::iopcode::mod, leftOperand, rightOperand, sym_table, lineno);
     }
 
 	/* relop */
 
-	intermediate_code::expr* Manage_expr__expr_GT_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
+	expr* Manage_expr__expr_GT_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr > expr\n");
-		/* Make new expr and emit a new quad */
-		expr* new_expr = new intermediate_code::expr(expression_type::BOOL_E);
-		new_expr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno); /*new_temp slides function*/
-		icode_gen.emit_quad(new quad(iopcode::if_greater, nullptr, arg1, arg2, lineno), icode_gen.next_quad_label()+3);
-		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, newexpr_constbool(false), nullptr, lineno));
-		icode_gen.emit_quad(new quad(iopcode::jump, nullptr, nullptr, nullptr, lineno), icode_gen.next_quad_label() + 2);
-		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, newexpr_constbool(true), nullptr, lineno));
-		return new_expr; 
+        return handle_expr_relop_expr(quad::iopcode::if_greater, leftOperand, rightOperand, sym_table, lineno);
     }
-    intermediate_code::expr* Manage_expr__expr_GE_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
+    expr* Manage_expr__expr_GE_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr >= expr\n");
-		/* Make new expr and emit a new quad */
-		expr* new_expr = new intermediate_code::expr(expression_type::BOOL_E);
-		new_expr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno); /*new_temp slides function*/
-		icode_gen.emit_quad(new quad(iopcode::if_greatereq, nullptr, arg1, arg2, lineno), icode_gen.next_quad_label() + 3);
-		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, newexpr_constbool(false), nullptr, lineno));
-		icode_gen.emit_quad(new quad(iopcode::jump, nullptr, nullptr, nullptr, lineno), icode_gen.next_quad_label() + 2);
-		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, newexpr_constbool(true), nullptr, lineno));
-		return new_expr;
+        return handle_expr_relop_expr(quad::iopcode::if_greatereq, leftOperand, rightOperand, sym_table, lineno);
     }
-    intermediate_code::expr* Manage_expr__expr_LT_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
+    expr* Manage_expr__expr_LT_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr < expr\n");
-		/* Make new expr and emit a new quad */
-		expr* new_expr = new intermediate_code::expr(expression_type::BOOL_E);
-		new_expr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno); /*new_temp slides function*/
-		icode_gen.emit_quad(new quad(iopcode::if_less, nullptr, arg1, arg2, lineno), icode_gen.next_quad_label() + 3);
-		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, newexpr_constbool(false), nullptr, lineno));
-		icode_gen.emit_quad(new quad(iopcode::jump, nullptr, nullptr, nullptr, lineno), icode_gen.next_quad_label() + 2);
-		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, newexpr_constbool(true), nullptr, lineno));
-		return new_expr;
+        return handle_expr_relop_expr(quad::iopcode::if_less, leftOperand, rightOperand, sym_table, lineno);
     }
-    intermediate_code::expr* Manage_expr__expr_LE_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
+    expr* Manage_expr__expr_LE_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr <= expr\n");
-		/* Make new expr and emit a new quad */
-		expr* new_expr = new intermediate_code::expr(expression_type::BOOL_E);
-		new_expr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno); /*new_temp slides function*/
-		icode_gen.emit_quad(new quad(iopcode::if_lesseq, nullptr, arg1, arg2, lineno), icode_gen.next_quad_label() + 3);
-		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, newexpr_constbool(false), nullptr, lineno));
-		icode_gen.emit_quad(new quad(iopcode::jump, nullptr, nullptr, nullptr, lineno), icode_gen.next_quad_label() + 2);
-		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, newexpr_constbool(true), nullptr, lineno));
-		return new_expr;
+        return handle_expr_relop_expr(quad::iopcode::if_lesseq, leftOperand, rightOperand, sym_table, lineno);
     }
-    intermediate_code::expr* Manage_expr__expr_EQ_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
+    expr* Manage_expr__expr_EQ_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr == expr\n");
-		/* Make new expr and emit a new quad */
-		expr* new_expr = new intermediate_code::expr(expression_type::BOOL_E);
-		new_expr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno); /*new_temp slides function*/
-		icode_gen.emit_quad(new quad(iopcode::if_eq, nullptr, arg1, arg2, lineno), icode_gen.next_quad_label() + 3);
-		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, newexpr_constbool(false), nullptr, lineno));
-		icode_gen.emit_quad(new quad(iopcode::jump, nullptr, nullptr, nullptr, lineno), icode_gen.next_quad_label() + 2);
-		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, newexpr_constbool(true), nullptr, lineno));
-		return new_expr;
+        return handle_expr_relop_expr(quad::iopcode::if_eq, leftOperand, rightOperand, sym_table, lineno);
     }
-    intermediate_code::expr* Manage_expr__expr_NE_expr(symbol_table &sym_table, expr *arg1, expr *arg2, unsigned int lineno) {
+    expr* Manage_expr__expr_NE_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr != expr\n");
-		/* Make new expr and emit a new quad */
-		expr* new_expr = new intermediate_code::expr(expression_type::BOOL_E);
-		new_expr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno); /*new_temp slides function*/
-		icode_gen.emit_quad(new quad(iopcode::if_noteq, nullptr, arg1, arg2, lineno), icode_gen.next_quad_label() + 3);
-		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, newexpr_constbool(false), nullptr, lineno));
-		icode_gen.emit_quad(new quad(iopcode::jump, nullptr, nullptr, nullptr, lineno), icode_gen.next_quad_label() + 2);
-		icode_gen.emit_quad(new quad(iopcode::assign, new_expr, newexpr_constbool(true), nullptr, lineno));
-		return new_expr;
+        return handle_expr_relop_expr(quad::iopcode::if_noteq, leftOperand, rightOperand, sym_table, lineno);
     }
-    void_t Manage_expr__expr_AND_expr() {
+
+    expr* Manage_expr__expr_AND_expr() {
         fprintf(yyout, "expr -> expr AND expr\n");
         return void_value;
     }
-    void_t Manage_expr__expr_OR_expr() {
+    expr* Manage_expr__expr_OR_expr() {
         fprintf(yyout, "expr -> expr OR expr\n");
         return void_value;
     }
-    void_t Manage_expr__term() {
+    expr* Manage_expr__term() {
         fprintf(yyout, "expr -> term\n");
         return void_value;
     }
@@ -483,21 +571,27 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_elist() */
-	void_t Manage_tmp_elist_tmp_elist_COMMA_expr(){
-		fprintf(yyout, "elist -> expr,...,expr\n");
-		return void_value;
+    deque<expr*> Manage_tmp_elist__tmp_elist_COMMA_expr(deque<expr*> const &tmp_elist, expr *expr) {
+		fprintf(yyout, "tmp_elist -> tmp_elist , expr\n");
+		deque<expr*> ret_val = tmp_elist;
+		ret_val.push_back(expr);
+
+		return ret_val;
 	}
-	void_t Manage_tmp_elist_empty(){
-		fprintf(yyout, "elist -> expr\n");
-		return void_value;
+    deque<expr*> Manage_tmp_elist__empty(){
+		fprintf(yyout, "tmp_elist -> <empty>\n");
+		return deque<expr*>();  //empty double ended queue
 	}
-	void_t Manage_elist_empty(){
-		fprintf(yyout, "elist -> empty\n");
-		return void_value;
+    deque<expr*> Manage_elist__empty(){
+		fprintf(yyout, "elist -> <empty>\n");
+		return deque<expr*>();  //empty double ended queue
 	}
-    void_t Manage_elist__expr_tmp_elist() {
+    deque<expr*> Manage_elist__expr_tmp_elist(expr *expr, deque<expr*> const &tmp_elist) {
         fprintf(yyout, "elist -> expr tmp_elist\n");
-        return void_value;
+        deque<expr*> ret_val = tmp_elist;
+        ret_val.push_front(expr);
+
+        return ret_val;
     }
 
 	/* Manage_objectdef()*/

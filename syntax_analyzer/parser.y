@@ -60,9 +60,10 @@
 %type <unsignedIntVal> ifprefix elseprefix whilestart whilecond
 %type <funcEntryPtr> funcprefix
 %type <uIntVector> break continue
+%type <dequeExpr> tmp_elist
 
 %type <voidVal> funcargs
-%type <voidVal> tmp_elist tmp_indexed
+%type <voidVal> tmp_indexed
 %type <voidVal> block_open stmts block_close
 
 /* Define the priority of tokens */
@@ -100,17 +101,17 @@ stmt:	expr SEMICOLON			{$$ = Manage_stmt__expr_SEMICOLON(); 	}
 		;
 
 expr:	assignexpr 			{$$ = Manage_expr__assignexpr();}
-    	| expr PLUS expr 	{$$ = Manage_expr__expr_PLUS_expr(sym_table,$1,$3,yylineno);} /* we must change expr type */
-		| expr MINUS expr 	{$$ = Manage_expr__expr_MINUS_expr(sym_table,$1,$3,yylineno);} 
-		| expr MUL expr 	{$$ = Manage_expr__expr_MUL_expr(sym_table,$1,$3,yylineno);}
-		| expr DIV expr 	{$$ = Manage_expr__expr_DIV_expr(sym_table,$1,$3,yylineno);}
-		| expr MOD expr 	{$$ = Manage_expr__expr_MOD_expr(sym_table,$1,$3,yylineno);}
-		| expr GT expr 		{$$ = Manage_expr__expr_GT_expr(sym_table,$1,$3,yylineno);}
-		| expr GE expr 		{$$ = Manage_expr__expr_GE_expr(sym_table,$1,$3,yylineno);}
-		| expr LT expr 		{$$ = Manage_expr__expr_LT_expr(sym_table,$1,$3,yylineno);}
-		| expr LE expr 		{$$ = Manage_expr__expr_LE_expr(sym_table,$1,$3,yylineno);}
-		| expr EQ expr 		{$$ = Manage_expr__expr_EQ_expr(sym_table,$1,$3,yylineno);}
-		| expr NE expr 		{$$ = Manage_expr__expr_NE_expr(sym_table,$1,$3,yylineno);}
+    	| expr PLUS expr 	{$$ = Manage_expr__expr_PLUS_expr	(sym_table, yylineno, $1,$3);}
+		| expr MINUS expr 	{$$ = Manage_expr__expr_MINUS_expr	(sym_table, yylineno, $1,$3);} 
+		| expr MUL expr 	{$$ = Manage_expr__expr_MUL_expr	(sym_table, yylineno, $1,$3);}
+		| expr DIV expr 	{$$ = Manage_expr__expr_DIV_expr	(sym_table, yylineno, $1,$3);}
+		| expr MOD expr 	{$$ = Manage_expr__expr_MOD_expr	(sym_table, yylineno, $1,$3);}
+		| expr GT expr 		{$$ = Manage_expr__expr_GT_expr		(sym_table, yylineno, $1,$3);}
+		| expr GE expr 		{$$ = Manage_expr__expr_GE_expr		(sym_table, yylineno, $1,$3);}
+		| expr LT expr 		{$$ = Manage_expr__expr_LT_expr		(sym_table, yylineno, $1,$3);}
+		| expr LE expr 		{$$ = Manage_expr__expr_LE_expr		(sym_table, yylineno, $1,$3);}
+		| expr EQ expr 		{$$ = Manage_expr__expr_EQ_expr		(sym_table, yylineno, $1,$3);}
+		| expr NE expr 		{$$ = Manage_expr__expr_NE_expr		(sym_table, yylineno, $1,$3);}
 		| expr AND expr 	{$$ = Manage_expr__expr_AND_expr();}
 		| expr OR expr 		{$$ = Manage_expr__expr_OR_expr();}
 		| term 				{$$ = Manage_expr__term();}
@@ -163,12 +164,12 @@ normcall:	LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_normcall__LEFT_P
 methodcall:	DOUBLE_DOT IDENTIFIER LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS($2, $4); }
 			;
 
-tmp_elist:	tmp_elist COMMA expr	{$$ = Manage_tmp_elist_tmp_elist_COMMA_expr();}
-		 	| %empty				{$$ = Manage_tmp_elist_empty();}
+tmp_elist:	tmp_elist COMMA expr	{$$ = Manage_tmp_elist__tmp_elist_COMMA_expr($1, $3);}
+		 	| %empty				{$$ = Manage_tmp_elist__empty();}
 			;
 
-elist:	expr tmp_elist	{$$ = Manage_elist__expr_tmp_elist();}
-		| %empty 		{$$ = Manage_elist_empty();}
+elist:	expr tmp_elist	{$$ = Manage_elist__expr_tmp_elist($1, $2);}
+		| %empty 		{$$ = Manage_elist__empty();}
 		;
 
 objectdef:	LEFT_BRACKET elist RIGHT_BRACKET		{$$ = Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET();}

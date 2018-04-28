@@ -32,7 +32,7 @@ namespace syntax_analyzer {
         symbol_table::func_entry *funcEntryPtr;         /* funcdef, funcprefix */
 
         intermediate_code::expr *exprPtr;   /*lvalue, member, primary, assignexpr, call, term, objectdef, const*/
-        std::deque<intermediate_code::expr*> dequeExpr; //double ended queue. Used for elist
+        std::deque<intermediate_code::expr*> dequeExpr; //double ended queue. Used for elist and tmp_elist
 
         intermediate_code::call_suffix *callSuffixPtr;  //methodcall, normcall, callsuffix
 

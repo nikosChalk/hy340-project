@@ -15,18 +15,24 @@ namespace intermediate_code {
          * Available opcodes for the intermediate code instruction set
          */
         enum iopcode {
-            assign,     add,        sub,            mul,            div,
-            mod,        uminus,     logical_and,    logical_or,     logical_not,
-            if_eq,      if_noteq,   if_lesseq,      if_greatereq,   if_less,
-            if_greater,
-            call,                   //arg1=function to call, arg2,result=nullptr
-            param,                  //arg1=parameter, arg2,result=nullptr
+            assign,                     //result=arg1, arg2=nullptr
+            add, sub, mul, div, mod,    //arg1=left operand, arg2=right operand
+
+            uminus,
+            logical_and, logical_or, logical_not,
+
+            if_eq, if_noteq, if_lesseq, if_greatereq, if_less, if_greater,  //arg1=lef operand, arg2=right operand
+
+            call,   //arg1=function to call, arg2,result=nullptr
+            param,  //arg1=parameter, arg2,result=nullptr
             ret,
-            getretval,              //result=return value, arg1,arg2=nullptr
+            getretval,  //result=return value, arg1,arg2=nullptr
             funcstart,  funcend,
+
             tablecreate,
-            tablegetelem,   tablesetelem,   /*result=table[index], arg1 = table, arg2 = index*/
-            jump
+            tablegetelem,   tablesetelem,   //result=table[index], arg1 = table, arg2 = index
+
+            jump    //result,arg1,arg2=nullptr. label=quadno to jump to.
         };
 
         iopcode opcode;

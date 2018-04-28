@@ -23,18 +23,16 @@ namespace intermediate_code {
             CONST_NUM_E,
             CONST_BOOL_E,
             CONST_STR_E,
-
-            NIL_E
+            CONST_NIL_E
         };
 
         type type;
         syntax_analyzer::symbol_table::entry *sym_entry;
         expr *index;            //used by TABLE_ITEM_E exprs to indicate their index within the table
         struct act_as_union {   //c++ does not allow objects within unions
-            double number;
+            long double number;
             std::string str;
             bool boolean;
-            bool is_nil;
         } const_val;    //field used only be make_const static functions
 
         /**
@@ -54,11 +52,43 @@ namespace intermediate_code {
         static expr* make_expr(type type);
 
         /**
+         * Creates a new expr for the given constant num. Caller is responsible to free the returned object.
+         * @param num The number
+         * @return A pointer to the new expr
+         */
+        static expr* make_const_num(long double num);
+
+        /**
          * Creates a new expr for the given constant string. Caller is responsible to free the returned object.
          * @param str The string
          * @return A pointer to the new expr
          */
         static expr* make_const_str(std::string const &str);
+
+        /**
+         * Creates a new expr for the given constant boolean. Caller is responsible to free the returned object.
+         * @param value The boolean value
+         * @return A pointer to the new expr
+         */
+        static expr* make_const_bool(bool value);
+
+        /**
+         * Creates a new expr for constant "nil". Caller is responsible to free the returned object.
+         * @return A pointer to the new expr
+         */
+        static expr* make_const_nil();
+
+        /**
+         * Checks at compile time, whether or not this expr can participate in an arithmetic operation.
+         * @return True if it can participate. False otherwise.
+         */
+        bool can_participate_in_arithmop() const;
+
+        /**
+         * Checks at compile time, whether or not this expr can participate in an relational operation.
+         * @return True if it can participate. False otherwise.
+         */
+        bool can_participate_in_relop() const;
 
     private:
         /**

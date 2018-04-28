@@ -8,7 +8,7 @@ using namespace syntax_analyzer;
 using namespace intermediate_code;
 
 expr::expr() {
-    type = NIL_E;   //for debugging
+    type = CONST_NIL_E;   //for debugging
     sym_entry = nullptr;
     index = nullptr;
 }
@@ -37,9 +37,41 @@ expr* expr::make_expr(type type) {
     return new_expr;
 }
 
+expr* expr::make_const_num(long double num) {
+    expr *new_expr = expr::make_expr(type::CONST_NUM_E);
+    new_expr->const_val.number = num;
+    return new_expr;
+}
+
 expr* expr::make_const_str(string const &str) {
     expr *new_expr = expr::make_expr(type::CONST_STR_E);
-    new_expr->const_val.str = str;
-
+    new_expr->const_val.str = string(str);
     return new_expr;
+}
+
+expr* expr::make_const_bool(bool value) {
+    expr *new_expr = expr::make_expr(type::CONST_BOOL_E);
+    new_expr->const_val.boolean = value;
+    return new_expr;
+}
+
+expr* expr::make_const_nil() {
+    return expr::make_expr(type::CONST_NIL_E);
+}
+
+bool expr::can_participate_in_arithmop() const {
+    switch(this->type) {
+        case type::VAR_E:           //depends on runtime.
+        case type::TABLE_ITEM_E:    //depends on runtime
+        case type::ARITHM_E:        //ok at compile time
+        case type::ASSIGN_E:        //depends on runtime
+        case type::CONST_NUM_E:     //ok at compile time
+            return true;
+        default:    //else
+            return false;
+    }
+}
+
+bool expr::can_participate_in_relop() const {
+    return can_participate_in_arithmop();   //same condition
 }
