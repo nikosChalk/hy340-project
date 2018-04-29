@@ -114,17 +114,17 @@ expr:	assignexpr 			{$$ = Manage_expr__assignexpr();}
 		| expr NE expr 		{$$ = Manage_expr__expr_NE_expr		(sym_table, yylineno, $1,$3);}
 		| expr AND expr 	{$$ = Manage_expr__expr_AND_expr();}
 		| expr OR expr 		{$$ = Manage_expr__expr_OR_expr();}
-		| term 				{$$ = Manage_expr__term();}
+		| term 				{$$ = Manage_expr__term($1);}
 		;
 
-term:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS		{$$ = Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS();}
-    	| MINUS expr %prec UMINUS 					{$$ = Manage_term__MINUS_expr();}	/* Special precedence for this rule */
-		| NOT expr 									{$$ = Manage_term__NOT_expr();}
-		| PLUS_PLUS lvalue 							{$$ = Manage_term__PLUS_PLUS_lvalue($2, yylineno);}
-		| lvalue PLUS_PLUS 							{$$ = Manage_term__lvalue_PLUS_PLUS($1, yylineno);}
-		| MINUS_MINUS lvalue 						{$$ = Manage_term__MINUS_MINUS_lvalue($2, yylineno);}
-		| lvalue MINUS_MINUS 						{$$ = Manage_term__lvalue_MINUS_MINUS($1, yylineno);}
-		| primary 									{$$ = Manage_term__primary();}
+term:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS		{$$ = Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS($2);}
+    	| MINUS expr %prec UMINUS 					{$$ = Manage_term__MINUS_expr(symtable,$2,yylineno);}	/* Special precedence for this rule */
+		| NOT expr 									{$$ = Manage_term__NOT_expr((symtable,$2,yylineno);}
+		| PLUS_PLUS lvalue 							{$$ = Manage_term__PLUS_PLUS_lvalue(symtable,$2, yylineno);}
+		| lvalue PLUS_PLUS 							{$$ = Manage_term__lvalue_PLUS_PLUS(symtable,$1, yylineno);}
+		| MINUS_MINUS lvalue 						{$$ = Manage_term__MINUS_MINUS_lvalue(syntable,$2, yylineno);}
+		| lvalue MINUS_MINUS 						{$$ = Manage_term__lvalue_MINUS_MINUS(symtable,$1, yylineno);}
+		| primary 									{$$ = Manage_term__primary($1);}
 		;
 
 assignexpr:	lvalue ASSIGN expr {$$ = Manage_assignexpr__lvalue_ASSIGN_expr($1, yylineno);}
@@ -133,7 +133,7 @@ assignexpr:	lvalue ASSIGN expr {$$ = Manage_assignexpr__lvalue_ASSIGN_expr($1, y
 primary:	lvalue											{$$ = Manage_primary__lvalue($1); }
 			| call											{$$ = Manage_primary__call(); }
 			| objectdef										{$$ = Manage_primary__objectdef(); }
-			| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS	{$$ = Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS(); }
+			| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS	{$$ = Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS($2); }
 			| const											{$$ = Manage_primary__const(); }
 			;
 

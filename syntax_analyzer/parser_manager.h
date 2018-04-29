@@ -71,21 +71,21 @@ namespace syntax_analyzer {
     intermediate_code::expr* Manage_expr__term();
 
 	/* Manage_term() */
-    intermediate_code::expr* Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS();
-    intermediate_code::expr* Manage_term__MINUS_expr();
-    intermediate_code::expr* Manage_term__NOT_expr();
-    intermediate_code::expr* Manage_term__PLUS_PLUS_lvalue(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
-    intermediate_code::expr* Manage_term__lvalue_PLUS_PLUS(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
-    intermediate_code::expr* Manage_term__MINUS_MINUS_lvalue(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
-    intermediate_code::expr* Manage_term__lvalue_MINUS_MINUS(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
-    intermediate_code::expr* Manage_term__primary();
+	intermediate_code::expr* Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(intermediate_code::expr* expr);
+	intermediate_code::expr* Manage_term__MINUS_expr(symbol_table &sym_table, intermediate_code::expr* expr, unsigned int lineno);
+	intermediate_code::expr* Manage_term__NOT_expr(symbol_table &sym_table, intermediate_code::expr* expr, unsigned int lineno);
+	intermediate_code::expr* Manage_term__PLUS_PLUS_lvalue(symbol_table &sym_table, intermediate_code::expr* lvalue, unsigned int lineno);
+	intermediate_code::expr* Manage_term__lvalue_PLUS_PLUS(symbol_table &sym_table, intermediate_code::expr* lvalue, unsigned int lineno);
+	intermediate_code::expr* Manage_term__MINUS_MINUS_lvalue(symbol_table &sym_table, intermediate_code::expr* lvalue, unsigned int lineno);
+	intermediate_code::expr* Manage_term__lvalue_MINUS_MINUS(symbol_table &sym_table, intermediate_code::expr* lvalue, unsigned int lineno);
+	intermediate_code::expr* Manage_term__primary(intermediate_code::expr* expr);
 
     intermediate_code::expr* Manage_assignexpr__lvalue_ASSIGN_expr(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
 
     intermediate_code::expr* Manage_primary__lvalue();
     intermediate_code::expr* Manage_primary__call();
     intermediate_code::expr* Manage_primary__objectdef();
-    intermediate_code::expr* Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS();
+	intermediate_code::expr* Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS(symbol_table::func_entry * funcdef);
     intermediate_code::expr* Manage_primary__const();
 
     /**
@@ -209,7 +209,7 @@ namespace syntax_analyzer {
 
 	/* Manage_ifstmt() */
 
-	unsigned int Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(expr* expr, unsigned int lineno);
+	unsigned int Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(intermediate_code::expr* expr, unsigned int lineno);
 	unsigned int Manage_elseprefix_ELSE(unsigned int lineno);
 	void_t Manage_ifprefix_stmt(unsigned int ifprefix);
 	void_t Manage_ifprefix_stmt_elseprefix_stmt(unsigned int ifprefix, unsigned int elseprefix);
