@@ -89,10 +89,6 @@ namespace syntax_analyzer {
          */
         void exit_formal_arg_ss();
 
-        /*TODO: otan allazei to scope xrhsimopoiei mia nea list. Otan meithwei to scope adeiazei adiazei thn lista auth???*/
-        void break_list_push(unsigned int quadno);  /*TODO: stabilize this function's API*/
-        std::vector<unsigned int> get_break_list(); /*TODO: stabilize this function's API*/
-
     private:
         /**
          * Keep track of the scope that the parser is within

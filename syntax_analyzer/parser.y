@@ -59,10 +59,10 @@
 %type <unsignedIntVal> funcbody	/* contains the number of local variables within the function */
 %type <unsignedIntVal> ifprefix elseprefix whilecond
 %type <funcEntryPtr> funcprefix
-%type <uIntVector> break continue
 %type <dequeExpr> tmp_elist
 %type <unsignedIntVal> log_next_quad
 
+%type <voidVal> breakstmt continuestmt
 %type <voidVal> funcargs
 %type <voidVal> tmp_indexed
 %type <voidVal> block_open stmts block_close
@@ -94,12 +94,22 @@ stmt:	expr SEMICOLON			{$$ = Manage_stmt__expr_SEMICOLON(); 	}
 		| whilestmt 			{$$ = Manage_stmt__whilestmt(); 		}
 		| forstmt 				{$$ = Manage_stmt__forstmt(); 			}
 		| returnstmt 			{$$ = Manage_stmt__returnstmt(); 		}
-		| BREAK SEMICOLON 		{$$ = Manage_stmt__BREAK_SEMICOLON();	}
-		| CONTINUE SEMICOLON	{$$ = Manage_stmt__CONTINUE_SEMICOLON();}
+		| breakstmt 			{$$ = Manage_stmt__break();				}
+		| continuestmt			{$$ = Manage_stmt__continue();			}
 		| block 				{$$ = Manage_stmt__block();				}
 		| funcdef 				{$$ = Manage_stmt__funcdef();			}
 		| SEMICOLON 			{$$ = Manage_stmt__SEMICOLON();			}
 		;
+
+returnstmt:	RETURN SEMICOLON		{$$ = Manage_RETURN_SEMICOLON(yylineno);}
+			| RETURN expr SEMICOLON	{$$ = Manage_RETURN_expr_SEMICOLON($2, yylineno);}
+			;
+
+breakstmt:	BREAK SEMICOLON	{$$ = Manage_breakstmt__BREAK_SEMICOLON();}
+		;
+
+continuestmt:	CONTINUE SEMICOLON	{$$ = Manage_continuestmt__CONTINUE_SEMICOLON();}
+			;
 
 expr:	assignexpr 			{$$ = Manage_expr__assignexpr();}
     	| expr PLUS expr 	{$$ = Manage_expr__expr_PLUS_expr	(sym_table, yylineno, $1,$3);}
@@ -245,10 +255,6 @@ whilestmt:	WHILE log_next_quad whilecond stmt {$$ = Manage_whilestmt__WHILE_log_
 			;
 
 forstmt:	FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {$$ = Manage_FOR_LEFT_PARENTHESIS_elist_SEMICLON_expr_SEMICOLON_elist_RIGHT_PARENTHESIS_stmt();}
-			;
-
-returnstmt:	RETURN SEMICOLON		{$$ = Manage_RETURN_SEMICOLON();}
-			| RETURN expr SEMICOLON	{$$ = Manage_RETURN_expr_SEMICOLON();}
 			;
 
 log_next_quad:	%empty	{$$ = Manage_log_next_quad__empty()}

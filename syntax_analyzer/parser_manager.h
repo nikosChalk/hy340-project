@@ -20,11 +20,24 @@ namespace syntax_analyzer {
     void_t Manage_stmt__whilestmt();
     void_t Manage_stmt__forstmt();
     void_t Manage_stmt__returnstmt();
-    void_t Manage_stmt__BREAK_SEMICOLON();
-    void_t Manage_stmt__CONTINUE_SEMICOLON();
+    void_t Manage_stmt__break();
+    void_t Manage_stmt__continue();
     void_t Manage_stmt__block();
     void_t Manage_stmt__funcdef();
     void_t Manage_stmt__SEMICOLON();
+
+    /* Manage_returnstmt() */
+    void_t Manage_returnstmt__RETURN_SEMICOLON(unsigned int lineno);
+    void_t Manage_returnstmt__RETURN_expr_SEMICOLON(intermediate_code::expr *expr, unsigned int lineno);
+
+    /**
+     * @throws syntax_analyzer::syntax_error If "break;" was not inside a loop
+     */
+    void_t Manage_breakstmt__BREAK_SEMICOLON(unsigned int lineno);
+    /**
+     * @throws syntax_analyzer::syntax_error If "continue;" was not inside a loop
+     */
+    void_t Manage_continuestmt__CONTINUE_SEMICOLON(unsigned int lineno);
 
     /* Manage_expr__assignexpr() */
 
@@ -207,7 +220,6 @@ namespace syntax_analyzer {
                                                                   std::string identifier, unsigned int lineno);
     std::vector<std::string> Manage_idlist__empty();
 
-    
 	/* Manage_ifstmt() */
 	unsigned int Manage_ifprefix__IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(intermediate_code::expr *expr, unsigned int lineno);
 	unsigned int Manage_elseprefix__ELSE(unsigned int lineno);
@@ -230,10 +242,8 @@ namespace syntax_analyzer {
 	/* Manage_forstmt() */
 	void_t Manage_FOR_LEFT_PARENTHESIS_elist_SEMICLON_expr_SEMICOLON_elist_RIGHT_PARENTHESIS_stmt();
 
-	/* Manage_returnstmt() */
-	void_t Manage_RETURN_SEMICOLON();
-	void_t Manage_RETURN_expr_SEMICOLON();
 
+	/* Manage miscellaneous */
 	/**
 	 * @return The quadno of the next quad which will be emitted.
 	 */

@@ -9,6 +9,7 @@
 #include <deque>
 #include "syntax_error.h"
 #include "scope_handler.h"
+#include "loop_handler.h"
 #include "hidden_var_handler.h"
 #include "../intermediate_code/types.h"
 #include "../intermediate_code/icode_generator.h"
@@ -26,6 +27,7 @@ namespace syntax_analyzer {
     static scope_handler scp_handler = scope_handler();
     static hidden_var_handler hvar_handler = hidden_var_handler();
 	static icode_generator icode_gen = icode_generator();
+	static loop_handler lp_handler = loop_handler();
 
     /**
      * If the given expr is not of type expression_type::TABLE_ITEM_E, then expr is simply returned.
@@ -227,6 +229,17 @@ namespace syntax_analyzer {
         return result;
     }
 
+    /**
+     * Handles the quad emit for the grammar rule "returnstmt -> ..."
+     * @param expr The expr within the return statement. Can be NULL/nullptr if it was a plain "return;"
+     * @throws syntax_analyzer::syntax_error If the reduction took place when the parser was not inside a function
+     */
+    static void handle_returnstmt(expr *expr, unsigned int lineno) {
+        if(scp_handler.get_current_ss() != scope_handler::scope_space::FUNCTION_LOCALS_SS)
+            throw syntax_error("return statement not within a function", lineno);
+        icode_gen.emit_quad(new quad(quad::iopcode::ret, nullptr, expr, nullptr, lineno));
+    }
+
 /************************* end *********************************/
 
 
@@ -265,12 +278,12 @@ namespace syntax_analyzer {
         fprintf(yyout, "stmt -> returnstmt\n");
         return void_value;
     }
-    void_t Manage_stmt__BREAK_SEMICOLON() {
-        fprintf(yyout, "stmt -> break ;\n");
+    void_t Manage_stmt__break() {
+        fprintf(yyout, "stmt -> break\n");
         return void_value;
     }
-    void_t Manage_stmt__CONTINUE_SEMICOLON() {
-        fprintf(yyout, "stmt -> continue ;\n");
+    void_t Manage_stmt__continue() {
+        fprintf(yyout, "stmt -> continue\n");
         return void_value;
     }
     void_t Manage_stmt__block() {
@@ -283,6 +296,40 @@ namespace syntax_analyzer {
     }
     void_t Manage_stmt__SEMICOLON() {
         fprintf(yyout, "stmt -> ;\n");
+        return void_value;
+    }
+
+    /* Manage_returnstmt() */
+    void_t Manage_returnstmt__RETURN_SEMICOLON(unsigned int lineno){
+        fprintf(yyout, "returnstmt -> return;\n");
+        handle_returnstmt(nullptr, lineno);
+        return void_value;
+    }
+    void_t Manage_returnstmt__RETURN_expr_SEMICOLON(expr *expr, unsigned int lineno){
+        fprintf(yyout, "returnstmt -> return expr;\n");
+        handle_returnstmt(expr, lineno);
+        return void_value;
+    }
+
+    /* Manage breakstmt */
+    void_t Manage_breakstmt__BREAK_SEMICOLON(unsigned int lineno) {
+        fprintf(yyout, "break -> BREAK;");
+        if(!lp_handler.is_in_loop())
+            throw syntax_error("break; not within loop", lineno);
+
+        lp_handler.append_to_break_list(icode_gen.next_quad_label());
+        icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);   //jump out of loop
+        return void_value;
+    }
+
+    /* Manage continuestmt */
+    void_t Manage_continuestmt__CONTINUE_SEMICOLON(unsigned int lineno) {
+        fprintf(yyout, "continue -> CONTINUE;");
+        if(!lp_handler.is_in_loop())
+            throw syntax_error("continue; not within loop", lineno);
+
+        lp_handler.append_to_continue_list(icode_gen.next_quad_label());
+        icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);   //jump to next iteratin
         return void_value;
     }
 
@@ -745,12 +792,14 @@ namespace syntax_analyzer {
         scp_handler.decrease_scope();
 
         scp_handler.enter_function_ss();
+        lp_handler.enter_function_ss();
         //"block" grammar rule will increase scope again
         return void_value;
     };
 
     unsigned int Manage_funcbody__block() {
         fprintf(yyout, "funcbody -> block\n");
+        lp_handler.exit_function_ss();
         return scp_handler.exit_function_ss();    //scope already reduced by "block" grammar rule
     }
     symbol_table::func_entry* Manage_funcdef__funcprefix_funcargs_funcbody(symbol_table::func_entry *func_entry,
@@ -859,16 +908,27 @@ namespace syntax_analyzer {
 
 		icode_gen.emit_quad(new quad(quad::iopcode::if_eq, nullptr, expr, expr::make_const_bool(true), lineno), icode_gen.next_quad_label() + 2);   //if true, skip the bellow jump
 		icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);   //in-complete jump. Will be patched to skip the "while" code
+        lp_handler.enter_loop();
 		return icode_gen.next_quad_label()-1;   //quadno of the above in-complete jump
 	}
 	void_t Manage_whilestmt__WHILE_log_next_quad_whilecond_stmt(unsigned int first_quadno, unsigned int whilecond, unsigned int lineno) {
 		fprintf(yyout, "whilestmt -> WHILE log_next_quad whilecond stmt\n");
 
 		icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), first_quadno); //jump to the start of the loop to calculate again the while's condition
-		icode_gen.patch_label(whilecond, icode_gen.next_quad_label());
-		/*TODO:*/
-		/*icode_gen.patch_label("$stmt.breaklist", icode_gen.next_quad_label());
-		icode_gen.patch_label("$stmt.contlist", icode_gen.next_quad_label());*/
+		icode_gen.patch_label(whilecond, icode_gen.next_quad_label());  //patch jump that goes out of the loop when the condition is false
+
+		//patch break list
+        vector<unsigned int> v = lp_handler.get_break_list();
+        for(unsigned int quadno : v)
+            icode_gen.patch_label(quadno, icode_gen.next_quad_label());
+
+        //patch continue list
+        v = lp_handler.get_continue_list();
+        for(unsigned int quadno: v)
+            icode_gen.patch_label(quadno, first_quadno);
+
+        //exit loop and return
+        lp_handler.exit_loop();
 		return void_value;
 	}
 
@@ -878,16 +938,7 @@ namespace syntax_analyzer {
 		return void_value;
 	}
 
-	/* Manage_returnstmt() */
-	void_t Manage_RETURN_SEMICOLON(){
-		fprintf(yyout, "returnstmt -> return ;\n");
-		return void_value;
-	}
-	void_t Manage_RETURN_expr_SEMICOLON(){
-		fprintf(yyout, "returnstmt -> return expr ;\n");
-		return void_value;
-	}
-
+    /* Manage miscellaneous */
     unsigned int Manage_log_next_quad__empty() {
 	    fprintf(yyout, "log_next_quad -> <empty>\n");
         return icode_gen.next_quad_label();

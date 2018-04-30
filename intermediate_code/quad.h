@@ -25,7 +25,7 @@ namespace intermediate_code {
 
             call,   //arg1=function to call, arg2,result=nullptr
             param,  //arg1=parameter, arg2,result=nullptr
-            ret,
+            ret,    //arg1=return value, arg2,result=nullptr
             getretval,  //result=return value, arg1,arg2=nullptr
             funcstart,  funcend,
 
