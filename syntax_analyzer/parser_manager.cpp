@@ -830,39 +830,41 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_ifstmt() */
-	unsigned int Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(expr* expr, unsigned int lineno){
-		icode_gen.emit_quad(new quad(iopcode::if_eq, expr, newexpr_constbool(true), nullptr, lineno) ,icode_gen.next_quad_label() + 2);
-		icode_gen.emit_quad(new quad(iopcode::jump, nullptr, nullptr, nullptr, lineno),0);
-		return icode_gen.next_quad_label();
+	unsigned int Manage_ifprefix__IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(expr *expr, unsigned int lineno) {
+        fprintf(yyout, "ifprefix -> if (expr)\n");
+
+		icode_gen.emit_quad(new quad(quad::iopcode::if_eq, nullptr, expr, expr::make_const_bool(true), lineno), icode_gen.next_quad_label() + 2);   //if expr is true, skip the bellow jump
+		icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);   //in-complete jump. Will be patched to skip the "if" code
+		return icode_gen.next_quad_label()-1;   //quadno of the above in-complete jump
 	};
-	unsigned int Manage_elseprefix_ELSE(unsigned int lineno){
-		icode_gen.emit_quad(new quad(iopcode::jump, nullptr, nullptr, nullptr, lineno),0);
-		return icode_gen.next_quad_label();
+	unsigned int Manage_elseprefix__ELSE(unsigned int lineno) {
+		icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);   //in-complete jump. Will be patched to skip the "else" code
+		return icode_gen.next_quad_label()-1;   //quadno of the above in-complete jump
 	}
-	void_t  Manage_ifprefix_stmt(unsigned int ifprefix){
-		fprintf(yyout, "ifstmt -> if ( expr ) stmt\n");
+	void_t  Manage_ifstmt__ifprefix_stmt(unsigned int ifprefix) {
+		fprintf(yyout, "ifstmt -> ifprefix stmt\n");
 		icode_gen.patch_label(ifprefix, icode_gen.next_quad_label());
 		return void_value;
 	}
-	void_t Manage_ifprefix_stmt_elseprefix_stmt(unsigned int ifprefix , unsigned int elseprefix){
-		fprintf(yyout, "ifstmt -> if ( expr ) stmt else stmt\n");
-		icode_gen.patch_label(ifprefix, elseprefix + 1);
+	void_t Manage_ifstmt__ifprefix_stmt_elseprefix_stmt(unsigned int ifprefix , unsigned int elseprefix){
+		fprintf(yyout, "ifstmt -> ifprefix stmt elseprefix stmt\n");
+		icode_gen.patch_label(ifprefix, elseprefix+1);
 		icode_gen.patch_label(elseprefix, icode_gen.next_quad_label());
 		return void_value;
 	}
 
 	/* Manage_whilestmt() */
-	unsigned int Manage_whilestart_WHILE(){
-		return icode_gen.next_quad_label();
+	unsigned int Manage_whilecond__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(expr *expr, unsigned int lineno){
+	    fprintf(yyout, "whilecond -> (expr)\n");
+
+		icode_gen.emit_quad(new quad(quad::iopcode::if_eq, nullptr, expr, expr::make_const_bool(true), lineno), icode_gen.next_quad_label() + 2);   //if true, skip the bellow jump
+		icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);   //in-complete jump. Will be patched to skip the "while" code
+		return icode_gen.next_quad_label()-1;   //quadno of the above in-complete jump
 	}
-	unsigned int Manage_whilecond_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(expr * expr){
-		icode_gen.emit_quad(new quad(iopcode::if_eq, expr, newexpr_constbool(true), nullptr, lineno), icode_gen.next_quad_label() + 2);
-		icode_gen.emit_quad(new quad(iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);
-		return icode_gen.next_quad_label();
-	}
-	void_t Manage_whilestmt_whilestart_whilecond_stmt(unsigned int whilestart , unsigned int whilecond){
-		fprintf(yyout, "whilestmt -> while ( expr ) stmt\n");
-		icode_gen.emit_quad(new quad(iopcode::jump, whilestart, nullptr, nullptr, lineno), 0);
+	void_t Manage_whilestmt__WHILE_log_next_quad_whilecond_stmt(unsigned int first_quadno, unsigned int whilecond, unsigned int lineno) {
+		fprintf(yyout, "whilestmt -> WHILE log_next_quad whilecond stmt\n");
+
+		icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), first_quadno); //jump to the start of the loop to calculate again the while's condition
 		icode_gen.patch_label(whilecond, icode_gen.next_quad_label());
 		/*TODO:*/
 		/*icode_gen.patch_label("$stmt.breaklist", icode_gen.next_quad_label());
@@ -884,5 +886,10 @@ namespace syntax_analyzer {
 	void_t Manage_RETURN_expr_SEMICOLON(){
 		fprintf(yyout, "returnstmt -> return expr ;\n");
 		return void_value;
+	}
+
+    unsigned int Manage_log_next_quad__empty() {
+	    fprintf(yyout, "log_next_quad -> <empty>\n");
+        return icode_gen.next_quad_label();
 	}
 }

@@ -57,10 +57,11 @@
 %type <strVector> tmp_idlist
 %type <strVal> funcname
 %type <unsignedIntVal> funcbody	/* contains the number of local variables within the function */
-%type <unsignedIntVal> ifprefix elseprefix whilestart whilecond
+%type <unsignedIntVal> ifprefix elseprefix whilecond
 %type <funcEntryPtr> funcprefix
 %type <uIntVector> break continue
 %type <dequeExpr> tmp_elist
+%type <unsignedIntVal> log_next_quad
 
 %type <voidVal> funcargs
 %type <voidVal> tmp_indexed
@@ -227,23 +228,20 @@ idlist:	IDENTIFIER tmp_idlist {$$ = Manage_idlist__IDENTIFIER_tmp_idlist(sym_tab
 		| %empty {$$ = Manage_idlist__empty();}
 		;
 
-ifprefix: IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS { $$ = Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS($3,yylineno);}
-	  ;
+ifprefix:	IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS { $$ = Manage_ifprefix__IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS($3, yylineno);}
+			;
 
-elseprefix: ELSE {$$ = Manage_elseprefix_ELSE(yylineno);}
+elseprefix: ELSE {$$ = Manage_elseprefix__ELSE(yylineno);}
 	    ;
 
-ifstmt:	ifprefix stmt { $$ = Manage_ifprefix_stmt($1);}
-		| ifprefix stmt elseprefix stmt	{ $$ = Manage_ifprefix_stmt_elseprefix_stmt($1,$3);}
+ifstmt:	ifprefix stmt { $$ = Manage_ifstmt__ifprefix_stmt($1);}
+		| ifprefix stmt elseprefix stmt	{ $$ = Manage_ifstmt__ifprefix_stmt_elseprefix_stmt($1,$3);}
 		;
 
-whilestart: WHILE{$$ = Manage_whilestart_WHILE();}
-	    ;
+whilecond:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS{$$ = Manage_whilecond__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS($2, yylineno);}
+			;
 
-whilecond: LEFT_PARENTHESIS expr RIGHT_PARENTHESIS{$$ = Manage_whilecond_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS($2);}
-	   ;
-
-whilestmt:	whilestart whilecond stmt {$$ = Manage_whilestmt_whilestart_whilecond_stmt($1,$2);}
+whilestmt:	WHILE log_next_quad whilecond stmt {$$ = Manage_whilestmt__WHILE_log_next_quad_whilecond_stmt($2, $3, yylineno);}
 			;
 
 forstmt:	FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {$$ = Manage_FOR_LEFT_PARENTHESIS_elist_SEMICLON_expr_SEMICOLON_elist_RIGHT_PARENTHESIS_stmt();}
@@ -252,6 +250,9 @@ forstmt:	FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTH
 returnstmt:	RETURN SEMICOLON		{$$ = Manage_RETURN_SEMICOLON();}
 			| RETURN expr SEMICOLON	{$$ = Manage_RETURN_expr_SEMICOLON();}
 			;
+
+log_next_quad:	%empty	{$$ = Manage_log_next_quad__empty()}
+				;
 
 %%
 

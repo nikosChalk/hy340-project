@@ -21,7 +21,7 @@ namespace intermediate_code {
             uminus,
             logical_and, logical_or, logical_not,
 
-            if_eq, if_noteq, if_lesseq, if_greatereq, if_less, if_greater,  //arg1=lef operand, arg2=right operand
+            if_eq, if_noteq, if_lesseq, if_greatereq, if_less, if_greater,  //arg1=lef operand, arg2=right operand, label=quadno to jump to if true
 
             call,   //arg1=function to call, arg2,result=nullptr
             param,  //arg1=parameter, arg2,result=nullptr

@@ -207,17 +207,25 @@ namespace syntax_analyzer {
                                                                   std::string identifier, unsigned int lineno);
     std::vector<std::string> Manage_idlist__empty();
 
+    
 	/* Manage_ifstmt() */
+	unsigned int Manage_ifprefix__IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(intermediate_code::expr *expr, unsigned int lineno);
+	unsigned int Manage_elseprefix__ELSE(unsigned int lineno);
+	/**
+	 * @param ifprefix The quadno of the incomplete jump that the "ifprefix -> (expr)" generated. The jump skips the "if" code
+	 */
+	void_t Manage_ifstmt__ifprefix_stmt(unsigned int ifprefix);
+	void_t Manage_ifstmt__ifprefix_stmt_elseprefix_stmt(unsigned int ifprefix, unsigned int elseprefix);
 
-	unsigned int Manage_IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(intermediate_code::expr* expr, unsigned int lineno);
-	unsigned int Manage_elseprefix_ELSE(unsigned int lineno);
-	void_t Manage_ifprefix_stmt(unsigned int ifprefix);
-	void_t Manage_ifprefix_stmt_elseprefix_stmt(unsigned int ifprefix, unsigned int elseprefix);
 
 	/* Manage_whilestmt() */
-	unsigned int Manage_whilestart_WHILE();
-	unsigned int Manage_whilecond_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(expr * expr);
-	void_t Manage_whilestmt_whilestart_whilecond_stmt(unsigned int whilestart, unsigned int whilecond);
+	unsigned int Manage_whilecond__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(intermediate_code::expr *expr, unsigned int lineno);
+	/**
+	 * @param first_quadno First quad number of the whilecond's "expr"
+	 * @param whilecond The quadno of the in-complete jump what whilecond produced. This jump is patched to jump out of the while loop.
+	 */
+	void_t Manage_whilestmt__WHILE_log_next_quad_whilecond_stmt(unsigned int first_quadno, unsigned int whilecond, unsigned int lineno);
+
 
 	/* Manage_forstmt() */
 	void_t Manage_FOR_LEFT_PARENTHESIS_elist_SEMICLON_expr_SEMICOLON_elist_RIGHT_PARENTHESIS_stmt();
@@ -225,6 +233,11 @@ namespace syntax_analyzer {
 	/* Manage_returnstmt() */
 	void_t Manage_RETURN_SEMICOLON();
 	void_t Manage_RETURN_expr_SEMICOLON();
+
+	/**
+	 * @return The quadno of the next quad which will be emitted.
+	 */
+	unsigned int Manage_log_next_quad__empty();
 };
 
 
