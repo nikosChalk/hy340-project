@@ -129,12 +129,12 @@ expr:	assignexpr 			{$$ = Manage_expr__assignexpr();}
 		;
 
 term:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS		{$$ = Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS($2);}
-    	| MINUS expr %prec UMINUS 					{$$ = Manage_term__MINUS_expr(symtable,$2,yylineno);}	/* Special precedence for this rule */
-		| NOT expr 									{$$ = Manage_term__NOT_expr((symtable,$2,yylineno);}
-		| PLUS_PLUS lvalue 							{$$ = Manage_term__PLUS_PLUS_lvalue(symtable,$2, yylineno);}
-		| lvalue PLUS_PLUS 							{$$ = Manage_term__lvalue_PLUS_PLUS(symtable,$1, yylineno);}
-		| MINUS_MINUS lvalue 						{$$ = Manage_term__MINUS_MINUS_lvalue(syntable,$2, yylineno);}
-		| lvalue MINUS_MINUS 						{$$ = Manage_term__lvalue_MINUS_MINUS(symtable,$1, yylineno);}
+    	| MINUS expr %prec UMINUS 					{$$ = Manage_term__MINUS_expr			(sym_table, yylineno, $2);}	/* Special precedence for this rule */
+		| NOT expr 									{$$ = Manage_term__NOT_expr				(sym_table, yylineno, $2);}
+		| PLUS_PLUS lvalue 							{$$ = Manage_term__PLUS_PLUS_lvalue		(sym_table, yylineno, $2);}
+		| lvalue PLUS_PLUS 							{$$ = Manage_term__lvalue_PLUS_PLUS		(sym_table, yylineno, $1);}
+		| MINUS_MINUS lvalue 						{$$ = Manage_term__MINUS_MINUS_lvalue	(sym_table, yylineno, $2);}
+		| lvalue MINUS_MINUS 						{$$ = Manage_term__lvalue_MINUS_MINUS	(sym_table, yylineno, $1);}
 		| primary 									{$$ = Manage_term__primary($1);}
 		;
 

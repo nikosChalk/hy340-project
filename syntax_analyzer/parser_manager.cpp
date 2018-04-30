@@ -240,6 +240,65 @@ namespace syntax_analyzer {
         icode_gen.emit_quad(new quad(quad::iopcode::ret, nullptr, expr, nullptr, lineno));
     }
 
+    /**
+     * Handles the quad emit for the grammar rules "term -> lvalue++" and "term -> lvalue--"
+     * @param lvalue The lvalue
+     * @param iopcode Must be either iopcode::add or iopcode::sub and indicates which of the two grammar rules was reduced
+     * @return The expr for the "term" non-terminal symbol
+     *
+     * @throws std::invalid_argument If iopcode is invalid
+     * @throws syntax_analyzer::syntax_error If lvalue's sym_entry field has lvalue type of symbol_table::entry::lvalue_type::FUNC
+     */
+    static expr* handle_lvalue_postop(expr *lvalue, quad::iopcode iopcode, symbol_table &sym_table, unsigned lineno) {
+        if(iopcode != quad::iopcode::add && iopcode != quad::iopcode::sub)
+            throw invalid_argument("Invalid iopcode");
+        if(lvalue->sym_entry->get_lvalue_type() == symbol_table::entry::lvalue_type::FUNC)
+            throw syntax_error("Function id cannot be used as an l-value", lineno);
+
+        expr *term = expr::make_expr(expr::type::VAR_E);
+        term->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+        if(lvalue->type == expr::type::TABLE_ITEM_E) {
+            expr *table_item_value = emit_iftableitem(lvalue, sym_table, lineno);   //due to the above if, it will always emit. x = lvalue[lvalue->index]
+            icode_gen.emit_quad(new quad(quad::iopcode::assign, term, table_item_value, nullptr, lineno));  //term = x
+            icode_gen.emit_quad(new quad(iopcode, table_item_value, table_item_value, expr::make_const_num(1), lineno)); //x = x +/- 1
+            icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, table_item_value, lvalue, lvalue->index, lineno));    //lvalue[lvalue->index] = x
+        }
+        else{
+            icode_gen.emit_quad(new quad(quad::iopcode::assign, term, lvalue, nullptr, lineno));    //term=lvalue
+            icode_gen.emit_quad(new quad(iopcode, lvalue, lvalue, expr::make_const_num(1), lineno)); //lvalue = lvalue +/- 1
+        }
+        return term;
+    }
+
+    /**
+     * Handles the quad emit for the grammar rules "term -> ++lvalue" and "term -> --lvalue"
+     * @param lvalue The lvalue
+     * @param iopcode Must be either iopcode::add or iopcode::sub and indicates which of the two grammar rules was reduced
+     * @return The expr for the "term" non-terminal symbol
+     *
+     * @throws std::invalid_argument If iopcode is invalid
+     * @throws syntax_analyzer::syntax_error If lvalue's sym_entry field has lvalue type of symbol_table::entry::lvalue_type::FUNC
+     */
+    static expr* handle_preop_lvalue(expr *lvalue, quad::iopcode iopcode, symbol_table &sym_table, unsigned lineno) {
+        if(iopcode != quad::iopcode::add && iopcode != quad::iopcode::sub)
+            throw invalid_argument("Invalid iopcode");
+        if(lvalue->sym_entry->get_lvalue_type() == symbol_table::entry::lvalue_type::FUNC)
+            throw syntax_error("Function id cannot be used as an l-value", lineno);
+
+        expr *term;
+        if(lvalue->type == expr::type::TABLE_ITEM_E){
+            term = emit_iftableitem(lvalue, sym_table, lineno); //will always emit due to the above if. term = lvalue[lvalue->index]
+            icode_gen.emit_quad(new quad(iopcode, term, term, expr::make_const_num(1), lineno)); //term = term +/- 1
+            icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, term, lvalue, lvalue->index, lineno));  //lvalue[lvalue->index] = term
+        } else {
+            icode_gen.emit_quad(new quad(iopcode, lvalue, lvalue, expr::make_const_num(1), lineno)); //lvalue = lvalue +/- 1
+            term  = expr::make_expr(expr::type::ARITHM_E);
+            term->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+            icode_gen.emit_quad(new quad(quad::iopcode::assign, term, lvalue, nullptr, lineno));    //term = lvalue
+        }
+        return term;
+    }
+
 /************************* end *********************************/
 
 
@@ -406,99 +465,43 @@ namespace syntax_analyzer {
 		fprintf(yyout, "term -> (expr)\n");
         return expr;
 	}
-	expr* Manage_term__MINUS_expr(symbol_table &sym_table,expr* expr, unsigned int lineno){
+	expr* Manage_term__MINUS_expr(symbol_table &sym_table, unsigned int lineno, expr *uminus_expr) {
 		fprintf(yyout, "term -> -expr\n");
-		if ((expr->type == expr::type::CONST_BOOL_E) || (expr->type == expr::type::CONST_STR_E) ||
-			(expr->type == expr::type::CONST_NIL_E) || (expr->type == expr::type::NEW_TABLE_E) ||
-			(expr->type == expr::type::PROGRAM_FUNC_E) || (expr->type == expr::type::LIBRARY_FUNC_E) ||
-			(expr->type == expr::type::BOOL_E)){
-			throw semantic_error("Illegal expr to unary -", lineno);
-		}
-		expr* result = expr::make_expr(expr::type::ARITHM_E);
+		if (!uminus_expr->can_participate_in_arithmop())
+			throw semantic_error("Illegal expr to unary minus '-'", lineno);
+
+		expr *result = expr::make_expr(expr::type::ARITHM_E);
 		result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-		icode_gen.emit_quad(new quad(quad::iopcode::uminus, result, expr, nullptr, lineno));
+		icode_gen.emit_quad(new quad(quad::iopcode::uminus, result, uminus_expr, nullptr, lineno));
         return result;
 	}
-	expr* Manage_term__NOT_expr(symbol_table &sym_table, expr* expr, unsigned int lineno){
+	expr* Manage_term__NOT_expr(symbol_table &sym_table, unsigned int lineno, expr *not_expr) {
 		fprintf(yyout, "term -> NOT expr\n");
-		expr* result = expr::make_expr(expr::type::BOOL_E);
+
+		expr *result = expr::make_expr(expr::type::BOOL_E);
 		result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-		icode_gen.emit_quad(new quad(quad::iopcode::logical_not, result, expr, nullptr, lineno));
+		icode_gen.emit_quad(new quad(quad::iopcode::logical_not, result, not_expr, nullptr, lineno));
 		return result;
 	}
-	expr* Manage_term__PLUS_PLUS_lvalue(symbol_table &sym_table, expr* lvalue, unsigned int lineno){
+	expr* Manage_term__PLUS_PLUS_lvalue(symbol_table &sym_table, unsigned int lineno, expr *lvalue) {
 		fprintf(yyout, "term -> ++lvalue\n");
-		if (lvalue->sym_entry->get_lvalue_type() == symbol_table::entry::lvalue_type::FUNC)
-            throw syntax_error("Function id cannot be used as an l-value", lineno);
-		if (lvalue->type == expr::type::TABLE_ITEM_E){
-			expr* result = emit_iftableitem(expr *lvalue, symbol_table &sym_table, unsigned int lineno);
-			icode_gen.emit_quad(new quad(quad::iopcode::add, result, result, make_const_num(1), lineno));
-			icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, result, lvalue, lvalue->index, lineno));
-		}
-		else{
-			icode_gen.emit_quad(new quad(quad::iopcode::add, lvalue, lvalue, make_const_num(1), lineno));
-			expr* result = expr::make_expr(expr::type::ARITHM_E);
-			result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-			icode_gen.emit_quad(new quad(quad::iopcode::assign, result, lvalue, nullptr, lineno));
-		}
-        return result;
+		return handle_preop_lvalue(lvalue, quad::iopcode::add, sym_table, lineno);
 	}
-	expr* Manage_term__lvalue_PLUS_PLUS(symbol_table &sym_table, expr* lvalue, unsigned int lineno){
-		fprintf(yyout, "term ->lvalue ++\n");
-		if (lvalue->sym_entry->get_lvalue_type() == symbol_table::entry::lvalue_type::FUNC)
-			throw syntax_error("Function id cannot be used as an l-value", lineno);
-		expr* result = expr::make_expr(expr::type::VAR_E);
-		result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-		if (lvalue->type == expr::type::TABLE_ITEM_E){
-			expr* value = emit_iftableitem(expr *lvalue, symbol_table &sym_table, unsigned int lineno);
-			icode_gen.emit_quad(new quad(quad::iopcode::assign, result, value, nullptr, lineno));
-			icode_gen.emit_quad(new quad(quad::iopcode::add, value, value, make_const_num(1), lineno));
-			icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, value, lvalue, lvalue->index, lineno));
-		}
-		else{
-			icode_gen.emit_quad(new quad(quad::iopcode::assign, result, lvalue, nullptr, lineno));
-			icode_gen.emit_quad(new quad(quad::iopcode::add, lvalue, lvalue, make_const_num(1), lineno));
-		}
-        return result;
+	expr* Manage_term__lvalue_PLUS_PLUS(symbol_table &sym_table, unsigned int lineno, expr *lvalue) {
+		fprintf(yyout, "term -> lvalue++\n");
+		return handle_lvalue_postop(lvalue, quad::iopcode::add, sym_table, lineno);
 	}
-	expr* Manage_term__MINUS_MINUS_lvalue(symbol_table &sym_table, expr* lvalue, unsigned int lineno){
+	expr* Manage_term__MINUS_MINUS_lvalue(symbol_table &sym_table, unsigned int lineno, expr *lvalue){
 		fprintf(yyout, "term -> --lvalue\n");
-		if (lvalue->sym_entry->get_lvalue_type() == symbol_table::entry::lvalue_type::FUNC)
-			throw syntax_error("Function id cannot be used as an l-value", lineno);
-		if (lvalue->type == expr::type::TABLE_ITEM_E){
-			expr* result = emit_iftableitem(expr *lvalue, symbol_table &sym_table, unsigned int lineno);
-			icode_gen.emit_quad(new quad(quad::iopcode::sub, result, result, make_const_num(1), lineno));
-			icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, result, lvalue, lvalue->index, lineno));
-		}
-		else{
-			icode_gen.emit_quad(new quad(quad::iopcode::sub, lvalue, lvalue, make_const_num(1), lineno));
-			expr* result = expr::make_expr(expr::type::ARITHM_E);
-			result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-			icode_gen.emit_quad(new quad(quad::iopcode::assign, result, lvalue, nullptr, lineno));
-		}
-		return result;
+        return handle_preop_lvalue(lvalue, quad::iopcode::sub, sym_table, lineno);
 	}
-	expr* Manage_term__lvalue_MINUS_MINUS(symbol_table &sym_table, expr* lvalue, unsigned int lineno){
+	expr* Manage_term__lvalue_MINUS_MINUS(symbol_table &sym_table, unsigned int lineno, expr *lvalue) {
 		fprintf(yyout, "term -> lvalue--\n");
-		if (lvalue->sym_entry->get_lvalue_type() == symbol_table::entry::lvalue_type::FUNC)
-			throw syntax_error("Function id cannot be used as an l-value", lineno);
-		expr* result = expr::make_expr(expr::type::VAR_E);
-		result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-		if (lvalue->type == expr::type::TABLE_ITEM_E){
-			expr* value = emit_iftableitem(expr *lvalue, symbol_table &sym_table, unsigned int lineno);
-			icode_gen.emit_quad(new quad(quad::iopcode::assign, result, value, nullptr, lineno));
-			icode_gen.emit_quad(new quad(quad::iopcode::sub, value, value, make_const_num(1), lineno));
-			icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, value, lvalue, lvalue->index, lineno));
-		}
-		else{
-			icode_gen.emit_quad(new quad(quad::iopcode::assign, result, lvalue, nullptr, lineno));
-			icode_gen.emit_quad(new quad(quad::iopcode::sub, lvalue, lvalue, make_const_num(1), lineno));
-		}
-		return result;
+        return handle_lvalue_postop(lvalue, quad::iopcode::sub, sym_table, lineno);
 	}
-	expr* Manage_term__primary(intermediate_code::expr* expr){
+	expr* Manage_term__primary(expr *primary){
 		fprintf(yyout, "term -> primary\n");
-        return expr;
+        return primary;
 	}
 	
     void_t Manage_assignexpr__lvalue_ASSIGN_expr(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno) {
@@ -521,9 +524,9 @@ namespace syntax_analyzer {
         fprintf(yyout, "primary -> objectdef\n");
         return void_value;
     }
-	expr* Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS(symbol_table::func_entry * funcdef) {
+	expr* Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS(symbol_table::func_entry *funcdef) {
         fprintf(yyout, "primary -> (funcdef)\n");
-		expr * result = expr::make_expr(expr::type::PROGRAM_FUNC_E);
+		expr *result = expr::make_expr(expr::type::PROGRAM_FUNC_E);
 		result->sym_entry = funcdef;
         return result;
     }
