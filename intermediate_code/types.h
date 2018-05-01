@@ -5,6 +5,7 @@
 
 #include "expr.h"
 #include "call_suffix.h"
+#include "for_prefix.h"
 #include "quad.h"
 
 

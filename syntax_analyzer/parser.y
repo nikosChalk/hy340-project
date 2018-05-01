@@ -61,6 +61,8 @@
 %type <funcEntryPtr> funcprefix
 %type <dequeExpr> tmp_elist
 %type <unsignedIntVal> log_next_quad
+%type <unsignedIntVal> N M
+%type <forPrefixPtr> forprefix
 
 %type <voidVal> breakstmt continuestmt
 %type <voidVal> funcargs
@@ -254,7 +256,16 @@ whilecond:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS{$$ = Manage_whilecond__LEFT_P
 whilestmt:	WHILE log_next_quad whilecond stmt {$$ = Manage_whilestmt__WHILE_log_next_quad_whilecond_stmt($2, $3, yylineno);}
 			;
 
-forstmt:	FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {$$ = Manage_FOR_LEFT_PARENTHESIS_elist_SEMICLON_expr_SEMICOLON_elist_RIGHT_PARENTHESIS_stmt();}
+N:		{$$=Manage_N(yylineno);}
+ 		;
+
+M:		{$$=Manage_M();}
+ 		;
+
+forprefix:	FOR LEFT_PARENTHESIS elist SEMICLON M expr SEMICOLON {$$=Manage_forprefix($5,$6,yylineno);}
+	 	;
+
+forstmt:	forprefix N elist RIGHT_PARENTHESIS N stmt N {$$ = Manage_forprefix_N_elist_RIGHT_PARENTHESIS_N_stmt_N($1,$2,$5,$7);}
 			;
 
 log_next_quad:	%empty	{$$ = Manage_log_next_quad__empty()}

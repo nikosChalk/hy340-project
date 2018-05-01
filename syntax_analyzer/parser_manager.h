@@ -240,7 +240,10 @@ namespace syntax_analyzer {
 
 
 	/* Manage_forstmt() */
-	void_t Manage_FOR_LEFT_PARENTHESIS_elist_SEMICLON_expr_SEMICOLON_elist_RIGHT_PARENTHESIS_stmt();
+	unsigned int Manage_N(unsigned int lineno);
+	unsigned int Manage_M();
+	intermediate_code::for_prefix* Manage_forprefix(unsigned int m, intermediate_code::expr* expr, unsigned int lineno);
+	void_t Manage_forprefix_N_elist_RIGHT_PARENTHESIS_N_stmt_N(intermediate_code::for_prefix* forprefix , unsigned int n1,unsigned int n2 ,unsigned int n3);
 
 
 	/* Manage miscellaneous */

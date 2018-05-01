@@ -936,8 +936,36 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_forstmt() */
-	void_t Manage_FOR_LEFT_PARENTHESIS_elist_SEMICLON_expr_SEMICOLON_elist_RIGHT_PARENTHESIS_stmt(){
-		fprintf(yyout, "forstmt -> for (elist;expr;elist) stmt\n");
+	unsigned int Manage_N(unsigned int lineno){
+		icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);   //in-complete jump
+		return icode_gen.next_quad_label();
+	}
+	unsigned int Manage_M(){
+		return icode_gen.next_quad_label();
+	}
+	intermediate_code::for_prefix* Manage_forprefix(unsigned int m, intermediate_code::expr* expr ,unsigned int lineno){
+		intermediate_code::for_prefix * result = new for_prefix(m, icode_gen.next_quad_label());
+		icode_gen.emit_quad(new quad(quad::iopcode::if_eq, nullptr, expr, expr::make_const_bool(true), lineno),0);
+		lp_handler.enter_loop(); /*TODO:check this*/
+		return result;
+	}
+	void_t  Manage_forprefix_N_elist_RIGHT_PARENTHESIS_N_stmt_N(intermediate_code::for_prefix* forprefix, unsigned int n1, unsigned int n2, unsigned int n3){
+		icode_gen.patch_label(forprefix->get_for_prefix_enter(), n2+1); // true jump
+		icode_gen.patch_label(n1, icode_gen.next_quad_label()); // false jump
+		icode_gen.patch_label(n2, forprefix->get_for_prefix_test()); //loop jump
+		icode_gen.patch_label(n3, n1 + 1); //closure jump
+
+		//patch break list
+		vector<unsigned int> v = lp_handler.get_break_list();
+		for (unsigned int quadno : v)
+			icode_gen.patch_label(quadno, icode_gen.next_quad_label());
+
+		//patch continue list
+		v = lp_handler.get_continue_list();
+		for (unsigned int quadno : v)
+			icode_gen.patch_label(quadno, n1+1);
+
+		lp_handler.exit_loop(); /*TODO:check this*/
 		return void_value;
 	}
 
