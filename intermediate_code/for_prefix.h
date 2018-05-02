@@ -5,18 +5,33 @@
 
 namespace intermediate_code {
 
+    /**
+     * Class used for the semantic value of the "forprefix" non-terminal symbol
+     */
 	class for_prefix{
 	public:
-		/*constructor*/
-		for_prefix(unsigned int test, unsigned int enter);
-		/*get function for private field test*/
-		unsigned int get_for_prefix_test();
-		/*get function for private field enter*/
-		unsigned int get_for_prefix_enter();
+		/**
+		 * Initializes the for prefix with the given fields
+		 * @param cond_first_quadno The quad number of the first quad of the for's condition "expr"
+		 * @param comparator_quadno The quad number of the intermediate code instruction "if_eq $cond_expr TRUE, then goto body"
+		 */
+		for_prefix(unsigned int cond_first_quadno, unsigned int comparator_quadno);
+
+        /**
+         * Returns the quad number of the first quad of the for's condition "expr"
+         * @return The quad number
+         */
+		unsigned int get_cond_first_quadno() const;
+
+		/**
+		 * Returns the quad number of the intermediate code instruction "if_eq $cond_expr TRUE, then goto body"
+		 * @return The quad number
+		 */
+		unsigned int get_comparator_quadno() const;
 
 	private:
-		unsigned int test;
-		unsigned int enter;
+		unsigned int cond_first_quadno;
+		unsigned int comparator_quadno;
 	};
 }
 

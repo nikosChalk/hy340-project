@@ -1,12 +1,12 @@
 
 
-#include "parser_manager.h"
-#include "symbol_table.h"
 #include <vector>
 #include <iostream>
 #include <cassert>
 #include <typeinfo>
 #include <deque>
+#include "parser_manager.h"
+#include "symbol_table.h"
 #include "syntax_error.h"
 #include "scope_handler.h"
 #include "loop_handler.h"
@@ -299,6 +299,30 @@ namespace syntax_analyzer {
         return term;
     }
 
+    /**
+     * Fetches the break list from the lp_handler and patches each entry to the given patch_label
+     * Note that this function doesn't exit from the current loop scope
+     * @param patch_label The label where the jump quad of a "break;" should lead
+     */
+    static void patch_break_list(unsigned int patch_label) {
+        vector<unsigned int> v = lp_handler.get_break_list();
+        for (unsigned int quadno : v)
+            icode_gen.patch_label(quadno, patch_label);
+        return;
+    }
+
+    /**
+     * Fetches the continue list from the lp_handler and patches each entry to the given patch_label
+     * Note that this function doesn't exit from the current loop scope
+     * @param patch_label The label where the jump quad of a "continue;" should lead
+     */
+    static void patch_continue_list(unsigned int patch_label) {
+        vector<unsigned int> v = lp_handler.get_continue_list();
+        for (unsigned int quadno : v)
+            icode_gen.patch_label(quadno, patch_label);
+        return;
+    }
+
 /************************* end *********************************/
 
 
@@ -393,9 +417,9 @@ namespace syntax_analyzer {
     }
 
 
-    void_t Manage_expr__assignexpr() {
+    expr* Manage_expr__assignexpr(expr *assignexpr) {
         fprintf(yyout, "expr -> assignexpr\n");
-        return void_value;
+        return assignexpr;
 
 	}
 
@@ -456,12 +480,12 @@ namespace syntax_analyzer {
         fprintf(yyout, "expr -> expr OR expr\n");
         return void_value;
     }
-    expr* Manage_expr__term(expr* term) {
+    expr* Manage_expr__term(expr *term) {
         fprintf(yyout, "expr -> term\n");
         return term;
     }
 
-	expr* Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(expr* expr){
+	expr* Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(expr *expr){
 		fprintf(yyout, "term -> (expr)\n");
         return expr;
 	}
@@ -512,17 +536,17 @@ namespace syntax_analyzer {
     }
 
 
-    expr* Manage_primary__lvalue(expr* lvalue) {
+    expr* Manage_primary__lvalue(symbol_table &sym_table, unsigned int lineno, expr *lvalue) {
         fprintf(yyout, "primary -> lvalue\n");
-		return emit_iftableitem(lvalue);
+		return emit_iftableitem(lvalue, sym_table, lineno);
     }
-    void_t Manage_primary__call() {
+    expr* Manage_primary__call(expr *call) {
         fprintf(yyout, "primary -> call\n");
-        return void_value;
+        return call;
     }
-    void_t Manage_primary__objectdef() {
+    expr* Manage_primary__objectdef(expr *objectdef) {
         fprintf(yyout, "primary -> objectdef\n");
-        return void_value;
+        return objectdef;
     }
 	expr* Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS(symbol_table::func_entry *funcdef) {
         fprintf(yyout, "primary -> (funcdef)\n");
@@ -530,9 +554,9 @@ namespace syntax_analyzer {
 		result->sym_entry = funcdef;
         return result;
     }
-    void_t Manage_primary__const() {
+    expr* Manage_primary__const(expr *const_expr) {
         fprintf(yyout, "primary -> const\n");
-        return void_value;
+        return const_expr;
     }
 
     expr* Manage_lvalue__IDENTIFIER(symbol_table &sym_table, const string &identifier, unsigned int lineno) {
@@ -599,9 +623,9 @@ namespace syntax_analyzer {
         id_entry = global_entries.at(0);
         return expr::make_lvalue_expr(id_entry);
     }
-    symbol_table::entry::lvalue_type Manage_lvalue__member() {
+    expr* Manage_lvalue__member(expr *member) {
         fprintf(yyout, "lvalue -> member\n");
-        return symbol_table::entry::lvalue_type::VAR;
+        return member;  /*TODO: validate this*/
     }
 
 
@@ -621,13 +645,15 @@ namespace syntax_analyzer {
 		tableitem_e->index = expr; /* The index is the expression. */		
 		return tableitem;
     }
-    void_t Manage_member__call_DOT_IDENTIFIER() {
+    expr* Manage_member__call_DOT_IDENTIFIER() {
         fprintf(yyout, "member -> call.IDENTIFIER\n");
-        return void_value;
+        /*TODO: implement this rule. Should member_item($call, id) be called?*/
+        return ...;
     }
-    void_t Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET() {
-        fprintf(yyout, "member -> [expr]\n");
-        return void_value;
+    expr* Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET() {
+        fprintf(yyout, "member -> call[expr]\n");
+        /*TODO: implement this rule. Should this be handled the same way as "member -> lvalue[expr] ?*/
+        return ...;
     }
 
 	/* Manage_call() */
@@ -644,7 +670,7 @@ namespace syntax_analyzer {
                     assert(false);  //Casting should ALWAYS be possible
 
             expr *self = lvalue;
-            lvalue = emit_iftableitem(member_item(self, method_call->get_name()));
+            lvalue = emit_iftableitem(member_item(self, method_call->get_name()));  /*TODO: fill this and be CAREFUL of the implementation of member_item*/
             call_suffix->get_elist().push_front(self);
         }
 		return handle_call_rule(lvalue, call_suffix->get_elist(), sym_table, lineno);
@@ -815,29 +841,29 @@ namespace syntax_analyzer {
     }
 
 	/* Manage_const() */
-	void_t Manage_const_CONST_INT(){
+	expr* Manage_const__CONST_INT(long value){
 		fprintf(yyout, "const -> CONST_INT\n");
-		return void_value;
+		return expr::make_const_num(value);
 	}
-	void_t Manage_const_CONST_REAL(){
+    expr* Manage_const__CONST_REAL(long double value){
 		fprintf(yyout, "const -> CONST_REAL\n");
-		return void_value;
+		return expr::make_const_num(value);
 	}
-	void_t Manage_const_CONST_STR(){
+    expr* Manage_const__CONST_STR(const string &str){
 		fprintf(yyout, "const -> CONST_STRING\n");
-		return void_value;
+		return expr::make_const_str(str);
 	}
-	void_t Manage_const_NIL(){
+    expr* Manage_const__NIL(){
 		fprintf(yyout, "const -> nil\n");
-		return void_value;
+		return expr::make_const_nil();
 	}
-	void_t Manage_const_BOOL_TRUE(){
+    expr* Manage_const__BOOL_TRUE(){
 		fprintf(yyout, "const -> true\n");
-		return void_value;
+		return expr::make_const_bool(true);
 	}
-	void_t Manage_const_BOOL_FALSE(){
+    expr* Manage_const__BOOL_FALSE(){
 		fprintf(yyout, "const -> false\n");
-		return void_value;
+		return expr::make_const_bool(false);
 	}
 
 	/* Manage_idlist() */
@@ -920,15 +946,9 @@ namespace syntax_analyzer {
 		icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), first_quadno); //jump to the start of the loop to calculate again the while's condition
 		icode_gen.patch_label(whilecond, icode_gen.next_quad_label());  //patch jump that goes out of the loop when the condition is false
 
-		//patch break list
-        vector<unsigned int> v = lp_handler.get_break_list();
-        for(unsigned int quadno : v)
-            icode_gen.patch_label(quadno, icode_gen.next_quad_label());
-
-        //patch continue list
-        v = lp_handler.get_continue_list();
-        for(unsigned int quadno: v)
-            icode_gen.patch_label(quadno, first_quadno);
+		//patch break and continue list
+        patch_break_list(icode_gen.next_quad_label());
+        patch_continue_list(first_quadno);
 
         //exit loop and return
         lp_handler.exit_loop();
@@ -936,36 +956,36 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_forstmt() */
-	unsigned int Manage_N(unsigned int lineno){
-		icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);   //in-complete jump
-		return icode_gen.next_quad_label();
-	}
-	unsigned int Manage_M(){
-		return icode_gen.next_quad_label();
-	}
-	intermediate_code::for_prefix* Manage_forprefix(unsigned int m, intermediate_code::expr* expr ,unsigned int lineno){
-		intermediate_code::for_prefix * result = new for_prefix(m, icode_gen.next_quad_label());
-		icode_gen.emit_quad(new quad(quad::iopcode::if_eq, nullptr, expr, expr::make_const_bool(true), lineno),0);
-		lp_handler.enter_loop(); /*TODO:check this*/
+	for_prefix* Manage_forprefix(unsigned int cond_first_quad, expr *cond_expr, unsigned int lineno) {
+	    fprintf(yyout, "for_prefix -> for(elist; log_next_quad expr; \n");
+
+		for_prefix *result = new for_prefix(cond_first_quad, icode_gen.next_quad_label());
+		icode_gen.emit_quad(new quad(quad::iopcode::if_eq, nullptr, cond_expr, expr::make_const_bool(true), lineno), 0);
+		lp_handler.enter_loop(); //Correct, since the elist in the "forstmt" rule, cannot containt a stmt and thus a break or continue.
 		return result;
 	}
-	void_t  Manage_forprefix_N_elist_RIGHT_PARENTHESIS_N_stmt_N(intermediate_code::for_prefix* forprefix, unsigned int n1, unsigned int n2, unsigned int n3){
-		icode_gen.patch_label(forprefix->get_for_prefix_enter(), n2+1); // true jump
-		icode_gen.patch_label(n1, icode_gen.next_quad_label()); // false jump
-		icode_gen.patch_label(n2, forprefix->get_for_prefix_test()); //loop jump
-		icode_gen.patch_label(n3, n1 + 1); //closure jump
+	void_t Manage_forstmt(for_prefix *forprefix, unsigned int incomplete_jmp_to_exit, unsigned int incomplete_jmp_to_cond,
+                          unsigned int incomplete_jmp_to_incr_expr) {
+        fprintf(yyout, "forstmt -> forprefix emit_incomplete_jmp elist RIGHT_PARENTHESIS emit_incomplete_jmp stmt emit_incomplete_jmp\n");
 
-		//patch break list
-		vector<unsigned int> v = lp_handler.get_break_list();
-		for (unsigned int quadno : v)
-			icode_gen.patch_label(quadno, icode_gen.next_quad_label());
+        //If comparator is true, then it jumps to the first quad of the for loop's body
+		icode_gen.patch_label(forprefix->get_comparator_quadno(), incomplete_jmp_to_cond+1);    //true jump
 
-		//patch continue list
-		v = lp_handler.get_continue_list();
-		for (unsigned int quadno : v)
-			icode_gen.patch_label(quadno, n1+1);
+		//No further emits. Next quad is a quad that exists out of the loop
+		icode_gen.patch_label(incomplete_jmp_to_exit, icode_gen.next_quad_label()); //false jump
 
-		lp_handler.exit_loop(); /*TODO:check this*/
+        //Path the incomplete jump that jumps to the evaluation of the condition
+		icode_gen.patch_label(incomplete_jmp_to_cond, forprefix->get_cond_first_quadno()); //loop jump
+
+        //Path the incomplete jump that jumps to the evaluation of the elist at the end of every successful loop
+		icode_gen.patch_label(incomplete_jmp_to_incr_expr, incomplete_jmp_to_exit+1); //closure jump
+
+        //patch break and continue list
+        patch_break_list(icode_gen.next_quad_label());
+        patch_continue_list(incomplete_jmp_to_exit+1);  //jumps to the evaluation of the elist at the end of every successful loop
+
+        //exit loop and return
+		lp_handler.exit_loop();
 		return void_value;
 	}
 
@@ -974,4 +994,9 @@ namespace syntax_analyzer {
 	    fprintf(yyout, "log_next_quad -> <empty>\n");
         return icode_gen.next_quad_label();
 	}
+    unsigned int Manage_emit_incomplete_jmp__empty(unsigned int lineno) {
+        fprintf(yyout, "emit_incomplete_jmp -> <empty>\n");
+        icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);   //in-complete jump
+        return icode_gen.next_quad_label();
+    }
 }

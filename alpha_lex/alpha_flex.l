@@ -63,8 +63,8 @@ const_real		{digit}*"."{digit}+
 "not"					{ return NOT; }
 "or"					{ return OR; }
 "local"					{ return LOCAL; }
-"true"					{ yylval.boolVal = true; return BOOL_TRUE; }
-"false"					{ yylval.boolVal = false; return BOOL_FALSE; }
+"true"					{ return BOOL_TRUE; }
+"false"					{ return BOOL_FALSE; }
 "nil"					{ return NIL; }
 
 "="						{ return ASSIGN; }
@@ -95,8 +95,8 @@ const_real		{digit}*"."{digit}+
 "."						{ return DOT; }
 ".."					{ return DOUBLE_DOT; }
 
-{const_int}				{ yylval.intVal = std::stoi(std::string(yytext)); return CONST_INT; }
-{const_real}			{ yylval.realVal = std::stod(std::string(yytext)); return CONST_REAL; }
+{const_int}				{ yylval.intVal = std::stol(std::string(yytext)); return CONST_INT; }
+{const_real}			{ yylval.realVal = std::stold(std::string(yytext)); return CONST_REAL; }
 {id}                    { yylval.strVal = std::string(yytext); return IDENTIFIER; /* id MUST be bellow all the above enumerated rules. */ }
 
 {ws}					{ /*ignore white spaces */ }

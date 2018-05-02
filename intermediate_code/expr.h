@@ -36,7 +36,7 @@ namespace intermediate_code {
         } const_val;    //field used only be make_const static functions
 
         /**
-         * Creates a new expr for the given sym_entry during the reduction of the grammar rule "lvalue -> ..."
+         * Creates a new expr for the given sym_entry during the reduction of the grammar rule "lvalue -> id | local id | ::id"
          * Caller is responsible to free the returned object.
          *
          * @param sym_entry The symbol table entry which is defined during the reduction of the grammar rule

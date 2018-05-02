@@ -21,10 +21,9 @@ namespace syntax_analyzer {
      * Type needed for the Value Stack of the Bison parser (LR parser.)
      */
     typedef struct {
-        bool boolVal;                   /*BOOL_TRUE, BOOL_FALSE*/
-        int intVal;                     /*CONST_INT*/
+        long intVal;                     /*CONST_INT*/
         unsigned int unsignedIntVal;    /*funcbody*/
-        double realVal;                 /*CONST_REAL */
+        long double realVal;                 /*CONST_REAL */
 
         std::string strVal;                 /*CONST_STR, IDENTIFIER, funcname */
         std::vector<std::string> strVector; /*idlist, tmp_idlist*/

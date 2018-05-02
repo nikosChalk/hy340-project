@@ -60,8 +60,7 @@
 %type <unsignedIntVal> ifprefix elseprefix whilecond
 %type <funcEntryPtr> funcprefix
 %type <dequeExpr> tmp_elist
-%type <unsignedIntVal> log_next_quad
-%type <unsignedIntVal> N M
+%type <unsignedIntVal> log_next_quad emit_incomplete_jmp
 %type <forPrefixPtr> forprefix
 
 %type <voidVal> breakstmt continuestmt
@@ -103,8 +102,8 @@ stmt:	expr SEMICOLON			{$$ = Manage_stmt__expr_SEMICOLON(); 	}
 		| SEMICOLON 			{$$ = Manage_stmt__SEMICOLON();			}
 		;
 
-returnstmt:	RETURN SEMICOLON		{$$ = Manage_RETURN_SEMICOLON(yylineno);}
-			| RETURN expr SEMICOLON	{$$ = Manage_RETURN_expr_SEMICOLON($2, yylineno);}
+returnstmt:	RETURN SEMICOLON		{$$ = Manage_returnstmt__RETURN_SEMICOLON(yylineno);}
+			| RETURN expr SEMICOLON	{$$ = Manage_returnstmt__RETURN_expr_SEMICOLON($2, yylineno);}
 			;
 
 breakstmt:	BREAK SEMICOLON	{$$ = Manage_breakstmt__BREAK_SEMICOLON();}
@@ -144,16 +143,16 @@ assignexpr:	lvalue ASSIGN expr {$$ = Manage_assignexpr__lvalue_ASSIGN_expr($1, y
 			;
 
 primary:	lvalue											{$$ = Manage_primary__lvalue($1); }
-			| call											{$$ = Manage_primary__call(); }
-			| objectdef										{$$ = Manage_primary__objectdef(); }
+			| call											{$$ = Manage_primary__call($1); }
+			| objectdef										{$$ = Manage_primary__objectdef($1); }
 			| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS	{$$ = Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS($2); }
-			| const											{$$ = Manage_primary__const(); }
+			| const											{$$ = Manage_primary__const($1); }
 			;
 
 lvalue:	IDENTIFIER					{$$ = Manage_lvalue__IDENTIFIER(sym_table, $1, yylineno); }
 		| LOCAL IDENTIFIER			{$$ = Manage_lvalue__LOCAL_IDENTIFIER(sym_table, $2, yylineno); }
 		| DOUBLE_COLON IDENTIFIER	{$$ = Manage_lvalue__DOUBLE_COLON_IDENTIFIER(sym_table, $2, yylineno); }
-		| member					{$$ = Manage_lvalue__member(); }
+		| member					{$$ = Manage_lvalue__member($1); }
 		;
 
 member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER($1, $3);}
@@ -224,12 +223,12 @@ funcbody:	block {$$ = Manage_funcbody__block();}
 funcdef:	funcprefix funcargs funcbody	{$$ = Manage_funcdef__funcprefix_funcargs_funcbody($1, yylineno, $3);}
 			;
 
-const:	CONST_INT 		{$$ = Manage_const_CONST_INT();}
-		| CONST_REAL	{$$ = Manage_const_CONST_REAL();}
-		| CONST_STR 	{$$ = Manage_const_CONST_STR();}
-		| NIL 			{$$ = Manage_const_NIL();}
-		| BOOL_TRUE 	{$$ = Manage_const_BOOL_TRUE();}
-		| BOOL_FALSE 	{$$ = Manage_const_BOOL_FALSE();}
+const:	CONST_INT 		{$$ = Manage_const__CONST_INT	($1);}
+		| CONST_REAL	{$$ = Manage_const__CONST_REAL	($1);}
+		| CONST_STR 	{$$ = Manage_const__CONST_STR	($1);}
+		| NIL 			{$$ = Manage_const__NIL			();}
+		| BOOL_TRUE 	{$$ = Manage_const__BOOL_TRUE	();}
+		| BOOL_FALSE 	{$$ = Manage_const__BOOL_FALSE	();}
 		;
 
 tmp_idlist:	tmp_idlist COMMA IDENTIFIER {$$ = Manage_tmp_idlist__tmp_idlist_COMMA_IDENTIFIER($1, $3);}
@@ -256,20 +255,17 @@ whilecond:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS{$$ = Manage_whilecond__LEFT_P
 whilestmt:	WHILE log_next_quad whilecond stmt {$$ = Manage_whilestmt__WHILE_log_next_quad_whilecond_stmt($2, $3, yylineno);}
 			;
 
-N:		{$$=Manage_N(yylineno);}
- 		;
+forprefix:	FOR LEFT_PARENTHESIS elist SEMICOLON log_next_quad expr SEMICOLON {$$=Manage_forprefix($5,$6,yylineno);}
+			;
 
-M:		{$$=Manage_M();}
- 		;
-
-forprefix:	FOR LEFT_PARENTHESIS elist SEMICLON M expr SEMICOLON {$$=Manage_forprefix($5,$6,yylineno);}
-	 	;
-
-forstmt:	forprefix N elist RIGHT_PARENTHESIS N stmt N {$$ = Manage_forprefix_N_elist_RIGHT_PARENTHESIS_N_stmt_N($1,$2,$5,$7);}
+forstmt:	forprefix emit_incomplete_jmp elist RIGHT_PARENTHESIS emit_incomplete_jmp stmt emit_incomplete_jmp {$$ = Manage_forstmt($1, $2, $5, $7);}
 			;
 
 log_next_quad:	%empty	{$$ = Manage_log_next_quad__empty()}
 				;
+
+emit_incomplete_jmp:	%empty	{$$ = Manage_emit_incomplete_jmp__empty(yylineno);}
+						;
 
 %%
 

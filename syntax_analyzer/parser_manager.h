@@ -40,8 +40,7 @@ namespace syntax_analyzer {
     void_t Manage_continuestmt__CONTINUE_SEMICOLON(unsigned int lineno);
 
     /* Manage_expr__assignexpr() */
-
-	void_t Manage_expr__assignexpr();
+	intermediate_code::expr* Manage_expr__assignexpr(intermediate_code::expr *assignexpr);
 
 	/* Manage_expr__expr_arithmop_expr */
 	intermediate_code::expr* Manage_expr__expr_PLUS_expr(symbol_table &sym_table, unsigned int lineno,
@@ -81,7 +80,7 @@ namespace syntax_analyzer {
     /* Manage_expr__expr_boolop_expr */
     intermediate_code::expr* Manage_expr__expr_AND_expr();
     intermediate_code::expr* Manage_expr__expr_OR_expr();
-    intermediate_code::expr* Manage_expr__term();
+    intermediate_code::expr* Manage_expr__term(intermediate_code::expr *expr);
 
 	/* Manage_term() */
 	intermediate_code::expr* Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(intermediate_code::expr *expr);
@@ -95,11 +94,11 @@ namespace syntax_analyzer {
 
     intermediate_code::expr* Manage_assignexpr__lvalue_ASSIGN_expr(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
 
-    intermediate_code::expr* Manage_primary__lvalue();
-    intermediate_code::expr* Manage_primary__call();
-    intermediate_code::expr* Manage_primary__objectdef();
+    intermediate_code::expr* Manage_primary__lvalue(symbol_table &sym_table, unsigned int lineno, intermediate_code::expr *lvalue);
+    intermediate_code::expr* Manage_primary__call(intermediate_code::expr *call);
+    intermediate_code::expr* Manage_primary__objectdef(intermediate_code::expr *objectdef);
 	intermediate_code::expr* Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS(symbol_table::func_entry *funcdef);
-    intermediate_code::expr* Manage_primary__const();
+    intermediate_code::expr* Manage_primary__const(intermediate_code::expr *const_expr);
 
     /**
      * Handles the identifier that appears within the grammar rule.
@@ -112,7 +111,7 @@ namespace syntax_analyzer {
      * This rule NEVER inserts to the symbol table
      */
 	intermediate_code::expr* Manage_lvalue__DOUBLE_COLON_IDENTIFIER(const symbol_table &sym_table, const std::string &identifier, unsigned int lineno);
-    intermediate_code::expr* Manage_lvalue__member();
+    intermediate_code::expr* Manage_lvalue__member(intermediate_code::expr *member);
 
     intermediate_code::expr* Manage_member__lvalue_DOT_IDENTIFIER();
     intermediate_code::expr* Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET();
@@ -203,12 +202,12 @@ namespace syntax_analyzer {
 
 
 	/* Manage_const() */
-    intermediate_code::expr* Manage_const_CONST_INT();
-    intermediate_code::expr* Manage_const_CONST_REAL();
-    intermediate_code::expr* Manage_const_CONST_STR();
-    intermediate_code::expr* Manage_const_NIL();
-    intermediate_code::expr* Manage_const_BOOL_TRUE();
-    intermediate_code::expr* Manage_const_BOOL_FALSE();
+    intermediate_code::expr* Manage_const__CONST_INT(long value);
+    intermediate_code::expr* Manage_const__CONST_REAL(long double value);
+    intermediate_code::expr* Manage_const__CONST_STR(const std::string &str);
+    intermediate_code::expr* Manage_const__NIL();
+    intermediate_code::expr* Manage_const__BOOL_TRUE();
+    intermediate_code::expr* Manage_const__BOOL_FALSE();
 
 	/* Manage_idlist() */
     /**
@@ -240,17 +239,29 @@ namespace syntax_analyzer {
 
 
 	/* Manage_forstmt() */
-	unsigned int Manage_N(unsigned int lineno);
-	unsigned int Manage_M();
-	intermediate_code::for_prefix* Manage_forprefix(unsigned int m, intermediate_code::expr* expr, unsigned int lineno);
-	void_t Manage_forprefix_N_elist_RIGHT_PARENTHESIS_N_stmt_N(intermediate_code::for_prefix* forprefix , unsigned int n1,unsigned int n2 ,unsigned int n3);
-
+	/**
+	 * @param cond_first_quad The quad number of the first quad of the for's condition "expr"
+	 * @param cond_expr The condition's expr
+	 */
+	intermediate_code::for_prefix* Manage_forprefix(unsigned int cond_first_quad, intermediate_code::expr *cond_expr, unsigned int lineno);
+	/**
+	 * @param incomplete_jmp_to_exit The quadno of the already emitted incomplete jump which jumps out of the loop, i.e. the rest code
+	 * @param incomplete_jmp_to_cond The quadno of the already emitted incomplete jump which jumps to the first quad of the condition
+	 * @param incomplete_jmp_to_incr_expr The quadno of the already emitted incomplete jump which jumps to the first quad of the elist
+	 * that executes at the end of every successful loop
+	 */
+	void_t Manage_forstmt(intermediate_code::for_prefix *forprefix, unsigned int incomplete_jmp_to_exit,
+                          unsigned int incomplete_jmp_to_cond, unsigned int incomplete_jmp_to_incr_expr);
 
 	/* Manage miscellaneous */
 	/**
 	 * @return The quadno of the next quad which will be emitted.
 	 */
 	unsigned int Manage_log_next_quad__empty();
+	/**
+	 * @return The quadno of the incomplete jump
+	 */
+    unsigned int Manage_emit_incomplete_jmp__empty(unsigned int lineno);
 };
 
 
