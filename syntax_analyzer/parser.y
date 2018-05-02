@@ -124,8 +124,8 @@ expr:	assignexpr 			{$$ = Manage_expr__assignexpr();}
 		| expr LE expr 		{$$ = Manage_expr__expr_LE_expr		(sym_table, yylineno, $1,$3);}
 		| expr EQ expr 		{$$ = Manage_expr__expr_EQ_expr		(sym_table, yylineno, $1,$3);}
 		| expr NE expr 		{$$ = Manage_expr__expr_NE_expr		(sym_table, yylineno, $1,$3);}
-		| expr AND expr 	{$$ = Manage_expr__expr_AND_expr();}
-		| expr OR expr 		{$$ = Manage_expr__expr_OR_expr();}
+		| expr AND expr 	{$$ = Manage_expr__expr_AND_expr	(sym_table, yylineno, $1,$3);}
+		| expr OR expr 		{$$ = Manage_expr__expr_OR_expr		(sym_table, yylineno, $1,$3);}
 		| term 				{$$ = Manage_expr__term($1);}
 		;
 

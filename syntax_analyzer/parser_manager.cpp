@@ -472,13 +472,23 @@ namespace syntax_analyzer {
         return handle_expr_relop_expr(quad::iopcode::if_noteq, leftOperand, rightOperand, sym_table, lineno);
     }
 
-    expr* Manage_expr__expr_AND_expr() {
+    expr* Manage_expr__expr_AND_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr AND expr\n");
-        return void_value;
+
+        //conversion to bool is left up to the virtual machine
+        expr *result = expr::make_expr(expr::type::BOOL_E);
+        result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+        icode_gen.emit_quad(new quad(quad::iopcode::logical_and, result, leftOperand, rightOperand, lineno));
+        return result;
     }
-    expr* Manage_expr__expr_OR_expr() {
+    expr* Manage_expr__expr_OR_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr OR expr\n");
-        return void_value;
+
+        //conversion to bool is left up to the virtual machine
+        expr *result = expr::make_expr(expr::type::BOOL_E);
+        result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+        icode_gen.emit_quad(new quad(quad::iopcode::logical_or, result, leftOperand, rightOperand, lineno));
+        return result;
     }
     expr* Manage_expr__term(expr *term) {
         fprintf(yyout, "expr -> term\n");

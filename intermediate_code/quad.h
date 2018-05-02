@@ -19,7 +19,7 @@ namespace intermediate_code {
             add, sub, mul, div, mod,    //arg1=left operand, arg2=right operand
 
             uminus,                     //arg1=unary operand, result=-arg1, arg2=nullptr
-            logical_and, logical_or,
+            logical_and, logical_or,    //arg1=lef operand, arg2=right operand. result=arg1 logical_op arg2
             logical_not,                //arg1=unary operand, result=NOT arg1, arg2=nullptr
 
             if_eq, if_noteq, if_lesseq, if_greatereq, if_less, if_greater,  //arg1=lef operand, arg2=right operand, label=quadno to jump to if true
