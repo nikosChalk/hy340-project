@@ -22,7 +22,7 @@ namespace intermediate_code {
             logical_and, logical_or,    //arg1=lef operand, arg2=right operand. result=arg1 logical_op arg2
             logical_not,                //arg1=unary operand, result=NOT arg1, arg2=nullptr
 
-            if_eq, if_noteq, if_lesseq, if_greatereq, if_less, if_greater,  //arg1=lef operand, arg2=right operand, label=quadno to jump to if true
+            if_eq, if_noteq, if_lesseq, if_greatereq, if_less, if_greater,  //result=arg1 relop arg2, arg1=lef operand, arg2=right operand, label=quadno to jump to if true
 
             call,   //arg1=function to call, arg2,result=nullptr
             param,  //arg1=parameter, arg2,result=nullptr

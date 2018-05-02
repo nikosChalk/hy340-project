@@ -78,10 +78,14 @@ namespace syntax_analyzer {
                                                        intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
 
     /* Manage_expr__expr_boolop_expr */
-    intermediate_code::expr* Manage_expr__expr_AND_expr(symbol_table &sym_table, unsigned int lineno,
-                                                        intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
-    intermediate_code::expr* Manage_expr__expr_OR_expr(symbol_table &sym_table, unsigned int lineno,
-                                                       intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
+    intermediate_code::expr* Manage_expr__expr_AND__log_next_quad_expr(symbol_table &sym_table, unsigned int lineno,
+                                                                          intermediate_code::expr *leftOperand,
+                                                                          intermediate_code::expr *rightOperand, unsigned int right_op_first_quadno);
+
+    intermediate_code::expr* Manage_expr__expr_OR_log_next_quad_expr(symbol_table &sym_table, unsigned int lineno,
+                                                                        intermediate_code::expr *leftOperand,
+                                                                        intermediate_code::expr *rightOperand, unsigned int right_op_first_quadno);
+
     intermediate_code::expr* Manage_expr__term(intermediate_code::expr *expr);
 
 	/* Manage_term() */

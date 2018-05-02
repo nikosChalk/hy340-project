@@ -220,10 +220,10 @@ namespace syntax_analyzer {
             result = expr::make_expr(expr::type::BOOL_E);
             result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
 
-            icode_gen.emit_quad(new quad(iopcode, result, arg1, arg2, lineno), icode_gen.next_quad_label()+3);  //if relop is true, jump to assign:true
-            icode_gen.emit_quad(new quad(quad::iopcode::assign, result, expr::make_const_bool(false), nullptr, lineno));    //else, assign false
-            icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), icode_gen.next_quad_label()+2);   //and then skip assign:true
-            icode_gen.emit_quad(new quad(quad::iopcode::assign, result, expr::make_const_bool(true), nullptr, lineno)); //assign:true
+            result->short_circ_extn.append_to_truelist(icode_gen.next_quad_label());
+            result->short_circ_extn.append_to_falselist(icode_gen.next_quad_label()+1);
+            icode_gen.emit_quad(new quad(iopcode, result, arg1, arg2, lineno), 0);  //if relop is true, goto ... (wait for short-circuit backpatching)
+            icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);   //else
         }
 
         return result;
@@ -300,28 +300,81 @@ namespace syntax_analyzer {
     }
 
     /**
-     * Fetches the break list from the lp_handler and patches each entry to the given patch_label
-     * Note that this function doesn't exit from the current loop scope
-     * @param patch_label The label where the jump quad of a "break;" should lead
+     * Converts the given expr to a new expr with type expr::type::BOOL_E by performing any necessary quad emits.
+     * Note that no conversion check occurs, and thus the AVM is responsible to check if the given expr can be converted to BOOL_E.
+     * @param expr_to_convert The expr which should be converted to boolean value
+     * @param lineno The line number that triggered this conversion
+     * @return A pointer to a new expr which is the boolean value of expr, or expr_to_convert if it is already of type::BOOL_E
      */
-    static void patch_break_list(unsigned int patch_label) {
-        vector<unsigned int> v = lp_handler.get_break_list();
-        for (unsigned int quadno : v)
-            icode_gen.patch_label(quadno, patch_label);
-        return;
+    static expr* convert_expr_to_bool_e(expr *expr_to_convert, symbol_table &sym_table, unsigned int lineno) {
+        expr *boolValue;
+
+        if(expr_to_convert->type != expr::type::BOOL_E) {
+            boolValue = expr::make_expr(expr::type::BOOL_E);
+            boolValue->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+
+            boolValue->short_circ_extn.append_to_truelist(icode_gen.next_quad_label());
+            boolValue->short_circ_extn.append_to_falselist(icode_gen.next_quad_label()+1);
+            icode_gen.emit_quad(new quad(quad::iopcode::if_eq, boolValue, expr_to_convert, expr::make_const_bool(true), lineno), 0);
+            icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);
+        } else {
+            boolValue = expr_to_convert;
+        }
+        return boolValue;
     }
 
     /**
-     * Fetches the continue list from the lp_handler and patches each entry to the given patch_label
-     * Note that this function doesn't exit from the current loop scope
-     * @param patch_label The label where the jump quad of a "continue;" should lead
+     * Handles the quad emit for the reduction of grammar rules "expr->expr logicalop expr" where logicalop
+     * is either AND or the OR token. Note that if short-circuit evaluation is followed.
+     * The left operand is considered to be arg1 and the right operand to be arg2.
+     *
+     * @param iopcode The intermediate opcode for the logical operation. Must be one of the bellow:
+     * quad::iopcode::logical_and or logical_or
+     * @param arg1 The arg1 (left operand) of the quad which will be emitted. Must not be NULL/nullptr
+     * @param arg2 The arg2 (right operand) of the quad which will be emitted. Must not be NULL/nullptr
+     * @param arg2_first_quadno The quad number of the first quad of the evaluation of expr arg2
+     * @lineno The line number which triggered the reduction of the grammar rule
+     * @return A new expr which represents the result expr of the operation.
      */
-    static void patch_continue_list(unsigned int patch_label) {
-        vector<unsigned int> v = lp_handler.get_continue_list();
-        for (unsigned int quadno : v)
-            icode_gen.patch_label(quadno, patch_label);
-        return;
+    static expr* handle_expr_logicalop_expr(quad::iopcode iopcode, expr *arg1, expr *arg2, unsigned int arg2_first_quadno,
+                                            symbol_table &sym_table, unsigned int lineno) {
+        assert(arg1 && arg2);
+        switch(iopcode) {
+            case quad::iopcode::logical_and:
+            case quad::iopcode::logical_or:
+                break;
+            default:
+                assert(false);  //Invalid iopcode
+        }
+
+        expr *result;
+        arg1 = convert_expr_to_bool_e(arg1, sym_table, lineno);
+        arg2 = convert_expr_to_bool_e(arg2, sym_table, lineno);
+
+        result = expr::make_expr(expr::type::BOOL_E);
+        result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+
+        if(iopcode == quad::iopcode::logical_and) {
+            icode_gen.patch_label(arg1->short_circ_extn.get_truelist(), arg2_first_quadno); //patch leftOperand's truelist to jump to the evaluation of the rightOperand
+
+            //transfer un-patched truelist and falselists to the result
+            result->short_circ_extn.append_to_truelist(arg2->short_circ_extn.get_truelist());
+            result->short_circ_extn.append_to_falselist(arg1->short_circ_extn.get_falselist());
+            result->short_circ_extn.append_to_falselist(arg2->short_circ_extn.get_falselist());
+        } else {    //opcode is logical_or
+            icode_gen.patch_label(arg1->short_circ_extn.get_falselist(), arg2_first_quadno); //patch leftOperand's falselist to jump to the evaluation of the rightOperand
+
+            //transfer un-patched truelists and falselist to the result
+            result->short_circ_extn.append_to_falselist(arg2->short_circ_extn.get_falselist());
+            result->short_circ_extn.append_to_truelist(arg1->short_circ_extn.get_truelist());
+            result->short_circ_extn.append_to_truelist(arg2->short_circ_extn.get_truelist());
+        }
+
+        //emit result quad
+        icode_gen.emit_quad(new quad(iopcode, result, arg1, arg2, lineno));
+        return result;
     }
+
 
 /************************* end *********************************/
 
@@ -446,7 +499,6 @@ namespace syntax_analyzer {
     }
 
 	/* relop */
-
 	expr* Manage_expr__expr_GT_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr > expr\n");
         return handle_expr_relop_expr(quad::iopcode::if_greater, leftOperand, rightOperand, sym_table, lineno);
@@ -472,23 +524,16 @@ namespace syntax_analyzer {
         return handle_expr_relop_expr(quad::iopcode::if_noteq, leftOperand, rightOperand, sym_table, lineno);
     }
 
-    expr* Manage_expr__expr_AND_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
-        fprintf(yyout, "expr -> expr AND expr\n");
-
-        //conversion to bool is left up to the virtual machine
-        expr *result = expr::make_expr(expr::type::BOOL_E);
-        result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-        icode_gen.emit_quad(new quad(quad::iopcode::logical_and, result, leftOperand, rightOperand, lineno));
-        return result;
+    /* logicalop */
+    expr* Manage_expr__expr_AND__log_next_quad_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand,
+                                                    expr *rightOperand, unsigned int right_op_first_quadno) {
+        fprintf(yyout, "expr -> expr AND log_next_quad expr\n");
+        return handle_expr_logicalop_expr(quad::iopcode::logical_and, leftOperand, rightOperand, right_op_first_quadno, sym_table, lineno);
     }
-    expr* Manage_expr__expr_OR_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
-        fprintf(yyout, "expr -> expr OR expr\n");
-
-        //conversion to bool is left up to the virtual machine
-        expr *result = expr::make_expr(expr::type::BOOL_E);
-        result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-        icode_gen.emit_quad(new quad(quad::iopcode::logical_or, result, leftOperand, rightOperand, lineno));
-        return result;
+    expr* Manage_expr__expr_OR_log_next_quad_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand,
+                                    unsigned int right_op_first_quadno) {
+        fprintf(yyout, "expr -> expr OR log_next_quad expr\n");
+        return handle_expr_logicalop_expr(quad::iopcode::logical_or, leftOperand, rightOperand, right_op_first_quadno, sym_table, lineno);
     }
     expr* Manage_expr__term(expr *term) {
         fprintf(yyout, "expr -> term\n");
@@ -509,11 +554,19 @@ namespace syntax_analyzer {
 		icode_gen.emit_quad(new quad(quad::iopcode::uminus, result, uminus_expr, nullptr, lineno));
         return result;
 	}
-	expr* Manage_term__NOT_expr(symbol_table &sym_table, unsigned int lineno, expr *not_expr) {
+    expr* Manage_term__NOT_expr(symbol_table &sym_table, unsigned int lineno, expr *not_expr) {
 		fprintf(yyout, "term -> NOT expr\n");
 
-		expr *result = expr::make_expr(expr::type::BOOL_E);
+        expr *result;
+        not_expr = convert_expr_to_bool_e(not_expr, sym_table, lineno);
+        result = expr::make_expr(expr::type::BOOL_E);
 		result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+
+		//invert truelist and falselist
+        result->short_circ_extn.append_to_truelist(not_expr->short_circ_extn.get_falselist());
+        result->short_circ_extn.append_to_falselist(not_expr->short_circ_extn.get_truelist());
+
+        //emit quad
 		icode_gen.emit_quad(new quad(quad::iopcode::logical_not, result, not_expr, nullptr, lineno));
 		return result;
 	}
@@ -957,8 +1010,8 @@ namespace syntax_analyzer {
 		icode_gen.patch_label(whilecond, icode_gen.next_quad_label());  //patch jump that goes out of the loop when the condition is false
 
 		//patch break and continue list
-        patch_break_list(icode_gen.next_quad_label());
-        patch_continue_list(first_quadno);
+        icode_gen.patch_label(lp_handler.get_break_list(), icode_gen.next_quad_label());
+        icode_gen.patch_label(lp_handler.get_continue_list(), first_quadno);
 
         //exit loop and return
         lp_handler.exit_loop();
@@ -991,8 +1044,8 @@ namespace syntax_analyzer {
 		icode_gen.patch_label(incomplete_jmp_to_incr_expr, incomplete_jmp_to_exit+1); //closure jump
 
         //patch break and continue list
-        patch_break_list(icode_gen.next_quad_label());
-        patch_continue_list(incomplete_jmp_to_exit+1);  //jumps to the evaluation of the elist at the end of every successful loop
+        icode_gen.patch_label(lp_handler.get_break_list(), icode_gen.next_quad_label());
+        icode_gen.patch_label(lp_handler.get_continue_list(), incomplete_jmp_to_exit+1); //jumps to the evaluation of the elist at the end of every successful loop
 
         //exit loop and return
 		lp_handler.exit_loop();

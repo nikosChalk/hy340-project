@@ -25,6 +25,11 @@ void icode_generator::patch_label(unsigned int quadno, unsigned int label) {
     quad_vector[quadno]->label = label;
 }
 
+void icode_generator::patch_label(const vector<unsigned int> &quadno_vector, unsigned int label) {
+    for(unsigned int quadno : quadno_vector)
+        patch_label(quadno, label);
+}
+
 unsigned int icode_generator::next_quad_label() const {
     return (unsigned int)quad_vector.size();
 }

@@ -45,7 +45,7 @@
 /* type declaration of non-terminal symbols, defined by the grammar */
 %type <strVector> idlist
 %type <funcEntryPtr> funcdef
-%type <exprPtr> expr lvalue member primary assignexpr call term objectdef const
+%type <exprPtr> expr lvalue member primary assignexpr term call objectdef const
 %type <dequeExpr> elist
 %type <callSuffixPtr> callsuffix normcall methodcall
 
@@ -124,8 +124,8 @@ expr:	assignexpr 			{$$ = Manage_expr__assignexpr();}
 		| expr LE expr 		{$$ = Manage_expr__expr_LE_expr		(sym_table, yylineno, $1,$3);}
 		| expr EQ expr 		{$$ = Manage_expr__expr_EQ_expr		(sym_table, yylineno, $1,$3);}
 		| expr NE expr 		{$$ = Manage_expr__expr_NE_expr		(sym_table, yylineno, $1,$3);}
-		| expr AND expr 	{$$ = Manage_expr__expr_AND_expr	(sym_table, yylineno, $1,$3);}
-		| expr OR expr 		{$$ = Manage_expr__expr_OR_expr		(sym_table, yylineno, $1,$3);}
+		| expr AND log_next_quad expr		{$$ = Manage_expr__expr_AND__log_next_quad_expr	(sym_table, yylineno, $1, $4, $3);}
+		| expr OR log_next_quad expr		{$$ = Manage_expr__expr_OR_log_next_quad_expr	(sym_table, yylineno, $1, $4, $3);}
 		| term 				{$$ = Manage_expr__term($1);}
 		;
 
@@ -261,7 +261,7 @@ forprefix:	FOR LEFT_PARENTHESIS elist SEMICOLON log_next_quad expr SEMICOLON {$$
 forstmt:	forprefix emit_incomplete_jmp elist RIGHT_PARENTHESIS emit_incomplete_jmp stmt emit_incomplete_jmp {$$ = Manage_forstmt($1, $2, $5, $7);}
 			;
 
-log_next_quad:	%empty	{$$ = Manage_log_next_quad__empty()}
+log_next_quad:	%empty	{$$ = Manage_log_next_quad__empty();}
 				;
 
 emit_incomplete_jmp:	%empty	{$$ = Manage_emit_incomplete_jmp__empty(yylineno);}

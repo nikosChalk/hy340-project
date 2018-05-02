@@ -11,6 +11,7 @@ expr::expr() {
     type = CONST_NIL_E;   //for debugging
     sym_entry = nullptr;
     index = nullptr;
+    short_circ_extn = sc_extension();
 }
 
 expr* expr::make_lvalue_expr(symbol_table::entry *sym_entry) {
@@ -74,4 +75,35 @@ bool expr::can_participate_in_arithmop() const {
 
 bool expr::can_participate_in_relop() const {
     return can_participate_in_arithmop();   //same condition
+}
+
+expr::sc_extension::sc_extension() {
+    this->truelist = vector<unsigned int>();
+    this->falselist = vector<unsigned int>();
+}
+
+void expr::sc_extension::append_to_truelist(const std::vector<unsigned int> &truelist) {
+    for(unsigned int quadno : truelist)
+        append_to_truelist(quadno);
+}
+
+void expr::sc_extension::append_to_truelist(unsigned int quadno) {
+    truelist.push_back(quadno);
+}
+
+void expr::sc_extension::append_to_falselist(const std::vector<unsigned int> &falselist) {
+    for(unsigned int quadno : falselist)
+        append_to_falselist(quadno);
+}
+
+void expr::sc_extension::append_to_falselist(unsigned int quadno) {
+    falselist.push_back(quadno);
+}
+
+const std::vector& expr::sc_extension::get_truelist() const {
+    return truelist;
+}
+
+const std::vector& expr::sc_extension::get_falselist() const {
+    return falselist;
 }

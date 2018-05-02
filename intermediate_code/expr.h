@@ -26,6 +26,61 @@ namespace intermediate_code {
             CONST_NIL_E
         };
 
+        /**
+         * Represents an extension for the expr that is used for short-circuit evaluation of boolean expressions
+         */
+        class sc_extension {
+        public:
+
+            /**
+             * Initializes truelist and falselist are initialized as empty.
+             */
+            sc_extension();
+
+            /**
+             * Appends each entry of the given truelist to the entries of this->truelist
+             * @param truelist The truelist to append
+             */
+            void append_to_truelist(const std::vector<unsigned int> &truelist);
+
+            /**
+             * Appends the given quadno to the entries of this->truelist
+             * @param quadno The quadno to append
+             */
+            void append_to_truelist(unsigned int quadno);
+
+            /**
+             * Appends each entry of the given falselist to the entries of this->falselist
+             * @param falselist The truelist to append
+             */
+            void append_to_falselist(const std::vector<unsigned int> &falselist);
+
+            /**
+             * Appends the given quadno to the entries of this->falselist
+             * @param quadno The quadno to append
+             */
+            void append_to_falselist(unsigned int quadno);
+
+            /**
+             * Returns the truelist. The truelist is a vector of quad numbers of incomplete instructions: "if_relop var1, var2, ??" where ??
+             * is the unknown label to jump to.
+             * @return The truelist
+             */
+            const std::vector& get_truelist() const;
+
+            /**
+             * Returns the falselist. The falselist is a vector of quad numbers of incomplete instructions: "jump ??" where ?? is the unknown
+             * label to jump to. Those jumps are after the instructions "if_relop ..." mentioned in the get_truelist()
+             * @return The falselist
+             */
+            const std::vector& get_falselist() const;
+
+        private:
+
+            std::vector<unsigned int> truelist;
+            std::vector<unsigned int> falselist;
+        };
+
         type type;
         syntax_analyzer::symbol_table::entry *sym_entry;
         expr *index;            //used by TABLE_ITEM_E exprs to indicate their index within the table
@@ -34,6 +89,7 @@ namespace intermediate_code {
             std::string str;
             bool boolean;
         } const_val;    //field used only be make_const static functions
+        sc_extension short_circ_extn;   //used by grammar rules where relational and logical operators are present
 
         /**
          * Creates a new expr for the given sym_entry during the reduction of the grammar rule "lvalue -> id | local id | ::id"

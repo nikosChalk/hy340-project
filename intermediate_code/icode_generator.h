@@ -39,6 +39,13 @@ namespace intermediate_code {
         void patch_label(unsigned int quadno, unsigned int label);
 
         /**
+         * For each entry quadno in the given quadno_vector, it changes the quad_vector[quadno]->label field to the given label
+         * @param quadno_vector The vector containing the quads' number to patch. Each entry must be less than next_quad_label().
+         * @param label The new label to set.
+         */
+        void patch_label(const std::vector<unsigned int> &quadno_vector, unsigned int label);
+
+        /**
          * Returns the label of the next quad which will be emitted
          * @return The label of the next quad which will be emitted
          */
