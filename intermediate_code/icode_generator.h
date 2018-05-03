@@ -44,6 +44,11 @@ namespace intermediate_code {
          */
         unsigned int next_quad_label() const;
 
+        /**
+         * Returns a string representation of this object
+         * @return The string representation
+         */
+        std::string to_string();
     private:
         std::vector<quad*> quad_vector;
     };

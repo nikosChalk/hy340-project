@@ -19,6 +19,8 @@
 	extern char *yytext;
 
 	int yyerror (const symbol_table &sym_table, char const *msg);
+
+	intermediate_code::icode_generator icode_gen = intermediate_code::icode_generator();
 %}
 
 /* bison parameters */
@@ -26,7 +28,7 @@
 %language "C"
 %output "alpha_bison.cpp"
 %defines "alpha_bison.h"
-%parse-param {syntax_analyzer::symbol_table &sym_table} {intermediate_code::icode_generator &icode_gen}
+%parse-param {syntax_analyzer::symbol_table &sym_table}
 %debug
 %start program	/*start symbol*/
 

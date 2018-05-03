@@ -90,6 +90,12 @@ namespace intermediate_code {
          */
         bool can_participate_in_relop() const;
 
+        /**
+         * Returns a string representation of this object
+         * @return The string representation
+         */
+        std::string to_string() const;
+
     private:
         /**
          * Creates a new expr with null sym_entry and index.

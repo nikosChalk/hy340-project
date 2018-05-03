@@ -36,6 +36,13 @@ namespace intermediate_code {
             jump    //result,arg1,arg2=nullptr. label=quadno to jump to.
         };
 
+        /**
+         * Returns a string representation of the given iopcode
+         * @param iopcode The intermediate code opcode
+         * @return The string representaiton
+         */
+        static std::string iopcode_to_str(iopcode iopcode);
+
         iopcode opcode;
         expr *result;
         expr *arg1;
@@ -49,6 +56,12 @@ namespace intermediate_code {
          * @param lineno The line in the source file which triggered the creation of the quad
          */
         quad(iopcode opcode, expr *result, expr *arg1, expr *arg2, unsigned int lineno, unsigned int label=0);
+
+        /**
+         * Returns a string representation of this object
+         * @return The string representation
+         */
+        std::string to_string();
     };
 };
 
