@@ -538,9 +538,20 @@ namespace syntax_analyzer {
         return primary;
 	}
 	
-    void_t Manage_assignexpr__lvalue_ASSIGN_expr(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno) {
+    void_t Manage_assignexpr__lvalue_ASSIGN_expr(symbol_table &sym_table, expr* lvalue, expr* expr, unsigned int lineno) {
         fprintf(yyout, "assignexpr -> lvalue = expr\n");
-        if(lvalueType == symbol_table::entry::lvalue_type::FUNC)
+		if(lvalue->type == TABLE_ITEM_E){
+			icode_gen.emit_quad(new quad(tablesetelem, lvalue, lvalue->index, expr));
+			assignexpr = emit_iftableitem(lvalue);
+			assignexpr->type = assignexpr e;
+		}
+		else{
+			icode_gen.emit_quad(new quad(assign, expr, (expr*)0, lvalue));
+			assignexpr = newexpr(assignexpr e);
+			assignexpr->sym_entry = hvar_handler().make_new(sym_table, scp_handler, lineno);
+			icode_gen.emit_quad(new quad(assign, lvalue, (expr*)0, assignexpr));
+		}
+        if(lvalue == symbol_table::entry::lvalue_type::FUNC)
             throw syntax_error("Function id cannot be used as an l-value", lineno);
         return void_value;
     }
@@ -741,13 +752,28 @@ namespace syntax_analyzer {
     }
 
 	/* Manage_objectdef()*/
-	void_t Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET(){
+	expr* Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET(deque<expr*> elist, symbol_table sym_table, unsigned int lineno){
 		fprintf(yyout, "objectdef -> [ elist ]\n");
-		return void_value;
+		t = expr::make_expr(newtable_e);
+		t->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+		icode_gen.emit_quad(new quad(tablecreate, t));
+		i = 0;
+		for(x = 0; x < elist.size(); x++){
+			icode_gen.emit_quad(new quad(tablesetelem, t, expr::make_expr_constnum(i++), x));
+		}
+		return t;
 	}
-	void_t Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET(){
+	expr* Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET(){
 		fprintf(yyout, "objectdef -> [ indexed ]\n");
-		return void_value;
+		t = expr::make_expr(newtable_e);
+		t->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+		icode_gen.emit_quad(new quad(tablecreate, t));
+		/*TODO: for(<x,y>){
+			icode_gen.emit_quad(new quad(tablesetelem, t, x, y));
+		}
+		*/
+		return t;
+		
 	}
 
 	/* Manage_indexed */
