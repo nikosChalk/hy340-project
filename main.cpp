@@ -4,12 +4,14 @@
 #include "alpha_lex/alpha_flex.h"
 #include "syntax_analyzer/symbol_table.h"
 #include "syntax_analyzer/alpha_bison.h"
+#include "intermediate_code/icode_generator.h"
 
 using namespace std;
 
 int main (int argc, char *argv[]) {
     int ret_val;
     syntax_analyzer::symbol_table sym_table = syntax_analyzer::symbol_table();
+	intermediate_code::icode_generator icode_gen = intermediate_code::icode_generator();
 
     /* Check command line arguments and open I/O files */
     if(argc < 2) {
@@ -35,7 +37,7 @@ int main (int argc, char *argv[]) {
     }
 
     try {
-        ret_val = yyparse(sym_table);
+        ret_val = yyparse(sym_table,icode_gen);
         fprintf(yyout, "%s", sym_table.to_string().c_str());
         if(ret_val == 0)
             fprintf(yyout, "EOF reached. Success!\n");

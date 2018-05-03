@@ -19,6 +19,7 @@ using namespace std;
 using namespace intermediate_code;
 
 extern FILE *yyout;
+extern intermediate_code::icode_generator icode_gen;
 
 namespace syntax_analyzer {
 
@@ -26,7 +27,6 @@ namespace syntax_analyzer {
 
     static scope_handler scp_handler = scope_handler();
     static hidden_var_handler hvar_handler = hidden_var_handler();
-	static icode_generator icode_gen = icode_generator();
 	static loop_handler lp_handler = loop_handler();
 
     /**

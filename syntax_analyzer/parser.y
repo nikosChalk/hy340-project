@@ -2,6 +2,7 @@
 %code requires {
 	#include "symbol_table.h"
 	#include "types.h"
+	#include "../intermediate_code/icode_generator.h"
 }
 
 %{
@@ -25,7 +26,7 @@
 %language "C"
 %output "alpha_bison.cpp"
 %defines "alpha_bison.h"
-%parse-param {syntax_analyzer::symbol_table &sym_table}
+%parse-param {syntax_analyzer::symbol_table &sym_table} {intermediate_code::icode_generator &icode_gen}
 %debug
 %start program	/*start symbol*/
 
