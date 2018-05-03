@@ -144,7 +144,7 @@ term:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS		{$$ = Manage_term__LEFT_PARENTHES
 		| primary 									{$$ = Manage_term__primary($1);}
 		;
 
-assignexpr:	lvalue ASSIGN expr {$$ = Manage_assignexpr__lvalue_ASSIGN_expr($1, yylineno);}
+assignexpr:	lvalue ASSIGN expr {$$ = Manage_assignexpr__lvalue_ASSIGN_expr(sym_table, yylineno, $1, $3);}
 			;
 
 primary:	lvalue											{$$ = Manage_primary__lvalue($1); }
@@ -160,8 +160,8 @@ lvalue:	IDENTIFIER					{$$ = Manage_lvalue__IDENTIFIER(sym_table, $1, yylineno);
 		| member					{$$ = Manage_lvalue__member($1); }
 		;
 
-member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER($1, $3);}
-		| lvalue LEFT_BRACKET expr RIGHT_BRACKET	{$$=Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET($1, $3);}
+member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER(sym_table, yylineno, $1, $3);}
+		| lvalue LEFT_BRACKET expr RIGHT_BRACKET	{$$=Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET(sym_table, yylineno, $1, $3);}
 		| call DOT IDENTIFIER						{$$=Manage_member__call_DOT_IDENTIFIER();}
 		| call LEFT_BRACKET expr RIGHT_BRACKET		{$$=Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();}
 		;
@@ -189,8 +189,8 @@ elist:	expr tmp_elist	{$$ = Manage_elist__expr_tmp_elist($1, $2);}
 		| %empty 		{$$ = Manage_elist__empty();}
 		;
 
-objectdef:	LEFT_BRACKET elist RIGHT_BRACKET		{$$ = Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET();}
-			| LEFT_BRACKET indexed RIGHT_BRACKET	{$$ = Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET();}
+objectdef:	LEFT_BRACKET elist RIGHT_BRACKET		{$$ = Manage_objectdef__LEFT_BRACKET_elist_RIGHT_BRACKET(sym_table, yylineno, $2);}
+			| LEFT_BRACKET indexed RIGHT_BRACKET	{$$ = Manage_objectdef__LEFT_BRACKET_indexed_RIGHT_BRACKET(sym_table, yylineno, $2);}
 			;
 
 tmp_indexed:	tmp_indexed COMMA indexedelem	{$$ = Manage_tmp_indexed__tmp_indexed_COMMA_indexedelem($1, $2);}

@@ -32,6 +32,18 @@ expr* expr::make_lvalue_expr(symbol_table::entry *sym_entry) {
     return new_expr;
 }
 
+expr* expr::make_table_item(symbol_table::entry *sym_entry, expr *index) {
+    expr *item = expr::make_expr(type::TABLE_ITEM_E);
+    item->sym_entry = sym_entry;
+    item->index = index;
+
+    return item;
+}
+
+expr* expr::make_table_item(symbol_table::entry *sym_entry, const string &id) {
+    return make_table_item(sym_entry, expr::make_const_str(id));
+}
+
 expr* expr::make_expr(type type) {
     expr *new_expr = new expr();
     new_expr->type = type;

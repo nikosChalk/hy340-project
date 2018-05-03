@@ -15,7 +15,7 @@ namespace intermediate_code {
          * Available opcodes for the intermediate code instruction set
          */
         enum iopcode {
-            assign,                     //result=arg1, arg2=nullptr
+            assign,                     //stores arg1 to result (result=arg1), arg2=nullptr
             add, sub, mul, div, mod,    //arg1=left operand, arg2=right operand
 
             uminus,                     //arg1=unary operand, result=-arg1, arg2=nullptr
@@ -30,8 +30,9 @@ namespace intermediate_code {
             getretval,  //result=return value, arg1,arg2=nullptr
             funcstart,  funcend,
 
-            tablecreate,
-            tablegetelem,   tablesetelem,   //result=table[index], arg1 = table, arg2 = index
+            tablecreate,    //arg1=table to create, arg2=nullptr, result=nullptr
+            tablegetelem,   //result=nullptr, arg1 = table, arg2 = index
+            tablesetelem,   //arg1=table, arg2=index, result=value to set. That is arg1[arg2] = result
 
             jump    //result,arg1,arg2=nullptr. label=quadno to jump to.
         };

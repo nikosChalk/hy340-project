@@ -538,22 +538,24 @@ namespace syntax_analyzer {
         return primary;
 	}
 	
-    void_t Manage_assignexpr__lvalue_ASSIGN_expr(symbol_table &sym_table, expr* lvalue, expr* expr, unsigned int lineno) {
+    expr* Manage_assignexpr__lvalue_ASSIGN_expr(symbol_table &sym_table, unsigned int lineno, expr *lvalue, expr *right_expr) {
         fprintf(yyout, "assignexpr -> lvalue = expr\n");
-		if(lvalue->type == TABLE_ITEM_E){
-			icode_gen.emit_quad(new quad(tablesetelem, lvalue, lvalue->index, expr));
-			assignexpr = emit_iftableitem(lvalue);
-			assignexpr->type = assignexpr e;
-		}
-		else{
-			icode_gen.emit_quad(new quad(assign, expr, (expr*)0, lvalue));
-			assignexpr = newexpr(assignexpr e);
-			assignexpr->sym_entry = hvar_handler().make_new(sym_table, scp_handler, lineno);
-			icode_gen.emit_quad(new quad(assign, lvalue, (expr*)0, assignexpr));
-		}
-        if(lvalue == symbol_table::entry::lvalue_type::FUNC)
+        expr *assignexpr;
+
+        if(lvalue->sym_entry->get_lvalue_type() == symbol_table::entry::lvalue_type::FUNC)
             throw syntax_error("Function id cannot be used as an l-value", lineno);
-        return void_value;
+
+		if(lvalue->type == expr::type::TABLE_ITEM_E) {
+			icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, right_expr, lvalue, lvalue->index, lineno));  //lvalue[lvalue->index] = right_expr
+			assignexpr = emit_iftableitem(lvalue, sym_table, lineno);
+			assignexpr->type = expr::type::ASSIGN_E;
+		} else {
+			icode_gen.emit_quad(new quad(quad::iopcode::assign, lvalue, right_expr, nullptr, lineno));  //lvalue = right_expr
+			assignexpr = expr::make_expr(expr::ASSIGN_E);
+			assignexpr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+			icode_gen.emit_quad(new quad(quad::iopcode::assign, assignexpr, lvalue, nullptr, lineno));  //assignexpr = lvalue
+		}
+        return assignexpr;
     }
 
 
@@ -650,31 +652,27 @@ namespace syntax_analyzer {
     }
 
 
-    expr* Manage_member__lvalue_DOT_IDENTIFIER(expr* lvalue, const string &id) {
+    expr* Manage_member__lvalue_DOT_IDENTIFIER(symbol_table &sym_table, unsigned int lineno, expr *lvalue, const string &id) {
         fprintf(yyout, "member -> .IDENTIFIER\n");
-        lvalue = emit_iftableitem(lvalue); /* Emit code if it is a table item. */
-		expr* item = newexpr(tableitem_e); /*Make a new expression. */
-		item->sym_entry = lvalue->sym_entry;
-		item->index = newexpr_conststring(id); /* Const string index. */
-		return item;
+        lvalue = emit_iftableitem(lvalue, sym_table, lineno); //Will always emit a getelem
+        return expr::make_table_item(lvalue->sym_entry, id);
     }
-    expr* Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET(expr* lvalue, expr* expr) {
+    expr* Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET(symbol_table &sym_table, unsigned int lineno, expr* lvalue, expr* expr) {
         fprintf(yyout, "member -> lvalue[expr]\n");
-        lvalue = emit_iftableitem(lvalue);
-		tableitem = newexpr(tableitem_e);
-		tableitem->sym_entry = lvalue->sym_entry;
-		tableitem_e->index = expr; /* The index is the expression. */		
-		return tableitem;
+        lvalue = emit_iftableitem(lvalue, sym_table, lineno);
+		return expr::make_table_item(lvalue->sym_entry, expr);
     }
     expr* Manage_member__call_DOT_IDENTIFIER() {
         fprintf(yyout, "member -> call.IDENTIFIER\n");
         /*TODO: implement this rule. Should member_item($call, id) be called?*/
-        return ...;
+        assert(false);
+        //return ...;
     }
     expr* Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET() {
         fprintf(yyout, "member -> call[expr]\n");
         /*TODO: implement this rule. Should this be handled the same way as "member -> lvalue[expr] ?*/
-        return ...;
+        assert(false);
+        //return ...;
     }
 
 	/* Manage_call() */
@@ -690,8 +688,8 @@ namespace syntax_analyzer {
             if(!(method_call = dynamic_cast<method_call*>(call_suffix)))    /*TODO: validate that this works*/
                     assert(false);  //Casting should ALWAYS be possible
 
-            expr *self = lvalue;
-            lvalue = emit_iftableitem(member_item(self, method_call->get_name()));  /*TODO: fill this and be CAREFUL of the implementation of member_item*/
+            expr *self = emit_iftableitem(lvalue, sym_table, lineno);
+            lvalue = emit_iftableitem(expr::make_table_item(self->sym_entry, method_call->get_name()), sym_table, lineno);  /*TODO: fill this and be CAREFUL of the implementation of member_item*/
             call_suffix->get_elist().push_front(self);
         }
 		return handle_call_rule(lvalue, call_suffix->get_elist(), sym_table, lineno);
@@ -752,27 +750,31 @@ namespace syntax_analyzer {
     }
 
 	/* Manage_objectdef()*/
-	expr* Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET(deque<expr*> elist, symbol_table sym_table, unsigned int lineno){
+	expr* Manage_objectdef__LEFT_BRACKET_elist_RIGHT_BRACKET(symbol_table &sym_table, unsigned int lineno, deque<expr*> const &elist) {
 		fprintf(yyout, "objectdef -> [ elist ]\n");
-		t = expr::make_expr(newtable_e);
-		t->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-		icode_gen.emit_quad(new quad(tablecreate, t));
-		i = 0;
-		for(x = 0; x < elist.size(); x++){
-			icode_gen.emit_quad(new quad(tablesetelem, t, expr::make_expr_constnum(i++), x));
+		expr *table = expr::make_expr(expr::type::NEW_TABLE_E);
+
+		table->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+		icode_gen.emit_quad(new quad(quad::iopcode::tablecreate, nullptr, table, nullptr, lineno));
+
+		int i=0;
+		for(expr *e : elist) {
+			icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, e, table, expr::make_const_num(i), lineno));
+			i++;
 		}
-		return t;
+		return table;
 	}
-	expr* Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET(){
+	expr* Manage_objectdef__LEFT_BRACKET_indexed_RIGHT_BRACKET(symbol_table &sym_table, unsigned int lineno, deque<pair<expr*, expr*>>const &indexed) {
 		fprintf(yyout, "objectdef -> [ indexed ]\n");
-		t = expr::make_expr(newtable_e);
-		t->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-		icode_gen.emit_quad(new quad(tablecreate, t));
-		/*TODO: for(<x,y>){
-			icode_gen.emit_quad(new quad(tablesetelem, t, x, y));
-		}
-		*/
-		return t;
+		expr *table = expr::make_expr(expr::type::NEW_TABLE_E);
+
+		table->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+		icode_gen.emit_quad(new quad(quad::iopcode::tablecreate, nullptr, table, nullptr, lineno));
+
+		for(auto const &p : indexed)
+			icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, p.second, table, p.first, lineno));
+
+		return table;
 		
 	}
 

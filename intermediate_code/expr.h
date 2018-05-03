@@ -45,6 +45,10 @@ namespace intermediate_code {
          */
         static expr* make_lvalue_expr(syntax_analyzer::symbol_table::entry *sym_entry);
 
+        static expr* make_table_item(syntax_analyzer::symbol_table::entry *sym_entry, expr *index);
+
+        static expr* make_table_item(syntax_analyzer::symbol_table::entry *sym_entry, const std::string &id);
+
         /**
          * Creates a new generic expr with the given type and nullptr sym_entry and index
          * @return A pointer to the new expr

@@ -94,7 +94,8 @@ namespace syntax_analyzer {
 	intermediate_code::expr* Manage_term__lvalue_MINUS_MINUS(symbol_table &sym_table, unsigned int lineno, intermediate_code::expr *lvalue);
 	intermediate_code::expr* Manage_term__primary           (intermediate_code::expr *primary);
 
-    intermediate_code::expr* Manage_assignexpr__lvalue_ASSIGN_expr(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
+    intermediate_code::expr* Manage_assignexpr__lvalue_ASSIGN_expr(symbol_table &sym_table, unsigned int lineno,
+                                                                   intermediate_code::expr *lvalue, intermediate_code::expr *right_expr);
 
     intermediate_code::expr* Manage_primary__lvalue(symbol_table &sym_table, unsigned int lineno, intermediate_code::expr *lvalue);
     intermediate_code::expr* Manage_primary__call(intermediate_code::expr *call);
@@ -115,8 +116,11 @@ namespace syntax_analyzer {
 	intermediate_code::expr* Manage_lvalue__DOUBLE_COLON_IDENTIFIER(const symbol_table &sym_table, const std::string &identifier, unsigned int lineno);
     intermediate_code::expr* Manage_lvalue__member(intermediate_code::expr *member);
 
-    intermediate_code::expr* Manage_member__lvalue_DOT_IDENTIFIER();
-    intermediate_code::expr* Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET();
+    intermediate_code::expr* Manage_member__lvalue_DOT_IDENTIFIER(symbol_table &sym_table, unsigned int lineno,
+                                                                  intermediate_code::expr *lvalue, const std::string &id);
+
+    intermediate_code::expr* Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET(symbol_table &sym_table, unsigned int lineno,
+                                                                                   intermediate_code::expr *lvalue, intermediate_code::expr *expr);
     intermediate_code::expr* Manage_member__call_DOT_IDENTIFIER();
     intermediate_code::expr* Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();
 
@@ -151,8 +155,11 @@ namespace syntax_analyzer {
                                                                       std::deque<intermediate_code::expr*> const &tmp_elist);
 
 	/* Manage_objectdef()*/
-    intermediate_code::expr* Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET();
-    intermediate_code::expr* Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET();
+    intermediate_code::expr* Manage_objectdef__LEFT_BRACKET_elist_RIGHT_BRACKET(symbol_table &sym_table, unsigned int lineno,
+                                                                                std::deque<intermediate_code::expr*> const &elist);
+
+    intermediate_code::expr* Manage_objectdef__LEFT_BRACKET_indexed_RIGHT_BRACKET(symbol_table &sym_table, unsigned int lineno,
+                                                                                  std::deque<std::pair<intermediate_code::expr*, intermediate_code::expr*>>const &indexed);
 
 	/* Manage_indexed() */
 	std::deque<std::pair<intermediate_code::expr*, intermediate_code::expr*>> Manage_tmp_indexed__tmp_indexed_COMMA_indexedelem(std::deque<std::pair<intermediate_code::expr*,intermediate_code::expr*>> const &tmp_indexed,
