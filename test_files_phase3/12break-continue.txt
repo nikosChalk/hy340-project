@@ -1,0 +1,11 @@
+x = f();
+while (x) {
+	function g() {
+		break;
+		while(true){
+			continue;
+		}
+	}
+	break;
+}
+

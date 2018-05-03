@@ -1,0 +1,14 @@
+while (x-y > z-w)
+      if (b)
+	break;
+      else
+	x = x-2;
+
+while (a>1) {
+	while (b == 1){
+		continue;
+	}
+	function A(){
+
+	}
+}
