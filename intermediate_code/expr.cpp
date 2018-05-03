@@ -1,6 +1,7 @@
 
 
 #include <cassert>
+#include <sstream>
 #include "expr.h"
 
 using namespace std;
@@ -74,4 +75,31 @@ bool expr::can_participate_in_arithmop() const {
 
 bool expr::can_participate_in_relop() const {
     return can_participate_in_arithmop();   //same condition
+}
+
+std::string expr::to_string() const {
+    stringstream ss;
+
+    switch(this->type) {
+        case type::VAR_E:
+        case type::TABLE_ITEM_E:
+        case type::PROGRAM_FUNC_E:
+        case type::LIBRARY_FUNC_E:
+        case type::ARITHM_E:
+        case type::BOOL_E:
+        case type::ASSIGN_E:
+        case type::NEW_TABLE_E:
+            assert(sym_entry);
+            return string(sym_entry->get_name());
+        case type::CONST_NUM_E:
+            return std::to_string(const_val.number);
+        case type::CONST_BOOL_E:
+            return (const_val.boolean) ? string("true") : string("false");
+        case type::CONST_STR_E:
+            return string(const_val.str);
+        case type::CONST_NIL_E:
+            return string("nil");
+        default:
+            assert(0);  //unreachable statement
+    }
 }

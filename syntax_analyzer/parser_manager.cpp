@@ -751,23 +751,28 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_indexed */
-	void_t Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem(){
-		fprintf(yyout, "indexed -> indexedelem,...,indexedelem\n");
-		return void_value;
+    deque<pair<expr*, expr*>> Manage_tmp_indexed__tmp_indexed_COMMA_indexedelem(deque<pair<expr*, expr*>> const &tmp_indexed, pair<expr*, expr*> const &indexedelem) {
+		fprintf(yyout, "tmp_indexed -> tmp_indexed, indexelem\n");
+
+        deque<pair<expr*, expr*>> result = tmp_indexed;
+        result.push_back(indexedelem);
+		return result;
 	}
-	void_t Manage_tmp_indexed_empty(){
-		fprintf(yyout, "indexed -> indexedelem\n");
-		return void_value;
+    deque<pair<expr*, expr*>> Manage_tmp_indexed__empty() {
+		fprintf(yyout, "tmp_indexed -> <empty>\n");
+		return deque<pair<expr*, expr*>>(); //empty double ended queue
 	}
-    void_t Manage_indexed__indexedelem_tmp_indexed() {
+    deque<pair<expr*, expr*>> Manage_indexed__indexedelem_tmp_indexed(pair<expr*, expr*> const &indexedelem, deque<pair<expr*, expr*>> const &tmp_indexed) {
         fprintf(yyout, "indexed -> indexelem tmp_indexed\n");
-        return void_value;
+        deque<pair<expr*, expr*>> result = tmp_indexed;
+        result.push_front(indexedelem);
+        return result;
     }
 
 	/* Manage_indexedelem() */
-	void_t Manage_indexedelem_LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE(){
+    pair<expr*, expr*> Manage_indexedelem__LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE(expr *left_expr, expr *right_expr) {
 		fprintf(yyout, "indexedelem -> { expr : expr }\n");
-		return void_value;
+        return pair(left_expr, right_expr);
 	}
 
 	/* Manage_block() */

@@ -56,12 +56,6 @@ namespace intermediate_code {
          * @param lineno The line in the source file which triggered the creation of the quad
          */
         quad(iopcode opcode, expr *result, expr *arg1, expr *arg2, unsigned int lineno, unsigned int label=0);
-
-        /**
-         * Returns a string representation of this object
-         * @return The string representation
-         */
-        std::string to_string();
     };
 };
 

@@ -48,7 +48,10 @@ namespace intermediate_code {
          * Returns a string representation of this object
          * @return The string representation
          */
-        std::string to_string();
+        std::string to_string() const;
+
+        friend std::ostream& operator<<(std::ostream &os, const icode_generator &igen);
+
     private:
         std::vector<quad*> quad_vector;
     };

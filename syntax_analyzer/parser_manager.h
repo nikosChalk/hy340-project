@@ -155,12 +155,14 @@ namespace syntax_analyzer {
     intermediate_code::expr* Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET();
 
 	/* Manage_indexed() */
-	void_t Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem();
-	void_t Manage_tmp_indexed_empty();
-    void_t Manage_indexed__indexedelem_tmp_indexed();
+	std::deque<std::pair<intermediate_code::expr*, intermediate_code::expr*>> Manage_tmp_indexed__tmp_indexed_COMMA_indexedelem(std::deque<std::pair<intermediate_code::expr*,intermediate_code::expr*>> const &tmp_indexed,
+                                                                                                                                std::pair<intermediate_code::expr*, intermediate_code::expr*> const &indexedelem);
+    std::deque<std::pair<intermediate_code::expr*, intermediate_code::expr*>> Manage_tmp_indexed__empty();
+    std::deque<std::pair<intermediate_code::expr*, intermediate_code::expr*>> Manage_indexed__indexedelem_tmp_indexed(std::pair<intermediate_code::expr*, intermediate_code::expr*> const &indexedelem,
+                                                                                                                      std::deque<std::pair<intermediate_code::expr*, intermediate_code::expr*>> const &tmp_indexed);
 
 	/* Manage_indexedelem() */
-	void_t Manage_indexedelem_LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE();
+    std::pair<intermediate_code::expr*, intermediate_code::expr*> Manage_indexedelem__LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE(intermediate_code::expr *left_expr, intermediate_code::expr *right_expr);
 
 	/* Manage_block() */
     void_t Manage_stmts__stmts_stmt();

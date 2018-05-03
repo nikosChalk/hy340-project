@@ -49,11 +49,13 @@
 %type <strVector> idlist
 %type <funcEntryPtr> funcdef
 %type <exprPtr> expr lvalue member primary assignexpr call term objectdef const
+%type <exprPair> indexedelem
 %type <dequeExpr> elist
+%type <dequeExprPair> indexed
 %type <callSuffixPtr> callsuffix normcall methodcall
 
 %type <voidVal> program stmt
-%type <voidVal> indexed indexedelem block
+%type <voidVal> block
 %type <voidVal> ifstmt whilestmt forstmt returnstmt
 
 /* type declaration of non-terminal helper symbols, defined by us */
@@ -63,12 +65,12 @@
 %type <unsignedIntVal> ifprefix elseprefix whilecond
 %type <funcEntryPtr> funcprefix
 %type <dequeExpr> tmp_elist
+%type <dequeExprPair> tmp_indexed
 %type <unsignedIntVal> log_next_quad emit_incomplete_jmp
 %type <forPrefixPtr> forprefix
 
 %type <voidVal> breakstmt continuestmt
 %type <voidVal> funcargs
-%type <voidVal> tmp_indexed
 %type <voidVal> block_open stmts block_close
 
 /* Define the priority of tokens */
@@ -191,14 +193,14 @@ objectdef:	LEFT_BRACKET elist RIGHT_BRACKET		{$$ = Manage_objectdef_LEFT_BRACKET
 			| LEFT_BRACKET indexed RIGHT_BRACKET	{$$ = Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET();}
 			;
 
-tmp_indexed:	tmp_indexed COMMA indexedelem	{$$ = Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem();}
-				|%empty							{$$ = Manage_tmp_indexed_empty();}
+tmp_indexed:	tmp_indexed COMMA indexedelem	{$$ = Manage_tmp_indexed__tmp_indexed_COMMA_indexedelem($1, $2);}
+				|%empty							{$$ = Manage_tmp_indexed__empty();}
 				;
 
-indexed:	indexedelem tmp_indexed	{$$ = Manage_indexed__indexedelem_tmp_indexed();}
+indexed:	indexedelem tmp_indexed	{$$ = Manage_indexed__indexedelem_tmp_indexed($1, $2);}
 			;
 
-indexedelem:	LEFT_BRACE expr COLON expr RIGHT_BRACE {$$ = Manage_indexedelem_LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE();}
+indexedelem:	LEFT_BRACE expr COLON expr RIGHT_BRACE {$$ = Manage_indexedelem__LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE($2, $4);}
 				;
 
 block_open:		LEFT_BRACE	{$$ = Manage_block_open__LEFT_BRACE();}
