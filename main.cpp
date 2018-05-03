@@ -8,7 +8,7 @@
 
 using namespace std;
 
-extern intermediate_code::icode_generator &icode_gen;
+extern intermediate_code::icode_generator icode_gen;
 
 int main (int argc, char *argv[]) {
     int ret_val;

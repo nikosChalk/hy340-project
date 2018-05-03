@@ -5,12 +5,12 @@
 using namespace std;
 using namespace intermediate_code;
 
-call_suffix::call_suffix(call_suffix::type type, const deque<expr*> &elist) {
+call_suffix::call_suffix(call_suffix::type suffix_type, const deque<expr*> &elist) {
     this->elist = deque<expr*>();
 
     for(auto it=elist.begin(); it!=elist.end(); it++)
         this->elist.push_front(*it);
-    this->type = type;
+    this->suffix_type = suffix_type;
 }
 
 deque<expr*>& call_suffix::get_elist() {
@@ -18,7 +18,7 @@ deque<expr*>& call_suffix::get_elist() {
 }
 
 call_suffix::type call_suffix::get_type() const {
-    return this->type;
+    return this->suffix_type;
 }
 
 method_call::method_call(const std::string &name, const std::deque<intermediate_code::expr *> &elist)

@@ -9,7 +9,7 @@ using namespace syntax_analyzer;
 using namespace intermediate_code;
 
 expr::expr() {
-    type = CONST_NIL_E;   //for debugging
+    expr_type = CONST_NIL_E;   //for debugging
     sym_entry = nullptr;
     index = nullptr;
 }
@@ -21,12 +21,12 @@ expr* expr::make_lvalue_expr(symbol_table::entry *sym_entry) {
     new_expr->sym_entry = sym_entry;
 
     if(sym_entry->get_lvalue_type() == symbol_table::entry::VAR) {
-        new_expr->type = type::VAR_E;
+        new_expr->expr_type = type::VAR_E;
     } else {
         if(sym_entry->get_sym_type() == symbol_table::entry::USER_FUNC)
-            new_expr->type = type::PROGRAM_FUNC_E;
+            new_expr->expr_type = type::PROGRAM_FUNC_E;
         else
-            new_expr->type = type::LIBRARY_FUNC_E;
+            new_expr->expr_type = type::LIBRARY_FUNC_E;
     }
 
     return new_expr;
@@ -44,9 +44,9 @@ expr* expr::make_table_item(symbol_table::entry *sym_entry, const string &id) {
     return make_table_item(sym_entry, expr::make_const_str(id));
 }
 
-expr* expr::make_expr(type type) {
+expr* expr::make_expr(type t) {
     expr *new_expr = new expr();
-    new_expr->type = type;
+    new_expr->expr_type = t;
     return new_expr;
 }
 
@@ -73,7 +73,7 @@ expr* expr::make_const_nil() {
 }
 
 bool expr::can_participate_in_arithmop() const {
-    switch(this->type) {
+    switch(this->expr_type) {
         case type::VAR_E:           //depends on runtime.
         case type::TABLE_ITEM_E:    //depends on runtime
         case type::ARITHM_E:        //ok at compile time
@@ -92,7 +92,7 @@ bool expr::can_participate_in_relop() const {
 std::string expr::to_string() const {
     stringstream ss;
 
-    switch(this->type) {
+    switch(this->expr_type) {
         case type::VAR_E:
         case type::TABLE_ITEM_E:
         case type::PROGRAM_FUNC_E:

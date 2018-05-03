@@ -17,29 +17,29 @@ namespace intermediate_code {
          * Returns the expression list of the arguments.
          * @return The expression list
          */
-        std::deque<expr*>& get_elist();
+        virtual std::deque<expr*>& get_elist();
 
         /**
          * Returns the type of the callsuffix
          * @return The type of the callsuffix
          */
-        type get_type() const;
+        virtual type get_type() const;
 
     protected:
         /**
          * Initializes the call_suffix with the given attributes
-         * @param type The type of the call suffix
+         * @param suffix_type The type of the call suffix
          * @param elist The expression list of the function's arguments, with the same order as they appear during the function call.
          * e.g.: If function call is "f(a,b)" then elist should be "a,b"
          */
-        call_suffix(type type, std::deque<expr*> const &elist);
+        call_suffix(type suffix_type, std::deque<expr*> const &elist);
 
     private:
         /**
          * expression list of the arguments. If function call is "f(a,b)" and elist should be "a,b"
          */
         std::deque<expr*> elist;
-        type type;
+        type suffix_type;
     };
 
     class method_call:public call_suffix {
@@ -56,7 +56,7 @@ namespace intermediate_code {
          * Returns the name of the method call
          * @return The name
          */
-        const std::string& get_name() const;
+        virtual const std::string& get_name() const;
 
     private:
         std::string name;

@@ -26,7 +26,7 @@ namespace intermediate_code {
             CONST_NIL_E
         };
 
-        type type;
+        type expr_type;
         syntax_analyzer::symbol_table::entry *sym_entry;
         expr *index;            //used by TABLE_ITEM_E exprs to indicate their index within the table
         struct act_as_union {   //c++ does not allow objects within unions
@@ -53,7 +53,7 @@ namespace intermediate_code {
          * Creates a new generic expr with the given type and nullptr sym_entry and index
          * @return A pointer to the new expr
          */
-        static expr* make_expr(type type);
+        static expr* make_expr(type t);
 
         /**
          * Creates a new expr for the given constant num. Caller is responsible to free the returned object.

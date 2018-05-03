@@ -3,6 +3,7 @@
 	#include "symbol_table.h"
 	#include "types.h"
 	#include "../intermediate_code/icode_generator.h"
+	#include "../intermediate_code/types.h"
 }
 
 %{
@@ -111,13 +112,13 @@ returnstmt:	RETURN SEMICOLON		{$$ = Manage_returnstmt__RETURN_SEMICOLON(yylineno
 			| RETURN expr SEMICOLON	{$$ = Manage_returnstmt__RETURN_expr_SEMICOLON($2, yylineno);}
 			;
 
-breakstmt:	BREAK SEMICOLON	{$$ = Manage_breakstmt__BREAK_SEMICOLON();}
-		;
-
-continuestmt:	CONTINUE SEMICOLON	{$$ = Manage_continuestmt__CONTINUE_SEMICOLON();}
+breakstmt:	BREAK SEMICOLON	{$$ = Manage_breakstmt__BREAK_SEMICOLON(yylineno);}
 			;
 
-expr:	assignexpr 			{$$ = Manage_expr__assignexpr();}
+continuestmt:	CONTINUE SEMICOLON	{$$ = Manage_continuestmt__CONTINUE_SEMICOLON(yylineno);}
+			;
+
+expr:	assignexpr 			{$$ = Manage_expr__assignexpr($1);}
     	| expr PLUS expr 	{$$ = Manage_expr__expr_PLUS_expr	(sym_table, yylineno, $1,$3);}
 		| expr MINUS expr 	{$$ = Manage_expr__expr_MINUS_expr	(sym_table, yylineno, $1,$3);} 
 		| expr MUL expr 	{$$ = Manage_expr__expr_MUL_expr	(sym_table, yylineno, $1,$3);}
@@ -147,7 +148,7 @@ term:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS		{$$ = Manage_term__LEFT_PARENTHES
 assignexpr:	lvalue ASSIGN expr {$$ = Manage_assignexpr__lvalue_ASSIGN_expr(sym_table, yylineno, $1, $3);}
 			;
 
-primary:	lvalue											{$$ = Manage_primary__lvalue($1); }
+primary:	lvalue											{$$ = Manage_primary__lvalue(sym_table, yylineno, $1); }
 			| call											{$$ = Manage_primary__call($1); }
 			| objectdef										{$$ = Manage_primary__objectdef($1); }
 			| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS	{$$ = Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS($2); }
@@ -166,7 +167,7 @@ member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER(sym_
 		| call LEFT_BRACKET expr RIGHT_BRACKET		{$$=Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();}
 		;
 
-call:	call normcall	{$$ = Manage_call__call_normcall(sym_table, yylineno, $1, $2;}
+call:	call normcall	{$$ = Manage_call__call_normcall(sym_table, yylineno, $1, $2);}
 		| lvalue callsuffix								{$$ = Manage_call__lvalue_callsuffix(sym_table, yylineno, $1, $2);}
 		| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS normcall	{$$ = Manage_call__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_normcall(sym_table, yylineno, $2, $4);}
 		;

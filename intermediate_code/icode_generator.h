@@ -4,7 +4,7 @@
 #define HY340_PROJECT_ICODE_GENERATOR_H
 
 #include <vector>
-#include "types.h"
+#include "quad.h"
 #include "../syntax_analyzer/hidden_var_handler.h"
 
 namespace intermediate_code {

@@ -44,7 +44,7 @@ namespace syntax_analyzer {
         assert(possible_table);
 
         //See documentation
-        if(possible_table->type != expr::type::TABLE_ITEM_E) {
+        if(possible_table->expr_type != expr::type::TABLE_ITEM_E) {
             return possible_table;
         } else {
             expr *result = expr::make_expr(expr::type::VAR_E);
@@ -117,7 +117,7 @@ namespace syntax_analyzer {
             throw semantic_error("arg2 cannot participate in arithmetic operation", lineno);
 
         expr *result;
-        if(arg1->type == arg2->type && arg2->type == expr::type::CONST_NUM_E) {
+        if(arg1->expr_type == arg2->expr_type && arg2->expr_type == expr::type::CONST_NUM_E) {
             long double const_val;
             long double arg1_val = arg1->const_val.number;
             long double arg2_val = arg2->const_val.number;
@@ -188,7 +188,7 @@ namespace syntax_analyzer {
             throw semantic_error("arg2 cannot participate in relational operation", lineno);
 
         expr *result;
-        if(arg1->type == arg2->type && arg2->type == expr::type::CONST_NUM_E) {
+        if(arg1->expr_type == arg2->expr_type && arg2->expr_type == expr::type::CONST_NUM_E) {
             bool const_val;
             long double arg1_val = arg1->const_val.number;
             long double arg2_val = arg2->const_val.number;
@@ -257,7 +257,7 @@ namespace syntax_analyzer {
 
         expr *term = expr::make_expr(expr::type::VAR_E);
         term->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-        if(lvalue->type == expr::type::TABLE_ITEM_E) {
+        if(lvalue->expr_type == expr::type::TABLE_ITEM_E) {
             expr *table_item_value = emit_iftableitem(lvalue, sym_table, lineno);   //due to the above if, it will always emit. x = lvalue[lvalue->index]
             icode_gen.emit_quad(new quad(quad::iopcode::assign, term, table_item_value, nullptr, lineno));  //term = x
             icode_gen.emit_quad(new quad(iopcode, table_item_value, table_item_value, expr::make_const_num(1), lineno)); //x = x +/- 1
@@ -286,7 +286,7 @@ namespace syntax_analyzer {
             throw syntax_error("Function id cannot be used as an l-value", lineno);
 
         expr *term;
-        if(lvalue->type == expr::type::TABLE_ITEM_E){
+        if(lvalue->expr_type == expr::type::TABLE_ITEM_E){
             term = emit_iftableitem(lvalue, sym_table, lineno); //will always emit due to the above if. term = lvalue[lvalue->index]
             icode_gen.emit_quad(new quad(iopcode, term, term, expr::make_const_num(1), lineno)); //term = term +/- 1
             icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, term, lvalue, lvalue->index, lineno));  //lvalue[lvalue->index] = term
@@ -545,10 +545,10 @@ namespace syntax_analyzer {
         if(lvalue->sym_entry->get_lvalue_type() == symbol_table::entry::lvalue_type::FUNC)
             throw syntax_error("Function id cannot be used as an l-value", lineno);
 
-		if(lvalue->type == expr::type::TABLE_ITEM_E) {
+		if(lvalue->expr_type == expr::type::TABLE_ITEM_E) {
 			icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, right_expr, lvalue, lvalue->index, lineno));  //lvalue[lvalue->index] = right_expr
 			assignexpr = emit_iftableitem(lvalue, sym_table, lineno);
-			assignexpr->type = expr::type::ASSIGN_E;
+			assignexpr->expr_type = expr::type::ASSIGN_E;
 		} else {
 			icode_gen.emit_quad(new quad(quad::iopcode::assign, lvalue, right_expr, nullptr, lineno));  //lvalue = right_expr
 			assignexpr = expr::make_expr(expr::ASSIGN_E);
@@ -680,19 +680,19 @@ namespace syntax_analyzer {
 		fprintf(yyout, " call -> call normcall\n");
 		return handle_call_rule(call, norm_call->get_elist(), sym_table, lineno);
 	}
-	expr* Manage_call__lvalue_callsuffix(symbol_table &sym_table, unsigned int lineno, expr *lvalue, call_suffix *call_suffix){
+	expr* Manage_call__lvalue_callsuffix(symbol_table &sym_table, unsigned int lineno, expr *lvalue, call_suffix *csuffix){
 		fprintf(yyout, "call -> lvalue callsuffix\n");
 
-        if(call_suffix->get_type() == call_suffix::type::METHOD_CALL) {
-            method_call *method_call;
-            if(!(method_call = dynamic_cast<method_call*>(call_suffix)))    /*TODO: validate that this works*/
+        if(csuffix->get_type() == call_suffix::type::METHOD_CALL) {
+            method_call *meth_call;
+            if(!(meth_call = dynamic_cast<method_call*>(csuffix)))    /*TODO: validate that this works*/
                     assert(false);  //Casting should ALWAYS be possible
 
             expr *self = emit_iftableitem(lvalue, sym_table, lineno);
-            lvalue = emit_iftableitem(expr::make_table_item(self->sym_entry, method_call->get_name()), sym_table, lineno);  /*TODO: fill this and be CAREFUL of the implementation of member_item*/
-            call_suffix->get_elist().push_front(self);
+            lvalue = emit_iftableitem(expr::make_table_item(self->sym_entry, meth_call->get_name()), sym_table, lineno);  /*TODO: fill this and be CAREFUL of the implementation of member_item*/
+            csuffix->get_elist().push_front(self);
         }
-		return handle_call_rule(lvalue, call_suffix->get_elist(), sym_table, lineno);
+		return handle_call_rule(lvalue, csuffix->get_elist(), sym_table, lineno);
 	}
 	expr* Manage_call__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_normcall(symbol_table &sym_table, unsigned int lineno,
                                                                            symbol_table::func_entry *funcdef, norm_call *norm_call) {
