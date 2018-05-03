@@ -300,27 +300,24 @@ namespace syntax_analyzer {
     }
 
     /**
-     * Converts the given expr to a new expr with type expr::type::BOOL_E by performing any necessary quad emits.
-     * Note that no conversion check occurs, and thus the AVM is responsible to check if the given expr can be converted to BOOL_E.
-     * @param expr_to_convert The expr which should be converted to boolean value
+     * If the expr_to_convert is not of type type::BOOL_E, then quads are emitted so that the expr can be used
+     * in a logical operation. Those quads are appended to the expr's truelist and falselist so that after the short-circuit
+     * evaluation of the boolean expression, true action and false action can be defined by backpatching these quads.
+     * If the expr_to_convert IS type::BOOL_E, then no action is taken.
+     *
+     * Note that no conversion check occurs, and thus the AVM is responsible to check if the given expr can be compared
+     * with a CONST_BOOL_E and what the output of that operation would be.
+     * @param expr_to_convert The expr which participates in a boolean expr
      * @param lineno The line number that triggered this conversion
-     * @return A pointer to a new expr which is the boolean value of expr, or expr_to_convert if it is already of type::BOOL_E
      */
-    static expr* convert_expr_to_bool_e(expr *expr_to_convert, symbol_table &sym_table, unsigned int lineno) {
-        expr *boolValue;
+    static void convert_expr_to_bool_e(expr *expr_to_convert, symbol_table &sym_table, unsigned int lineno) {
 
         if(expr_to_convert->type != expr::type::BOOL_E) {
-            boolValue = expr::make_expr(expr::type::BOOL_E);
-            boolValue->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-
-            boolValue->short_circ_extn.append_to_truelist(icode_gen.next_quad_label());
-            boolValue->short_circ_extn.append_to_falselist(icode_gen.next_quad_label()+1);
-            icode_gen.emit_quad(new quad(quad::iopcode::if_eq, boolValue, expr_to_convert, expr::make_const_bool(true), lineno), 0);
-            icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);
-        } else {
-            boolValue = expr_to_convert;
+            expr_to_convert->short_circ_extn.append_to_truelist(icode_gen.next_quad_label());
+            expr_to_convert->short_circ_extn.append_to_falselist(icode_gen.next_quad_label()+1);
+            icode_gen.emit_quad(new quad(quad::iopcode::if_eq, nullptr, expr_to_convert, expr::make_const_bool(true), lineno), 0);  //jump to true action
+            icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);   //jump to false action
         }
-        return boolValue;
     }
 
     /**
@@ -348,8 +345,8 @@ namespace syntax_analyzer {
         }
 
         expr *result;
-        arg1 = convert_expr_to_bool_e(arg1, sym_table, lineno);
-        arg2 = convert_expr_to_bool_e(arg2, sym_table, lineno);
+        convert_expr_to_bool_e(arg1, sym_table, lineno);
+        convert_expr_to_bool_e(arg2, sym_table, lineno);
 
         result = expr::make_expr(expr::type::BOOL_E);
         result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
@@ -558,7 +555,7 @@ namespace syntax_analyzer {
 		fprintf(yyout, "term -> NOT expr\n");
 
         expr *result;
-        not_expr = convert_expr_to_bool_e(not_expr, sym_table, lineno);
+        convert_expr_to_bool_e(not_expr, sym_table, lineno);
         result = expr::make_expr(expr::type::BOOL_E);
 		result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
 
@@ -1022,10 +1019,10 @@ namespace syntax_analyzer {
 	for_prefix* Manage_forprefix(unsigned int cond_first_quad, expr *cond_expr, unsigned int lineno) {
 	    fprintf(yyout, "for_prefix -> for(elist; log_next_quad expr; \n");
 
-		for_prefix *result = new for_prefix(cond_first_quad, icode_gen.next_quad_label());
-		icode_gen.emit_quad(new quad(quad::iopcode::if_eq, nullptr, cond_expr, expr::make_const_bool(true), lineno), 0);
+		for_prefix *forprefix = new for_prefix(cond_first_quad, icode_gen.next_quad_label());
+		icode_gen.emit_quad(new quad(quad::iopcode::if_eq, nullptr, cond_expr, expr::make_const_bool(true), lineno), 0);    //backpatch it later to jump to the the start of the loop
 		lp_handler.enter_loop(); //Correct, since the elist in the "forstmt" rule, cannot containt a stmt and thus a break or continue.
-		return result;
+		return forprefix;
 	}
 	void_t Manage_forstmt(for_prefix *forprefix, unsigned int incomplete_jmp_to_exit, unsigned int incomplete_jmp_to_cond,
                           unsigned int incomplete_jmp_to_incr_expr) {
