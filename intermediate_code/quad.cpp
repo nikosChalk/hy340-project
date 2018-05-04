@@ -27,6 +27,7 @@ std::string quad::iopcode_to_str(intermediate_code::quad::iopcode iopcode) {
         case iopcode::if_greater:   return "if_greater";
         case iopcode::call:         return "call";
         case iopcode::param:        return "param";
+        case iopcode::ret:          return "ret";
         case iopcode::getretval:    return "getretval";
         case iopcode::funcstart:    return "funcstart";
         case iopcode::funcend:      return "funcend";

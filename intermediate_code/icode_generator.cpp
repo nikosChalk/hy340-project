@@ -39,8 +39,12 @@ std::string icode_generator::to_string() const {
     ss << "quad#" << sp << "opcode" << sp << "result" << sp << "arg1" << sp << "arg2" << "label" << endl;
     ss <<  splitter << endl;
     for(quad const *q : this->quad_vector) {
-        ss << quad::iopcode_to_str(q->opcode) << sp << q->result->to_string() << sp
-           << q->arg1->to_string() << sp << q->arg2->to_string() << sp << std::to_string(q->label) << endl;
+        string arg1_str = (q->arg1 == nullptr) ? "" : q->arg1->to_string();
+        string arg2_str = (q->arg2 == nullptr) ? "" : q->arg2->to_string();
+        string res_str = (q->result == nullptr) ? "" : q->result->to_string();
+
+        ss << quad::iopcode_to_str(q->opcode) << sp << res_str << sp
+           << arg1_str << sp << arg2_str << sp << std::to_string(q->label) << endl;
     }
     ss << splitter << endl;
     return ss.str();

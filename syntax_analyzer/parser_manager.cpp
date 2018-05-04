@@ -19,7 +19,7 @@ using namespace std;
 using namespace intermediate_code;
 
 extern FILE *yyout;
-extern intermediate_code::icode_generator &icode_gen;
+extern intermediate_code::icode_generator icode_gen;
 
 namespace syntax_analyzer {
 
