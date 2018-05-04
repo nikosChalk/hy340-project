@@ -46,6 +46,8 @@ std::string icode_generator::to_string() const {
     return ss.str();
 }
 
-ostream& operator<<(ostream &os, const icode_generator &igen) {
-    return os << igen.to_string();
+namespace intermediate_code {
+    ostream &operator<<(ostream &os, const icode_generator &igen) {
+        return os << igen.to_string();
+    }
 }
