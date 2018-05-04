@@ -724,10 +724,10 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_elist() */
-    deque<expr*> Manage_tmp_elist__tmp_elist_COMMA_expr(deque<expr*> const &tmp_elist, expr *expr) {
+    deque<expr*> Manage_tmp_elist__tmp_elist_COMMA_expr(deque<expr*> const &tmp_elist, expr *e) {
 		fprintf(yyout, "tmp_elist -> tmp_elist , expr\n");
 		deque<expr*> ret_val = tmp_elist;
-		ret_val.push_back(expr);
+		ret_val.push_back(e);
 
 		return ret_val;
 	}
@@ -739,10 +739,10 @@ namespace syntax_analyzer {
 		fprintf(yyout, "elist -> <empty>\n");
 		return deque<expr*>();  //empty double ended queue
 	}
-    deque<expr*> Manage_elist__expr_tmp_elist(expr *expr, deque<expr*> const &tmp_elist) {
+    deque<expr*> Manage_elist__expr_tmp_elist(expr *e, deque<expr*> const &tmp_elist) {
         fprintf(yyout, "elist -> expr tmp_elist\n");
         deque<expr*> ret_val = tmp_elist;
-        ret_val.push_front(expr);
+        ret_val.push_front(e);
 
         return ret_val;
     }
@@ -798,7 +798,8 @@ namespace syntax_analyzer {
 	/* Manage_indexedelem() */
     pair<expr*, expr*> Manage_indexedelem__LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE(expr *left_expr, expr *right_expr) {
 		fprintf(yyout, "indexedelem -> { expr : expr }\n");
-        return pair(left_expr, right_expr);
+		pair <expr*, expr*> Pair(left_expr,right_expr);
+        return Pair;
 	}
 
 	/* Manage_block() */

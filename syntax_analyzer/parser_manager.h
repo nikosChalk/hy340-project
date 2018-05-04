@@ -121,8 +121,8 @@ namespace syntax_analyzer {
 
     intermediate_code::expr* Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET(symbol_table &sym_table, unsigned int lineno,
                                                                                    intermediate_code::expr *lvalue, intermediate_code::expr *expr);
-	intermediate_code::expr* Manage_member__call_DOT_IDENTIFIER(symbol_table &sym_table, unsigned int lineno, expr *call, const string &id);
-	intermediate_code::expr* Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET(symbol_table &sym_table, unsigned int lineno, expr* call, expr* expr);
+	intermediate_code::expr* Manage_member__call_DOT_IDENTIFIER(symbol_table &sym_table, unsigned int lineno, intermediate_code::expr *call, const std::string &id);
+	intermediate_code::expr* Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET(symbol_table &sym_table, unsigned int lineno, intermediate_code::expr* call, intermediate_code::expr* expr);
 
 	/* Manage_call() */
     intermediate_code::expr* Manage_call__call_normcall(symbol_table &sym_table, unsigned int lineno,
