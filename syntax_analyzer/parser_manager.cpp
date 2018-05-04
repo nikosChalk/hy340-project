@@ -547,7 +547,7 @@ namespace syntax_analyzer {
 
 		if(lvalue->expr_type == expr::type::TABLE_ITEM_E) {
 			icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, right_expr, lvalue, lvalue->index, lineno));  //lvalue[lvalue->index] = right_expr
-			assignexpr = emit_iftableitem(lvalue, sym_table, lineno);
+			assignexpr = emit_iftableitem(lvalue, sym_table, lineno);   //will always emit. Fetches the value that we just set
 			assignexpr->expr_type = expr::type::ASSIGN_E;
 		} else {
 			icode_gen.emit_quad(new quad(quad::iopcode::assign, lvalue, right_expr, nullptr, lineno));  //lvalue = right_expr
@@ -654,22 +654,22 @@ namespace syntax_analyzer {
 
     expr* Manage_member__lvalue_DOT_IDENTIFIER(symbol_table &sym_table, unsigned int lineno, expr *lvalue, const string &id) {
         fprintf(yyout, "member -> lvalue.IDENTIFIER\n");
-        lvalue = emit_iftableitem(lvalue, sym_table, lineno); //Will always emit a getelem
+        lvalue = emit_iftableitem(lvalue, sym_table, lineno); //emit a quad::type::tablegetelem if lvalue was of that type
         return expr::make_table_item(lvalue->sym_entry, id);
     }
     expr* Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET(symbol_table &sym_table, unsigned int lineno, expr* lvalue, expr* expr) {
         fprintf(yyout, "member -> lvalue[expr]\n");
-        lvalue = emit_iftableitem(lvalue, sym_table, lineno);
+        lvalue = emit_iftableitem(lvalue, sym_table, lineno);   //emit a quad::type::tablegetelem if lvalue was of that type
 		return expr::make_table_item(lvalue->sym_entry, expr);
     }
 	expr* Manage_member__call_DOT_IDENTIFIER(symbol_table &sym_table, unsigned int lineno, expr *call, const string &id) {
         fprintf(yyout, "member -> call.IDENTIFIER\n");
-		call = emit_iftableitem(call, sym_table, lineno); //Will always emit a getelem
+		call = emit_iftableitem(call, sym_table, lineno); //emit a quad::type::tablegetelem if call was of that type
 		return expr::make_table_item(call->sym_entry, id);
     }
 	expr* Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET(symbol_table &sym_table, unsigned int lineno, expr* call, expr* expr) {
         fprintf(yyout, "member -> call[expr]\n");
-		call = emit_iftableitem(call, sym_table, lineno);
+		call = emit_iftableitem(call, sym_table, lineno);   //emit a quad::type::tablegetelem if call was of that type
 		return expr::make_table_item(call->sym_entry, expr);
     }
 
@@ -686,8 +686,13 @@ namespace syntax_analyzer {
             if(!(meth_call = dynamic_cast<method_call*>(csuffix)))    /*TODO: validate that this works*/
                     assert(false);  //Casting should ALWAYS be possible
 
-            expr *self = emit_iftableitem(lvalue, sym_table, lineno);
-            lvalue = emit_iftableitem(expr::make_table_item(self->sym_entry, meth_call->get_name()), sym_table, lineno);  /*TODO: fill this and be CAREFUL of the implementation of member_item*/
+            //Sine we have lvalue..csuffix(args) (method call) we convert it to lvalue.csuffix(self, args) where self=lvalue
+            expr *self, *table_item;
+            self = lvalue;
+            self = emit_iftableitem(self, sym_table, lineno);   //On the base case, lvalue is expr::type::NEW_TABLE_E. Emit a quad::type::tablegetelem if lvalue is a table element.
+            table_item = expr::make_table_item(self->sym_entry, meth_call->get_name()); //get the lvalue.csuffix as an expr*
+            lvalue = emit_iftableitem(table_item, sym_table, lineno);   //Will always emit a quad::type::tablegetelem since table_item is of expr::type::TABLE_ITEM_E.
+
             csuffix->get_elist().push_front(self);
         }
 		return handle_call_rule(lvalue, csuffix->get_elist(), sym_table, lineno);
@@ -773,7 +778,6 @@ namespace syntax_analyzer {
 			icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, p.second, table, p.first, lineno));
 
 		return table;
-		
 	}
 
 	/* Manage_indexed */
@@ -798,8 +802,7 @@ namespace syntax_analyzer {
 	/* Manage_indexedelem() */
     pair<expr*, expr*> Manage_indexedelem__LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE(expr *left_expr, expr *right_expr) {
 		fprintf(yyout, "indexedelem -> { expr : expr }\n");
-		pair <expr*, expr*> Pair(left_expr,right_expr);
-        return Pair;
+        return pair<expr*, expr*>(left_expr, right_expr);
 	}
 
 	/* Manage_block() */

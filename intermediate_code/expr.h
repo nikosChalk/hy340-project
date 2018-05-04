@@ -45,8 +45,24 @@ namespace intermediate_code {
          */
         static expr* make_lvalue_expr(syntax_analyzer::symbol_table::entry *sym_entry);
 
+        /**
+         * Creates a new expr of type::TABLE_ITEM_E. This is used whenever we want a table's element as an expr*
+         * Caller is responsible to free the returned object.
+         *
+         * @param sym_entry A symbol table entry pointing to the table
+         * @param index The index that the returned expr has within the table.
+         * @return A pointer to the new expr
+         */
         static expr* make_table_item(syntax_analyzer::symbol_table::entry *sym_entry, expr *index);
 
+        /**
+         * Creates a new expr of type::TABLE_ITEM_E. This is used whenever we want a table's element as an expr*
+         * Caller is responsible to free the returned object.
+         *
+         * @param sym_entry A symbol table entry pointing to the table
+         * @param id The string index that the returned expr has within the table. (e.g. "x" if we have "table.x")
+         * @return A pointer to the new expr
+         */
         static expr* make_table_item(syntax_analyzer::symbol_table::entry *sym_entry, const std::string &id);
 
         /**

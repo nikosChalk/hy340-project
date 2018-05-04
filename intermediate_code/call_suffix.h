@@ -17,13 +17,13 @@ namespace intermediate_code {
          * Returns the expression list of the arguments.
          * @return The expression list
          */
-        virtual std::deque<expr*>& get_elist();
+        std::deque<expr*>& get_elist();
 
         /**
          * Returns the type of the callsuffix
          * @return The type of the callsuffix
          */
-        virtual type get_type() const;
+        type get_type() const;
 
     protected:
         /**
@@ -56,7 +56,7 @@ namespace intermediate_code {
          * Returns the name of the method call
          * @return The name
          */
-        virtual const std::string& get_name() const;
+        const std::string& get_name() const;
 
     private:
         std::string name;

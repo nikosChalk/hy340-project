@@ -31,7 +31,7 @@ namespace intermediate_code {
             funcstart,  funcend,
 
             tablecreate,    //arg1=table to create, arg2=nullptr, result=nullptr
-            tablegetelem,   //result=nullptr, arg1 = table, arg2 = index
+            tablegetelem,   //result=variable to store arg1[arg2], arg1 = table, arg2 = index
             tablesetelem,   //arg1=table, arg2=index, result=value to set. That is arg1[arg2] = result
 
             jump    //result,arg1,arg2=nullptr. label=quadno to jump to.
