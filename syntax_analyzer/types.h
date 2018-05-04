@@ -36,7 +36,10 @@ namespace syntax_analyzer {
 
         std::pair<intermediate_code::expr*, intermediate_code::expr*> exprPair; //indexedelem
 
-        intermediate_code::call_suffix *callSuffixPtr;  //methodcall, normcall, callsuffix
+        intermediate_code::call_suffix *callSuffixPtr;  //callsuffix
+        intermediate_code::norm_call    *normCallPtr;   //normcall
+        intermediate_code::method_call  *methodCallPtr; //methodcall
+
 		intermediate_code::for_prefix *forPrefixPtr;	//forprefix
 
         std::vector<unsigned int> uIntVector;   /*break, continue*/

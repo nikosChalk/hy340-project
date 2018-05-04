@@ -14,6 +14,11 @@ namespace intermediate_code {
         enum type {NORM_CALL, METHOD_CALL};
 
         /**
+         * Performs clean up
+         */
+        virtual ~call_suffix();
+
+        /**
          * Returns the expression list of the arguments.
          * @return The expression list
          */

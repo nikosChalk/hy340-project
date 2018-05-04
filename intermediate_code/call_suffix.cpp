@@ -13,6 +13,8 @@ call_suffix::call_suffix(call_suffix::type suffix_type, const deque<expr*> &elis
     this->suffix_type = suffix_type;
 }
 
+call_suffix::~call_suffix() { /*noop. Just for derived classes to be considered virtual at runtime*/ }
+
 deque<expr*>& call_suffix::get_elist() {
     return this->elist;
 }

@@ -674,9 +674,9 @@ namespace syntax_analyzer {
     }
 
 	/* Manage_call() */
-	expr* Manage_call__call_normcall(symbol_table &sym_table, unsigned int lineno, expr *call, norm_call *norm_call) {
+	expr* Manage_call__call_normcall(symbol_table &sym_table, unsigned int lineno, expr *call, norm_call *ncall) {
 		fprintf(yyout, " call -> call normcall\n");
-		return handle_call_rule(call, norm_call->get_elist(), sym_table, lineno);
+		return handle_call_rule(call, ncall->get_elist(), sym_table, lineno);
 	}
 	expr* Manage_call__lvalue_callsuffix(symbol_table &sym_table, unsigned int lineno, expr *lvalue, call_suffix *csuffix){
 		fprintf(yyout, "call -> lvalue callsuffix\n");
@@ -698,11 +698,11 @@ namespace syntax_analyzer {
 		return handle_call_rule(lvalue, csuffix->get_elist(), sym_table, lineno);
 	}
 	expr* Manage_call__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_normcall(symbol_table &sym_table, unsigned int lineno,
-                                                                           symbol_table::func_entry *funcdef, norm_call *norm_call) {
+                                                                           symbol_table::func_entry *funcdef, norm_call *ncall) {
 		fprintf(yyout, "call -> (funcdef) (elist)\n");
 		expr *func = expr::make_expr(expr::type::PROGRAM_FUNC_E);
 		func->sym_entry = funcdef;
-		return handle_call_rule(func, norm_call->get_elist(), sym_table, lineno);
+		return handle_call_rule(func, ncall->get_elist(), sym_table, lineno);
 	}
 
 	/* Manage_callsuffix() */

@@ -2,8 +2,6 @@
 %code requires {
 	#include "symbol_table.h"
 	#include "types.h"
-	#include "../intermediate_code/icode_generator.h"
-	#include "../intermediate_code/types.h"
 }
 
 %{
@@ -12,8 +10,10 @@
 	#include <iostream>
 	#include <stack>
 	#include "parser_manager.h"
+	#include "../intermediate_code/icode_generator.h"
 
 	using namespace syntax_analyzer;
+	using namespace intermediate_code;
 
 	extern int yylex();
 	extern int yylineno;
@@ -21,7 +21,7 @@
 
 	int yyerror (const symbol_table &sym_table, char const *msg);
 
-	intermediate_code::icode_generator icode_gen = intermediate_code::icode_generator();
+	icode_generator icode_gen = icode_generator();
 %}
 
 /* bison parameters */
@@ -53,7 +53,9 @@
 %type <exprPair> indexedelem
 %type <dequeExpr> elist
 %type <dequeExprPair> indexed
-%type <callSuffixPtr> callsuffix normcall methodcall
+%type <normCallPtr> normcall
+%type <methodCallPtr> methodcall
+%type <callSuffixPtr> callsuffix
 
 %type <voidVal> program stmt
 %type <voidVal> block
@@ -194,7 +196,7 @@ objectdef:	LEFT_BRACKET elist RIGHT_BRACKET		{$$ = Manage_objectdef__LEFT_BRACKE
 			| LEFT_BRACKET indexed RIGHT_BRACKET	{$$ = Manage_objectdef__LEFT_BRACKET_indexed_RIGHT_BRACKET(sym_table, yylineno, $2);}
 			;
 
-tmp_indexed:	tmp_indexed COMMA indexedelem	{$$ = Manage_tmp_indexed__tmp_indexed_COMMA_indexedelem($1, $2);}
+tmp_indexed:	tmp_indexed COMMA indexedelem	{$$ = Manage_tmp_indexed__tmp_indexed_COMMA_indexedelem($1, $3);}
 				|%empty							{$$ = Manage_tmp_indexed__empty();}
 				;
 
@@ -267,7 +269,7 @@ forprefix:	FOR LEFT_PARENTHESIS elist SEMICOLON log_next_quad expr SEMICOLON {$$
 forstmt:	forprefix emit_incomplete_jmp elist RIGHT_PARENTHESIS emit_incomplete_jmp stmt emit_incomplete_jmp {$$ = Manage_forstmt($1, $2, $5, $7);}
 			;
 
-log_next_quad:	%empty	{$$ = Manage_log_next_quad__empty()}
+log_next_quad:	%empty	{$$ = Manage_log_next_quad__empty();}
 				;
 
 emit_incomplete_jmp:	%empty	{$$ = Manage_emit_incomplete_jmp__empty(yylineno);}

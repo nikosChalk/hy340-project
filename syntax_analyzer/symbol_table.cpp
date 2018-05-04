@@ -37,6 +37,8 @@ namespace syntax_analyzer {
         this->name = name;
         this->symbol_type = symbol_type;
     }
+    symbol_table::entry::~entry() { /*noop. Just for derived classes to be considered virtual at runtime*/ }
+
     symbol_table::entry::entry() {
         /* Disable default constructor */
         assert(false);

@@ -126,14 +126,14 @@ namespace syntax_analyzer {
 
 	/* Manage_call() */
     intermediate_code::expr* Manage_call__call_normcall(symbol_table &sym_table, unsigned int lineno,
-                                                        intermediate_code::expr *call, intermediate_code::norm_call *norm_call);
+                                                        intermediate_code::expr *call, intermediate_code::norm_call *ncall);
 
     intermediate_code::expr* Manage_call__lvalue_callsuffix(symbol_table &sym_table, unsigned int lineno,
                                                             intermediate_code::expr *lvalue, intermediate_code::call_suffix *csuffix);
 
     intermediate_code::expr* Manage_call__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_normcall(symbol_table &sym_table, unsigned int lineno,
                                                                                              symbol_table::func_entry *funcdef,
-                                                                                             intermediate_code::norm_call *norm_call);
+                                                                                             intermediate_code::norm_call *ncall);
 
 	/* Manage_callsuffix() */
 	intermediate_code::call_suffix* Manage_callsuffix__normcall(intermediate_code::norm_call* norm_call);

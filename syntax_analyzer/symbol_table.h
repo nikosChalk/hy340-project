@@ -32,6 +32,11 @@ namespace syntax_analyzer {
             static std::string sym_type_to_string(sym_type symbol_type);
 
             /**
+             * Performs clean up
+             */
+            virtual ~entry();
+
+            /**
              * Returns the scope of this entry.
              * @return The entry's scope
              */
