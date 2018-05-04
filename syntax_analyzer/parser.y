@@ -163,8 +163,8 @@ lvalue:	IDENTIFIER					{$$ = Manage_lvalue__IDENTIFIER(sym_table, $1, yylineno);
 
 member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER(sym_table, yylineno, $1, $3);}
 		| lvalue LEFT_BRACKET expr RIGHT_BRACKET	{$$=Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET(sym_table, yylineno, $1, $3);}
-		| call DOT IDENTIFIER						{$$=Manage_member__call_DOT_IDENTIFIER();}
-		| call LEFT_BRACKET expr RIGHT_BRACKET		{$$=Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();}
+		| call DOT IDENTIFIER						{$$=Manage_member__call_DOT_IDENTIFIER(sym_table, yylineno, $1, $3);}
+		| call LEFT_BRACKET expr RIGHT_BRACKET		{$$=Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET(sym_table, yylineno, $1, $3);}
 		;
 
 call:	call normcall	{$$ = Manage_call__call_normcall(sym_table, yylineno, $1, $2);}

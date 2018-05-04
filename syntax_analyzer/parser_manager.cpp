@@ -653,7 +653,7 @@ namespace syntax_analyzer {
 
 
     expr* Manage_member__lvalue_DOT_IDENTIFIER(symbol_table &sym_table, unsigned int lineno, expr *lvalue, const string &id) {
-        fprintf(yyout, "member -> .IDENTIFIER\n");
+        fprintf(yyout, "member -> lvalue.IDENTIFIER\n");
         lvalue = emit_iftableitem(lvalue, sym_table, lineno); //Will always emit a getelem
         return expr::make_table_item(lvalue->sym_entry, id);
     }
@@ -662,17 +662,15 @@ namespace syntax_analyzer {
         lvalue = emit_iftableitem(lvalue, sym_table, lineno);
 		return expr::make_table_item(lvalue->sym_entry, expr);
     }
-    expr* Manage_member__call_DOT_IDENTIFIER() {
+	expr* Manage_member__call_DOT_IDENTIFIER(symbol_table &sym_table, unsigned int lineno, expr *call, const string &id) {
         fprintf(yyout, "member -> call.IDENTIFIER\n");
-        /*TODO: implement this rule. Should member_item($call, id) be called?*/
-        assert(false);
-        //return ...;
+		call = emit_iftableitem(call, sym_table, lineno); //Will always emit a getelem
+		return expr::make_table_item(call->sym_entry, id);
     }
-    expr* Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET() {
+	expr* Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET(symbol_table &sym_table, unsigned int lineno, expr* call, expr* expr) {
         fprintf(yyout, "member -> call[expr]\n");
-        /*TODO: implement this rule. Should this be handled the same way as "member -> lvalue[expr] ?*/
-        assert(false);
-        //return ...;
+		call = emit_iftableitem(call, sym_table, lineno);
+		return expr::make_table_item(call->sym_entry, expr);
     }
 
 	/* Manage_call() */
