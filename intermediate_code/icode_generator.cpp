@@ -35,9 +35,10 @@ unsigned int icode_generator::next_quad_label() const {
     return (unsigned int)quad_vector.size();
 }
 
-#define MAX_TABS string("\t\t\t")
-#define MAX_TABS_COUNT (MAX_TABS).length()
-#define TAB(str) (string(MAX_TABS_COUNT - ((str).length()/8), '\t'))
+#define MAX_TABS (string("\t\t\t"))
+#define MAX_TABS_COUNT ((long)(MAX_TABS).length())
+#define MAX(x,y) (((x) > (y)) ? (x) : (y))
+#define TAB(str) (string(MAX(MAX_TABS_COUNT - (long)((str).length()/8), 1), '\t'))
 std::string icode_generator::to_string() const {
     stringstream ss;
     const string splitter = "----------------------------------------------------------------------------------------------------------------";
