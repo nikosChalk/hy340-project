@@ -367,9 +367,37 @@ namespace syntax_analyzer {
             result->short_circ_extn.append_to_truelist(arg2->short_circ_extn.get_truelist());
         }
 
-        //emit result quad
-        icode_gen.emit_quad(new quad(iopcode, result, arg1, arg2, lineno));
+        //Emitting a quad of type logical_and or logical_or is not needed sine we simulate these instructions through if_eq and jumps
         return result;
+    }
+
+
+    /**
+     * If the given sc_expr->must_be_patched() would return true, then quads are emitted to patch the sc_expr's truelist and falselist.
+     * Then the result of the short circuit expr is returned through a hidden var.
+     * If no patching is needed, no action is taken
+     * @param possible_sc_expr The expr which might be a short-circuit expr and thus its truelist and falselist must be patched.
+     * @param lineno The lineno that triggered the patching
+     * @return On the first case, the result of the short circuit expr is returned in a hidden var. On the second case (no action taken),
+     * possible_sc_expr is returned as is
+     */
+    static expr* patch_possible_sc_expr(expr *possible_sc_expr, symbol_table &sym_table, unsigned int lineno) {
+        expr *result;
+
+        if(possible_sc_expr->must_be_patched()) {
+            result = expr::make_expr(expr::type::BOOL_E);
+            result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+
+            icode_gen.patch_label(possible_sc_expr->short_circ_extn.get_truelist(), icode_gen.next_quad_label());     //jump to sc_result = true
+            icode_gen.patch_label(possible_sc_expr->short_circ_extn.get_falselist(), icode_gen.next_quad_label()+2);  //jump to sc_result = false
+
+            icode_gen.emit_quad(new quad(quad::iopcode::assign, result, expr::make_const_bool(true), nullptr, lineno));    //sc_result = true
+            icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), icode_gen.next_quad_label()+2);   //and then skip assign:false
+            icode_gen.emit_quad(new quad(quad::iopcode::assign, result, expr::make_const_bool(false), nullptr, lineno)); //sc_result = false
+            return result;
+        } else {
+            return possible_sc_expr;
+        }
     }
 
 
@@ -438,8 +466,9 @@ namespace syntax_analyzer {
         handle_returnstmt(nullptr, lineno);
         return void_value;
     }
-    void_t Manage_returnstmt__RETURN_expr_SEMICOLON(expr *expr, unsigned int lineno){
+    void_t Manage_returnstmt__RETURN_expr_SEMICOLON(symbol_table &sym_table, unsigned int lineno, expr *expr){
         fprintf(yyout, "returnstmt -> return expr;\n");
+        expr = patch_possible_sc_expr(expr, sym_table, lineno);
         handle_returnstmt(expr, lineno);
         return void_value;
     }
@@ -595,6 +624,7 @@ namespace syntax_analyzer {
         if(lvalue->sym_entry->get_lvalue_type() == symbol_table::entry::lvalue_type::FUNC)
             throw syntax_error("Function id cannot be used as an l-value", lineno);
 
+        right_expr = patch_possible_sc_expr(right_expr, sym_table, lineno);
 		if(lvalue->expr_type == expr::type::TABLE_ITEM_E) {
 			icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, right_expr, lvalue, lvalue->index, lineno));  //lvalue[lvalue->index] = right_expr
 			assignexpr = emit_iftableitem(lvalue, sym_table, lineno);   //will always emit. Fetches the value that we just set
@@ -605,6 +635,9 @@ namespace syntax_analyzer {
 			assignexpr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
 			icode_gen.emit_quad(new quad(quad::iopcode::assign, assignexpr, lvalue, nullptr, lineno));  //assignexpr = lvalue
 		}
+
+
+
         return assignexpr;
     }
 
@@ -698,7 +731,7 @@ namespace syntax_analyzer {
     }
     expr* Manage_lvalue__member(expr *member) {
         fprintf(yyout, "lvalue -> member\n");
-        return member;  /*TODO: validate this*/
+        return member;
     }
 
 
@@ -710,6 +743,8 @@ namespace syntax_analyzer {
     expr* Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET(symbol_table &sym_table, unsigned int lineno, expr* lvalue, expr* expr) {
         fprintf(yyout, "member -> lvalue[expr]\n");
         lvalue = emit_iftableitem(lvalue, sym_table, lineno);   //emit a quad::type::tablegetelem if lvalue was of that type
+        expr = patch_possible_sc_expr(expr, sym_table, lineno);
+
 		return expr::make_table_item(lvalue->sym_entry, expr);
     }
 	expr* Manage_member__call_DOT_IDENTIFIER(symbol_table &sym_table, unsigned int lineno, expr *call, const string &id) {
@@ -720,6 +755,8 @@ namespace syntax_analyzer {
 	expr* Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET(symbol_table &sym_table, unsigned int lineno, expr* call, expr* expr) {
         fprintf(yyout, "member -> call[expr]\n");
 		call = emit_iftableitem(call, sym_table, lineno);   //emit a quad::type::tablegetelem if call was of that type
+		expr = patch_possible_sc_expr(expr, sym_table, lineno);
+
 		return expr::make_table_item(call->sym_entry, expr);
     }
 
@@ -733,7 +770,7 @@ namespace syntax_analyzer {
 
         if(csuffix->get_type() == call_suffix::type::METHOD_CALL) {
             method_call *meth_call;
-            if(!(meth_call = dynamic_cast<method_call*>(csuffix)))    /*TODO: validate that this works*/
+            if(!(meth_call = dynamic_cast<method_call*>(csuffix)))
                     assert(false);  //Casting should ALWAYS be possible
 
             //Sine we have lvalue..csuffix(args) (method call) we convert it to lvalue.csuffix(self, args) where self=lvalue
@@ -779,9 +816,10 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_elist() */
-    deque<expr*> Manage_tmp_elist__tmp_elist_COMMA_expr(deque<expr*> const &tmp_elist, expr *e) {
+    deque<expr*> Manage_tmp_elist__tmp_elist_COMMA_expr(symbol_table &sym_table, unsigned int lineno, deque<expr*> const &tmp_elist, expr *e) {
 		fprintf(yyout, "tmp_elist -> tmp_elist , expr\n");
 		deque<expr*> ret_val = tmp_elist;
+		e = patch_possible_sc_expr(e, sym_table, lineno);
 		ret_val.push_back(e);
 
 		return ret_val;
@@ -794,9 +832,10 @@ namespace syntax_analyzer {
 		fprintf(yyout, "elist -> <empty>\n");
 		return deque<expr*>();  //empty double ended queue
 	}
-    deque<expr*> Manage_elist__expr_tmp_elist(expr *e, deque<expr*> const &tmp_elist) {
+    deque<expr*> Manage_elist__expr_tmp_elist(symbol_table &sym_table, unsigned int lineno, expr *e, deque<expr*> const &tmp_elist) {
         fprintf(yyout, "elist -> expr tmp_elist\n");
         deque<expr*> ret_val = tmp_elist;
+        e = patch_possible_sc_expr(e, sym_table, lineno);
         ret_val.push_front(e);
 
         return ret_val;
@@ -850,8 +889,11 @@ namespace syntax_analyzer {
     }
 
 	/* Manage_indexedelem() */
-    pair<expr*, expr*> Manage_indexedelem__LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE(expr *left_expr, expr *right_expr) {
+    pair<expr*, expr*> Manage_indexedelem(symbol_table &sym_table, unsigned int lineno,
+                                          expr *left_expr, expr *right_expr) {
 		fprintf(yyout, "indexedelem -> { expr : expr }\n");
+		left_expr = patch_possible_sc_expr(left_expr, sym_table, lineno);
+		right_expr = patch_possible_sc_expr(right_expr, sym_table, lineno);
         return pair<expr*, expr*>(left_expr, right_expr);
 	}
 
@@ -1003,9 +1045,10 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_ifstmt() */
-	unsigned int Manage_ifprefix__IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(expr *expr, unsigned int lineno) {
+	unsigned int Manage_ifprefix__IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(symbol_table &sym_table, unsigned int lineno, expr *expr) {
         fprintf(yyout, "ifprefix -> if (expr)\n");
 
+        expr = patch_possible_sc_expr(expr, sym_table, lineno);
 		icode_gen.emit_quad(new quad(quad::iopcode::if_eq, nullptr, expr, expr::make_const_bool(true), lineno), icode_gen.next_quad_label() + 2);   //if expr is true, skip the bellow jump
 		icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);   //in-complete jump. Will be patched to skip the "if" code
 		return icode_gen.next_quad_label()-1;   //quadno of the above in-complete jump
@@ -1027,9 +1070,10 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_whilestmt() */
-	unsigned int Manage_whilecond__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(expr *expr, unsigned int lineno){
+	unsigned int Manage_whilecond__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(symbol_table &sym_table, unsigned int lineno, expr *expr){
 	    fprintf(yyout, "whilecond -> (expr)\n");
 
+	    expr = patch_possible_sc_expr(expr, sym_table, lineno);
 		icode_gen.emit_quad(new quad(quad::iopcode::if_eq, nullptr, expr, expr::make_const_bool(true), lineno), icode_gen.next_quad_label() + 2);   //if true, skip the bellow jump
 		icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);   //in-complete jump. Will be patched to skip the "while" code
         lp_handler.enter_loop();
@@ -1051,9 +1095,10 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_forstmt() */
-	for_prefix* Manage_forprefix(unsigned int cond_first_quad, expr *cond_expr, unsigned int lineno) {
+	for_prefix* Manage_forprefix(symbol_table &sym_table, unsigned int lineno, unsigned int cond_first_quad, expr *cond_expr) {
 	    fprintf(yyout, "for_prefix -> for(elist; log_next_quad expr; \n");
 
+	    cond_expr = patch_possible_sc_expr(cond_expr, sym_table, lineno);
 		for_prefix *forprefix = new for_prefix(cond_first_quad, icode_gen.next_quad_label());
 		icode_gen.emit_quad(new quad(quad::iopcode::if_eq, nullptr, cond_expr, expr::make_const_bool(true), lineno), 0);    //backpatch it later to jump to the the start of the loop
 		lp_handler.enter_loop(); //Correct, since the elist in the "forstmt" rule, cannot containt a stmt and thus a break or continue.

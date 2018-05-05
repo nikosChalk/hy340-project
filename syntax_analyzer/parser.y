@@ -111,7 +111,7 @@ stmt:	expr SEMICOLON			{$$ = Manage_stmt__expr_SEMICOLON(); 	}
 		;
 
 returnstmt:	RETURN SEMICOLON		{$$ = Manage_returnstmt__RETURN_SEMICOLON(yylineno);}
-			| RETURN expr SEMICOLON	{$$ = Manage_returnstmt__RETURN_expr_SEMICOLON($2, yylineno);}
+			| RETURN expr SEMICOLON	{$$ = Manage_returnstmt__RETURN_expr_SEMICOLON(sym_table, yylineno, $2);}
 			;
 
 breakstmt:	BREAK SEMICOLON	{$$ = Manage_breakstmt__BREAK_SEMICOLON(yylineno);}
@@ -184,11 +184,11 @@ normcall:	LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_normcall__LEFT_P
 methodcall:	DOUBLE_DOT IDENTIFIER LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {$$ = Manage_methodcall__DOUBLE_DOT_IDENTIFIER_LEFT_PARENTHESIS_elist_RIGHT_PARENTHESIS($2, $4); }
 			;
 
-tmp_elist:	tmp_elist COMMA expr	{$$ = Manage_tmp_elist__tmp_elist_COMMA_expr($1, $3);}
+tmp_elist:	tmp_elist COMMA expr	{$$ = Manage_tmp_elist__tmp_elist_COMMA_expr(sym_table, yylineno, $1, $3);}
 		 	| %empty				{$$ = Manage_tmp_elist__empty();}
 			;
 
-elist:	expr tmp_elist	{$$ = Manage_elist__expr_tmp_elist($1, $2);}
+elist:	expr tmp_elist	{$$ = Manage_elist__expr_tmp_elist(sym_table, yylineno, $1, $2);}
 		| %empty 		{$$ = Manage_elist__empty();}
 		;
 
@@ -203,7 +203,7 @@ tmp_indexed:	tmp_indexed COMMA indexedelem	{$$ = Manage_tmp_indexed__tmp_indexed
 indexed:	indexedelem tmp_indexed	{$$ = Manage_indexed__indexedelem_tmp_indexed($1, $2);}
 			;
 
-indexedelem:	LEFT_BRACE expr COLON expr RIGHT_BRACE {$$ = Manage_indexedelem__LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE($2, $4);}
+indexedelem:	LEFT_BRACE expr COLON expr RIGHT_BRACE {$$ = Manage_indexedelem(sym_table, yylineno, $2, $4);}
 				;
 
 block_open:		LEFT_BRACE	{$$ = Manage_block_open__LEFT_BRACE();}
@@ -247,7 +247,7 @@ idlist:	IDENTIFIER tmp_idlist {$$ = Manage_idlist__IDENTIFIER_tmp_idlist(sym_tab
 		| %empty {$$ = Manage_idlist__empty();}
 		;
 
-ifprefix:	IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS { $$ = Manage_ifprefix__IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS($3, yylineno);}
+ifprefix:	IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS { $$ = Manage_ifprefix__IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(sym_table, yylineno, $3);}
 			;
 
 elseprefix: ELSE {$$ = Manage_elseprefix__ELSE(yylineno);}
@@ -257,13 +257,13 @@ ifstmt:	ifprefix stmt { $$ = Manage_ifstmt__ifprefix_stmt($1);}
 		| ifprefix stmt elseprefix stmt	{ $$ = Manage_ifstmt__ifprefix_stmt_elseprefix_stmt($1,$3);}
 		;
 
-whilecond:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS{$$ = Manage_whilecond__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS($2, yylineno);}
+whilecond:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS{$$ = Manage_whilecond__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(sym_table, yylineno, $2);}
 			;
 
 whilestmt:	WHILE log_next_quad whilecond stmt {$$ = Manage_whilestmt__WHILE_log_next_quad_whilecond_stmt($2, $3, yylineno);}
 			;
 
-forprefix:	FOR LEFT_PARENTHESIS elist SEMICOLON log_next_quad expr SEMICOLON {$$=Manage_forprefix($5,$6,yylineno);}
+forprefix:	FOR LEFT_PARENTHESIS elist SEMICOLON log_next_quad expr SEMICOLON {$$=Manage_forprefix(sym_table, yylineno, $5,$6);}
 			;
 
 forstmt:	forprefix emit_incomplete_jmp elist RIGHT_PARENTHESIS emit_incomplete_jmp stmt emit_incomplete_jmp {$$ = Manage_forstmt($1, $2, $5, $7);}

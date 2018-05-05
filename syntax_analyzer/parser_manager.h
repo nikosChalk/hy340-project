@@ -28,7 +28,7 @@ namespace syntax_analyzer {
 
     /* Manage_returnstmt() */
     void_t Manage_returnstmt__RETURN_SEMICOLON(unsigned int lineno);
-    void_t Manage_returnstmt__RETURN_expr_SEMICOLON(intermediate_code::expr *expr, unsigned int lineno);
+    void_t Manage_returnstmt__RETURN_expr_SEMICOLON(symbol_table &sym_table, unsigned int lineno, intermediate_code::expr *expr);
 
     /**
      * @throws syntax_analyzer::syntax_error If "break;" was not inside a loop
@@ -151,11 +151,13 @@ namespace syntax_analyzer {
 																													  std::deque<intermediate_code::expr*> const &elist);
 
     /* Manage_elist() */
-	std::deque<intermediate_code::expr*> Manage_tmp_elist__tmp_elist_COMMA_expr(std::deque<intermediate_code::expr*> const &tmp_elist,
+	std::deque<intermediate_code::expr*> Manage_tmp_elist__tmp_elist_COMMA_expr(symbol_table &sym_table, unsigned int lineno,
+																				std::deque<intermediate_code::expr*> const &tmp_elist,
                                                                                 intermediate_code::expr *expr);
 	std::deque<intermediate_code::expr*> Manage_tmp_elist__empty();
 	std::deque<intermediate_code::expr*> Manage_elist__empty();
-	std::deque<intermediate_code::expr*> Manage_elist__expr_tmp_elist(intermediate_code::expr *expr,
+	std::deque<intermediate_code::expr*> Manage_elist__expr_tmp_elist(symbol_table &sym_table, unsigned int lineno,
+                                                                      intermediate_code::expr *expr,
                                                                       std::deque<intermediate_code::expr*> const &tmp_elist);
 
 	/* Manage_objectdef()*/
@@ -173,7 +175,9 @@ namespace syntax_analyzer {
                                                                                                                       std::deque<std::pair<intermediate_code::expr*, intermediate_code::expr*>> const &tmp_indexed);
 
 	/* Manage_indexedelem() */
-    std::pair<intermediate_code::expr*, intermediate_code::expr*> Manage_indexedelem__LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE(intermediate_code::expr *left_expr, intermediate_code::expr *right_expr);
+    std::pair<intermediate_code::expr*, intermediate_code::expr*> Manage_indexedelem(symbol_table &sym_table, unsigned int lineno,
+                                                                                     intermediate_code::expr *left_expr,
+                                                                                     intermediate_code::expr *right_expr);
 
 	/* Manage_block() */
     void_t Manage_stmts__stmts_stmt();
@@ -235,7 +239,7 @@ namespace syntax_analyzer {
     std::vector<std::string> Manage_idlist__empty();
 
 	/* Manage_ifstmt() */
-	unsigned int Manage_ifprefix__IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(intermediate_code::expr *expr, unsigned int lineno);
+	unsigned int Manage_ifprefix__IF_LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(symbol_table &sym_table, unsigned int lineno, intermediate_code::expr *expr);
 	unsigned int Manage_elseprefix__ELSE(unsigned int lineno);
 	/**
 	 * @param ifprefix The quadno of the incomplete jump that the "ifprefix -> (expr)" generated. The jump skips the "if" code
@@ -245,7 +249,7 @@ namespace syntax_analyzer {
 
 
 	/* Manage_whilestmt() */
-	unsigned int Manage_whilecond__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(intermediate_code::expr *expr, unsigned int lineno);
+	unsigned int Manage_whilecond__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(symbol_table &sym_table, unsigned int lineno, intermediate_code::expr *expr);
 	/**
 	 * @param first_quadno First quad number of the whilecond's "expr"
 	 * @param whilecond The quadno of the in-complete jump what whilecond produced. This jump is patched to jump out of the while loop.
@@ -258,7 +262,8 @@ namespace syntax_analyzer {
 	 * @param cond_first_quad The quad number of the first quad of the for's condition "expr"
 	 * @param cond_expr The condition's expr
 	 */
-	intermediate_code::for_prefix* Manage_forprefix(unsigned int cond_first_quad, intermediate_code::expr *cond_expr, unsigned int lineno);
+	intermediate_code::for_prefix* Manage_forprefix(symbol_table &sym_table, unsigned int lineno,
+                                                    unsigned int cond_first_quad, intermediate_code::expr *cond_expr);
 	/**
 	 * @param incomplete_jmp_to_exit The quadno of the already emitted incomplete jump which jumps out of the loop, i.e. the rest code
 	 * @param incomplete_jmp_to_cond The quadno of the already emitted incomplete jump which jumps to the first quad of the condition

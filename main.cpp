@@ -37,6 +37,7 @@ int main (int argc, char *argv[]) {
         }
     }
 
+
     try {
         ret_val = yyparse(sym_table);
         fprintf(yyout, "%s\n", sym_table.to_string().c_str());

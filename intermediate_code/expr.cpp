@@ -90,6 +90,14 @@ bool expr::can_participate_in_relop() const {
     return can_participate_in_arithmop();   //same condition
 }
 
+const bool expr::must_be_patched() const {
+    if(!short_circ_extn.get_truelist().empty() || !short_circ_extn.get_falselist().empty()) {
+        assert(expr_type == type::BOOL_E);  //Since it has non-empty truelist or falselist, it MUST be of type::BOOL_E
+        return true;
+    }
+    return false;
+}
+
 std::string expr::to_string() const {
     stringstream ss;
 

@@ -167,6 +167,12 @@ namespace intermediate_code {
         bool can_participate_in_relop() const;
 
         /**
+         * Returns true if this is a expr::type::BOOL_E whose truelist or falselist is not empty and thus these lists must be patched
+         * @return True if this is a expr::type::BOOL_E whose truelist or falselist is not empty. False otherwise
+         */
+        const bool must_be_patched() const;
+
+        /**
          * Returns a string representation of this object
          * @return The string representation
          */
