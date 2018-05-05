@@ -14,6 +14,11 @@ namespace intermediate_code {
         enum type {NORM_CALL, METHOD_CALL};
 
         /**
+         * Performs clean up
+         */
+        virtual ~call_suffix();
+
+        /**
          * Returns the expression list of the arguments.
          * @return The expression list
          */
@@ -28,18 +33,18 @@ namespace intermediate_code {
     protected:
         /**
          * Initializes the call_suffix with the given attributes
-         * @param type The type of the call suffix
+         * @param suffix_type The type of the call suffix
          * @param elist The expression list of the function's arguments, with the same order as they appear during the function call.
          * e.g.: If function call is "f(a,b)" then elist should be "a,b"
          */
-        call_suffix(type type, std::deque<expr*> const &elist);
+        call_suffix(type suffix_type, std::deque<expr*> const &elist);
 
     private:
         /**
          * expression list of the arguments. If function call is "f(a,b)" and elist should be "a,b"
          */
         std::deque<expr*> elist;
-        type type;
+        type suffix_type;
     };
 
     class method_call:public call_suffix {

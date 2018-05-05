@@ -19,6 +19,7 @@ using namespace std;
 using namespace intermediate_code;
 
 extern FILE *yyout;
+extern intermediate_code::icode_generator icode_gen;
 
 namespace syntax_analyzer {
 
@@ -26,7 +27,6 @@ namespace syntax_analyzer {
 
     static scope_handler scp_handler = scope_handler();
     static hidden_var_handler hvar_handler = hidden_var_handler();
-	static icode_generator icode_gen = icode_generator();
 	static loop_handler lp_handler = loop_handler();
 
     /**
@@ -44,7 +44,7 @@ namespace syntax_analyzer {
         assert(possible_table);
 
         //See documentation
-        if(possible_table->type != expr::type::TABLE_ITEM_E) {
+        if(possible_table->expr_type != expr::type::TABLE_ITEM_E) {
             return possible_table;
         } else {
             expr *result = expr::make_expr(expr::type::VAR_E);
@@ -117,7 +117,7 @@ namespace syntax_analyzer {
             throw semantic_error("arg2 cannot participate in arithmetic operation", lineno);
 
         expr *result;
-        if(arg1->type == arg2->type && arg2->type == expr::type::CONST_NUM_E) {
+        if(arg1->expr_type == arg2->expr_type && arg2->expr_type == expr::type::CONST_NUM_E) {
             long double const_val;
             long double arg1_val = arg1->const_val.number;
             long double arg2_val = arg2->const_val.number;
@@ -188,7 +188,7 @@ namespace syntax_analyzer {
             throw semantic_error("arg2 cannot participate in relational operation", lineno);
 
         expr *result;
-        if(arg1->type == arg2->type && arg2->type == expr::type::CONST_NUM_E) {
+        if(arg1->expr_type == arg2->expr_type && arg2->expr_type == expr::type::CONST_NUM_E) {
             bool const_val;
             long double arg1_val = arg1->const_val.number;
             long double arg2_val = arg2->const_val.number;
@@ -257,7 +257,7 @@ namespace syntax_analyzer {
 
         expr *term = expr::make_expr(expr::type::VAR_E);
         term->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
-        if(lvalue->type == expr::type::TABLE_ITEM_E) {
+        if(lvalue->expr_type == expr::type::TABLE_ITEM_E) {
             expr *table_item_value = emit_iftableitem(lvalue, sym_table, lineno);   //due to the above if, it will always emit. x = lvalue[lvalue->index]
             icode_gen.emit_quad(new quad(quad::iopcode::assign, term, table_item_value, nullptr, lineno));  //term = x
             icode_gen.emit_quad(new quad(iopcode, table_item_value, table_item_value, expr::make_const_num(1), lineno)); //x = x +/- 1
@@ -286,7 +286,7 @@ namespace syntax_analyzer {
             throw syntax_error("Function id cannot be used as an l-value", lineno);
 
         expr *term;
-        if(lvalue->type == expr::type::TABLE_ITEM_E){
+        if(lvalue->expr_type == expr::type::TABLE_ITEM_E){
             term = emit_iftableitem(lvalue, sym_table, lineno); //will always emit due to the above if. term = lvalue[lvalue->index]
             icode_gen.emit_quad(new quad(iopcode, term, term, expr::make_const_num(1), lineno)); //term = term +/- 1
             icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, term, lvalue, lvalue->index, lineno));  //lvalue[lvalue->index] = term
@@ -312,7 +312,7 @@ namespace syntax_analyzer {
      */
     static void convert_expr_to_bool_e(expr *expr_to_convert, symbol_table &sym_table, unsigned int lineno) {
 
-        if(expr_to_convert->type != expr::type::BOOL_E) {
+        if(expr_to_convert->expr_type != expr::type::BOOL_E) {
             expr_to_convert->short_circ_extn.append_to_truelist(icode_gen.next_quad_label());
             expr_to_convert->short_circ_extn.append_to_falselist(icode_gen.next_quad_label()+1);
             icode_gen.emit_quad(new quad(quad::iopcode::if_eq, nullptr, expr_to_convert, expr::make_const_bool(true), lineno), 0);  //jump to true action
@@ -588,11 +588,24 @@ namespace syntax_analyzer {
         return primary;
 	}
 	
-    void_t Manage_assignexpr__lvalue_ASSIGN_expr(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno) {
+    expr* Manage_assignexpr__lvalue_ASSIGN_expr(symbol_table &sym_table, unsigned int lineno, expr *lvalue, expr *right_expr) {
         fprintf(yyout, "assignexpr -> lvalue = expr\n");
-        if(lvalueType == symbol_table::entry::lvalue_type::FUNC)
+        expr *assignexpr;
+
+        if(lvalue->sym_entry->get_lvalue_type() == symbol_table::entry::lvalue_type::FUNC)
             throw syntax_error("Function id cannot be used as an l-value", lineno);
-        return void_value;
+
+		if(lvalue->expr_type == expr::type::TABLE_ITEM_E) {
+			icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, right_expr, lvalue, lvalue->index, lineno));  //lvalue[lvalue->index] = right_expr
+			assignexpr = emit_iftableitem(lvalue, sym_table, lineno);   //will always emit. Fetches the value that we just set
+			assignexpr->expr_type = expr::type::ASSIGN_E;
+		} else {
+			icode_gen.emit_quad(new quad(quad::iopcode::assign, lvalue, right_expr, nullptr, lineno));  //lvalue = right_expr
+			assignexpr = expr::make_expr(expr::ASSIGN_E);
+			assignexpr->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+			icode_gen.emit_quad(new quad(quad::iopcode::assign, assignexpr, lvalue, nullptr, lineno));  //assignexpr = lvalue
+		}
+        return assignexpr;
     }
 
 
@@ -689,58 +702,57 @@ namespace syntax_analyzer {
     }
 
 
-    expr* Manage_member__lvalue_DOT_IDENTIFIER(expr* lvalue, const string &id) {
-        fprintf(yyout, "member -> .IDENTIFIER\n");
-        lvalue = emit_iftableitem(lvalue); /* Emit code if it is a table item. */
-		expr* item = newexpr(tableitem_e); /*Make a new expression. */
-		item->sym_entry = lvalue->sym_entry;
-		item->index = newexpr_conststring(id); /* Const string index. */
-		return item;
+    expr* Manage_member__lvalue_DOT_IDENTIFIER(symbol_table &sym_table, unsigned int lineno, expr *lvalue, const string &id) {
+        fprintf(yyout, "member -> lvalue.IDENTIFIER\n");
+        lvalue = emit_iftableitem(lvalue, sym_table, lineno); //emit a quad::type::tablegetelem if lvalue was of that type
+        return expr::make_table_item(lvalue->sym_entry, id);
     }
-    expr* Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET(expr* lvalue, expr* expr) {
+    expr* Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET(symbol_table &sym_table, unsigned int lineno, expr* lvalue, expr* expr) {
         fprintf(yyout, "member -> lvalue[expr]\n");
-        lvalue = emit_iftableitem(lvalue);
-		tableitem = newexpr(tableitem_e);
-		tableitem->sym_entry = lvalue->sym_entry;
-		tableitem_e->index = expr; /* The index is the expression. */		
-		return tableitem;
+        lvalue = emit_iftableitem(lvalue, sym_table, lineno);   //emit a quad::type::tablegetelem if lvalue was of that type
+		return expr::make_table_item(lvalue->sym_entry, expr);
     }
-    expr* Manage_member__call_DOT_IDENTIFIER() {
+	expr* Manage_member__call_DOT_IDENTIFIER(symbol_table &sym_table, unsigned int lineno, expr *call, const string &id) {
         fprintf(yyout, "member -> call.IDENTIFIER\n");
-        /*TODO: implement this rule. Should member_item($call, id) be called?*/
-        return ...;
+		call = emit_iftableitem(call, sym_table, lineno); //emit a quad::type::tablegetelem if call was of that type
+		return expr::make_table_item(call->sym_entry, id);
     }
-    expr* Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET() {
+	expr* Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET(symbol_table &sym_table, unsigned int lineno, expr* call, expr* expr) {
         fprintf(yyout, "member -> call[expr]\n");
-        /*TODO: implement this rule. Should this be handled the same way as "member -> lvalue[expr] ?*/
-        return ...;
+		call = emit_iftableitem(call, sym_table, lineno);   //emit a quad::type::tablegetelem if call was of that type
+		return expr::make_table_item(call->sym_entry, expr);
     }
 
 	/* Manage_call() */
-	expr* Manage_call__call_normcall(symbol_table &sym_table, unsigned int lineno, expr *call, norm_call *norm_call) {
+	expr* Manage_call__call_normcall(symbol_table &sym_table, unsigned int lineno, expr *call, norm_call *ncall) {
 		fprintf(yyout, " call -> call normcall\n");
-		return handle_call_rule(call, norm_call->get_elist(), sym_table, lineno);
+		return handle_call_rule(call, ncall->get_elist(), sym_table, lineno);
 	}
-	expr* Manage_call__lvalue_callsuffix(symbol_table &sym_table, unsigned int lineno, expr *lvalue, call_suffix *call_suffix){
+	expr* Manage_call__lvalue_callsuffix(symbol_table &sym_table, unsigned int lineno, expr *lvalue, call_suffix *csuffix){
 		fprintf(yyout, "call -> lvalue callsuffix\n");
 
-        if(call_suffix->get_type() == call_suffix::type::METHOD_CALL) {
-            method_call *method_call;
-            if(!(method_call = dynamic_cast<method_call*>(call_suffix)))    /*TODO: validate that this works*/
+        if(csuffix->get_type() == call_suffix::type::METHOD_CALL) {
+            method_call *meth_call;
+            if(!(meth_call = dynamic_cast<method_call*>(csuffix)))    /*TODO: validate that this works*/
                     assert(false);  //Casting should ALWAYS be possible
 
-            expr *self = lvalue;
-            lvalue = emit_iftableitem(member_item(self, method_call->get_name()));  /*TODO: fill this and be CAREFUL of the implementation of member_item*/
-            call_suffix->get_elist().push_front(self);
+            //Sine we have lvalue..csuffix(args) (method call) we convert it to lvalue.csuffix(self, args) where self=lvalue
+            expr *self, *table_item;
+            self = lvalue;
+            self = emit_iftableitem(self, sym_table, lineno);   //On the base case, lvalue is expr::type::NEW_TABLE_E. Emit a quad::type::tablegetelem if lvalue is a table element.
+            table_item = expr::make_table_item(self->sym_entry, meth_call->get_name()); //get the lvalue.csuffix as an expr*
+            lvalue = emit_iftableitem(table_item, sym_table, lineno);   //Will always emit a quad::type::tablegetelem since table_item is of expr::type::TABLE_ITEM_E.
+
+            csuffix->get_elist().push_front(self);
         }
-		return handle_call_rule(lvalue, call_suffix->get_elist(), sym_table, lineno);
+		return handle_call_rule(lvalue, csuffix->get_elist(), sym_table, lineno);
 	}
 	expr* Manage_call__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_normcall(symbol_table &sym_table, unsigned int lineno,
-                                                                           symbol_table::func_entry *funcdef, norm_call *norm_call) {
+                                                                           symbol_table::func_entry *funcdef, norm_call *ncall) {
 		fprintf(yyout, "call -> (funcdef) (elist)\n");
 		expr *func = expr::make_expr(expr::type::PROGRAM_FUNC_E);
 		func->sym_entry = funcdef;
-		return handle_call_rule(func, norm_call->get_elist(), sym_table, lineno);
+		return handle_call_rule(func, ncall->get_elist(), sym_table, lineno);
 	}
 
 	/* Manage_callsuffix() */
@@ -767,10 +779,10 @@ namespace syntax_analyzer {
 	}
 
 	/* Manage_elist() */
-    deque<expr*> Manage_tmp_elist__tmp_elist_COMMA_expr(deque<expr*> const &tmp_elist, expr *expr) {
+    deque<expr*> Manage_tmp_elist__tmp_elist_COMMA_expr(deque<expr*> const &tmp_elist, expr *e) {
 		fprintf(yyout, "tmp_elist -> tmp_elist , expr\n");
 		deque<expr*> ret_val = tmp_elist;
-		ret_val.push_back(expr);
+		ret_val.push_back(e);
 
 		return ret_val;
 	}
@@ -782,42 +794,65 @@ namespace syntax_analyzer {
 		fprintf(yyout, "elist -> <empty>\n");
 		return deque<expr*>();  //empty double ended queue
 	}
-    deque<expr*> Manage_elist__expr_tmp_elist(expr *expr, deque<expr*> const &tmp_elist) {
+    deque<expr*> Manage_elist__expr_tmp_elist(expr *e, deque<expr*> const &tmp_elist) {
         fprintf(yyout, "elist -> expr tmp_elist\n");
         deque<expr*> ret_val = tmp_elist;
-        ret_val.push_front(expr);
+        ret_val.push_front(e);
 
         return ret_val;
     }
 
 	/* Manage_objectdef()*/
-	void_t Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET(){
+	expr* Manage_objectdef__LEFT_BRACKET_elist_RIGHT_BRACKET(symbol_table &sym_table, unsigned int lineno, deque<expr*> const &elist) {
 		fprintf(yyout, "objectdef -> [ elist ]\n");
-		return void_value;
+		expr *table = expr::make_expr(expr::type::NEW_TABLE_E);
+
+		table->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+		icode_gen.emit_quad(new quad(quad::iopcode::tablecreate, nullptr, table, nullptr, lineno));
+
+		int i=0;
+		for(expr *e : elist) {
+			icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, e, table, expr::make_const_num(i), lineno));
+			i++;
+		}
+		return table;
 	}
-	void_t Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET(){
+	expr* Manage_objectdef__LEFT_BRACKET_indexed_RIGHT_BRACKET(symbol_table &sym_table, unsigned int lineno, deque<pair<expr*, expr*>>const &indexed) {
 		fprintf(yyout, "objectdef -> [ indexed ]\n");
-		return void_value;
+		expr *table = expr::make_expr(expr::type::NEW_TABLE_E);
+
+		table->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
+		icode_gen.emit_quad(new quad(quad::iopcode::tablecreate, nullptr, table, nullptr, lineno));
+
+		for(auto const &p : indexed)
+			icode_gen.emit_quad(new quad(quad::iopcode::tablesetelem, p.second, table, p.first, lineno));
+
+		return table;
 	}
 
 	/* Manage_indexed */
-	void_t Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem(){
-		fprintf(yyout, "indexed -> indexedelem,...,indexedelem\n");
-		return void_value;
+    deque<pair<expr*, expr*>> Manage_tmp_indexed__tmp_indexed_COMMA_indexedelem(deque<pair<expr*, expr*>> const &tmp_indexed, pair<expr*, expr*> const &indexedelem) {
+		fprintf(yyout, "tmp_indexed -> tmp_indexed, indexelem\n");
+
+        deque<pair<expr*, expr*>> result = tmp_indexed;
+        result.push_back(indexedelem);
+		return result;
 	}
-	void_t Manage_tmp_indexed_empty(){
-		fprintf(yyout, "indexed -> indexedelem\n");
-		return void_value;
+    deque<pair<expr*, expr*>> Manage_tmp_indexed__empty() {
+		fprintf(yyout, "tmp_indexed -> <empty>\n");
+		return deque<pair<expr*, expr*>>(); //empty double ended queue
 	}
-    void_t Manage_indexed__indexedelem_tmp_indexed() {
+    deque<pair<expr*, expr*>> Manage_indexed__indexedelem_tmp_indexed(pair<expr*, expr*> const &indexedelem, deque<pair<expr*, expr*>> const &tmp_indexed) {
         fprintf(yyout, "indexed -> indexelem tmp_indexed\n");
-        return void_value;
+        deque<pair<expr*, expr*>> result = tmp_indexed;
+        result.push_front(indexedelem);
+        return result;
     }
 
 	/* Manage_indexedelem() */
-	void_t Manage_indexedelem_LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE(){
+    pair<expr*, expr*> Manage_indexedelem__LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE(expr *left_expr, expr *right_expr) {
 		fprintf(yyout, "indexedelem -> { expr : expr }\n");
-		return void_value;
+        return pair<expr*, expr*>(left_expr, right_expr);
 	}
 
 	/* Manage_block() */

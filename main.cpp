@@ -4,8 +4,11 @@
 #include "alpha_lex/alpha_flex.h"
 #include "syntax_analyzer/symbol_table.h"
 #include "syntax_analyzer/alpha_bison.h"
+#include "intermediate_code/icode_generator.h"
 
 using namespace std;
+
+extern intermediate_code::icode_generator icode_gen;
 
 int main (int argc, char *argv[]) {
     int ret_val;
@@ -36,14 +39,20 @@ int main (int argc, char *argv[]) {
 
     try {
         ret_val = yyparse(sym_table);
-        fprintf(yyout, "%s", sym_table.to_string().c_str());
+        fprintf(yyout, "%s\n", sym_table.to_string().c_str());
+        fprintf(yyout, "%s\n", icode_gen.to_string().c_str());
+
         if(ret_val == 0)
             fprintf(yyout, "EOF reached. Success!\n");
         else
             fprintf(yyout, "Error while parsing. yyparse returned %d\n", ret_val);
     } catch(runtime_error &err) {
-        cerr << "Current Symbol Table Is: " << endl;
+        cerr << "Current Symbol Table Is:" << endl;
         cerr << sym_table;
+
+        cerr << "Quads Emitted:" << endl;
+        cerr << icode_gen;
+
         cerr << err.what() << endl;
         cerr << "Parsing Failed" << endl;
     }

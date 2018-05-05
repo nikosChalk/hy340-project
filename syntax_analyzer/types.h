@@ -32,8 +32,14 @@ namespace syntax_analyzer {
 
         intermediate_code::expr *exprPtr;   //expr, lvalue, member, primary, assignexpr, term, call, objectdef, const
         std::deque<intermediate_code::expr*> dequeExpr; //double ended queue. Used for elist and tmp_elist
+        std::deque<std::pair<intermediate_code::expr*, intermediate_code::expr*>> dequeExprPair;    //indexed, tmp_indexed
 
-        intermediate_code::call_suffix *callSuffixPtr;  //methodcall, normcall, callsuffix
+        std::pair<intermediate_code::expr*, intermediate_code::expr*> exprPair; //indexedelem
+
+        intermediate_code::call_suffix *callSuffixPtr;  //callsuffix
+        intermediate_code::norm_call    *normCallPtr;   //normcall
+        intermediate_code::method_call  *methodCallPtr; //methodcall
+
 		intermediate_code::for_prefix *forPrefixPtr;	//forprefix
 
         std::vector<unsigned int> uIntVector;   /*break, continue*/

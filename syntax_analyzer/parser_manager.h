@@ -98,7 +98,8 @@ namespace syntax_analyzer {
 	intermediate_code::expr* Manage_term__lvalue_MINUS_MINUS(symbol_table &sym_table, unsigned int lineno, intermediate_code::expr *lvalue);
 	intermediate_code::expr* Manage_term__primary           (intermediate_code::expr *primary);
 
-    intermediate_code::expr* Manage_assignexpr__lvalue_ASSIGN_expr(symbol_table::entry::lvalue_type lvalueType, unsigned int lineno);
+    intermediate_code::expr* Manage_assignexpr__lvalue_ASSIGN_expr(symbol_table &sym_table, unsigned int lineno,
+                                                                   intermediate_code::expr *lvalue, intermediate_code::expr *right_expr);
 
     intermediate_code::expr* Manage_primary__lvalue(symbol_table &sym_table, unsigned int lineno, intermediate_code::expr *lvalue);
     intermediate_code::expr* Manage_primary__call(intermediate_code::expr *call);
@@ -119,21 +120,24 @@ namespace syntax_analyzer {
 	intermediate_code::expr* Manage_lvalue__DOUBLE_COLON_IDENTIFIER(const symbol_table &sym_table, const std::string &identifier, unsigned int lineno);
     intermediate_code::expr* Manage_lvalue__member(intermediate_code::expr *member);
 
-    intermediate_code::expr* Manage_member__lvalue_DOT_IDENTIFIER();
-    intermediate_code::expr* Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET();
-    intermediate_code::expr* Manage_member__call_DOT_IDENTIFIER();
-    intermediate_code::expr* Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();
+    intermediate_code::expr* Manage_member__lvalue_DOT_IDENTIFIER(symbol_table &sym_table, unsigned int lineno,
+                                                                  intermediate_code::expr *lvalue, const std::string &id);
+
+    intermediate_code::expr* Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET(symbol_table &sym_table, unsigned int lineno,
+                                                                                   intermediate_code::expr *lvalue, intermediate_code::expr *expr);
+	intermediate_code::expr* Manage_member__call_DOT_IDENTIFIER(symbol_table &sym_table, unsigned int lineno, intermediate_code::expr *call, const std::string &id);
+	intermediate_code::expr* Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET(symbol_table &sym_table, unsigned int lineno, intermediate_code::expr* call, intermediate_code::expr* expr);
 
 	/* Manage_call() */
     intermediate_code::expr* Manage_call__call_normcall(symbol_table &sym_table, unsigned int lineno,
-                                                        intermediate_code::expr *call, intermediate_code::norm_call *norm_call);
+                                                        intermediate_code::expr *call, intermediate_code::norm_call *ncall);
 
     intermediate_code::expr* Manage_call__lvalue_callsuffix(symbol_table &sym_table, unsigned int lineno,
-                                                            intermediate_code::expr *lvalue, intermediate_code::call_suffix *call_suffix);
+                                                            intermediate_code::expr *lvalue, intermediate_code::call_suffix *csuffix);
 
     intermediate_code::expr* Manage_call__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_normcall(symbol_table &sym_table, unsigned int lineno,
                                                                                              symbol_table::func_entry *funcdef,
-                                                                                             intermediate_code::norm_call *norm_call);
+                                                                                             intermediate_code::norm_call *ncall);
 
 	/* Manage_callsuffix() */
 	intermediate_code::call_suffix* Manage_callsuffix__normcall(intermediate_code::norm_call* norm_call);
@@ -155,16 +159,21 @@ namespace syntax_analyzer {
                                                                       std::deque<intermediate_code::expr*> const &tmp_elist);
 
 	/* Manage_objectdef()*/
-    intermediate_code::expr* Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET();
-    intermediate_code::expr* Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET();
+    intermediate_code::expr* Manage_objectdef__LEFT_BRACKET_elist_RIGHT_BRACKET(symbol_table &sym_table, unsigned int lineno,
+                                                                                std::deque<intermediate_code::expr*> const &elist);
+
+    intermediate_code::expr* Manage_objectdef__LEFT_BRACKET_indexed_RIGHT_BRACKET(symbol_table &sym_table, unsigned int lineno,
+                                                                                  std::deque<std::pair<intermediate_code::expr*, intermediate_code::expr*>>const &indexed);
 
 	/* Manage_indexed() */
-	void_t Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem();
-	void_t Manage_tmp_indexed_empty();
-    void_t Manage_indexed__indexedelem_tmp_indexed();
+	std::deque<std::pair<intermediate_code::expr*, intermediate_code::expr*>> Manage_tmp_indexed__tmp_indexed_COMMA_indexedelem(std::deque<std::pair<intermediate_code::expr*,intermediate_code::expr*>> const &tmp_indexed,
+                                                                                                                                std::pair<intermediate_code::expr*, intermediate_code::expr*> const &indexedelem);
+    std::deque<std::pair<intermediate_code::expr*, intermediate_code::expr*>> Manage_tmp_indexed__empty();
+    std::deque<std::pair<intermediate_code::expr*, intermediate_code::expr*>> Manage_indexed__indexedelem_tmp_indexed(std::pair<intermediate_code::expr*, intermediate_code::expr*> const &indexedelem,
+                                                                                                                      std::deque<std::pair<intermediate_code::expr*, intermediate_code::expr*>> const &tmp_indexed);
 
 	/* Manage_indexedelem() */
-	void_t Manage_indexedelem_LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE();
+    std::pair<intermediate_code::expr*, intermediate_code::expr*> Manage_indexedelem__LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE(intermediate_code::expr *left_expr, intermediate_code::expr *right_expr);
 
 	/* Manage_block() */
     void_t Manage_stmts__stmts_stmt();

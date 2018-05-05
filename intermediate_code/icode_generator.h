@@ -4,7 +4,7 @@
 #define HY340_PROJECT_ICODE_GENERATOR_H
 
 #include <vector>
-#include "types.h"
+#include "quad.h"
 #include "../syntax_analyzer/hidden_var_handler.h"
 
 namespace intermediate_code {
@@ -50,6 +50,14 @@ namespace intermediate_code {
          * @return The label of the next quad which will be emitted
          */
         unsigned int next_quad_label() const;
+
+        /**
+         * Returns a string representation of this object
+         * @return The string representation
+         */
+        std::string to_string() const;
+
+        friend std::ostream& operator<<(std::ostream &os, const icode_generator &igen);
 
     private:
         std::vector<quad*> quad_vector;

@@ -10,14 +10,18 @@
 	#include <iostream>
 	#include <stack>
 	#include "parser_manager.h"
+	#include "../intermediate_code/icode_generator.h"
 
 	using namespace syntax_analyzer;
+	using namespace intermediate_code;
 
 	extern int yylex();
 	extern int yylineno;
 	extern char *yytext;
 
 	int yyerror (const symbol_table &sym_table, char const *msg);
+
+	icode_generator icode_gen = icode_generator();
 %}
 
 /* bison parameters */
@@ -45,12 +49,16 @@
 /* type declaration of non-terminal symbols, defined by the grammar */
 %type <strVector> idlist
 %type <funcEntryPtr> funcdef
-%type <exprPtr> expr lvalue member primary assignexpr term call objectdef const
+%type <exprPtr> expr lvalue member primary assignexpr call term objectdef const
+%type <exprPair> indexedelem
 %type <dequeExpr> elist
-%type <callSuffixPtr> callsuffix normcall methodcall
+%type <dequeExprPair> indexed
+%type <normCallPtr> normcall
+%type <methodCallPtr> methodcall
+%type <callSuffixPtr> callsuffix
 
 %type <voidVal> program stmt
-%type <voidVal> indexed indexedelem block
+%type <voidVal> block
 %type <voidVal> ifstmt whilestmt forstmt returnstmt
 
 /* type declaration of non-terminal helper symbols, defined by us */
@@ -60,12 +68,12 @@
 %type <unsignedIntVal> ifprefix elseprefix whilecond
 %type <funcEntryPtr> funcprefix
 %type <dequeExpr> tmp_elist
+%type <dequeExprPair> tmp_indexed
 %type <unsignedIntVal> log_next_quad emit_incomplete_jmp
 %type <forPrefixPtr> forprefix
 
 %type <voidVal> breakstmt continuestmt
 %type <voidVal> funcargs
-%type <voidVal> tmp_indexed
 %type <voidVal> block_open stmts block_close
 
 /* Define the priority of tokens */
@@ -106,13 +114,13 @@ returnstmt:	RETURN SEMICOLON		{$$ = Manage_returnstmt__RETURN_SEMICOLON(yylineno
 			| RETURN expr SEMICOLON	{$$ = Manage_returnstmt__RETURN_expr_SEMICOLON($2, yylineno);}
 			;
 
-breakstmt:	BREAK SEMICOLON	{$$ = Manage_breakstmt__BREAK_SEMICOLON();}
-		;
-
-continuestmt:	CONTINUE SEMICOLON	{$$ = Manage_continuestmt__CONTINUE_SEMICOLON();}
+breakstmt:	BREAK SEMICOLON	{$$ = Manage_breakstmt__BREAK_SEMICOLON(yylineno);}
 			;
 
-expr:	assignexpr 			{$$ = Manage_expr__assignexpr();}
+continuestmt:	CONTINUE SEMICOLON	{$$ = Manage_continuestmt__CONTINUE_SEMICOLON(yylineno);}
+			;
+
+expr:	assignexpr 			{$$ = Manage_expr__assignexpr($1);}
     	| expr PLUS expr 	{$$ = Manage_expr__expr_PLUS_expr	(sym_table, yylineno, $1,$3);}
 		| expr MINUS expr 	{$$ = Manage_expr__expr_MINUS_expr	(sym_table, yylineno, $1,$3);} 
 		| expr MUL expr 	{$$ = Manage_expr__expr_MUL_expr	(sym_table, yylineno, $1,$3);}
@@ -139,10 +147,10 @@ term:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS		{$$ = Manage_term__LEFT_PARENTHES
 		| primary 									{$$ = Manage_term__primary($1);}
 		;
 
-assignexpr:	lvalue ASSIGN expr {$$ = Manage_assignexpr__lvalue_ASSIGN_expr($1, yylineno);}
+assignexpr:	lvalue ASSIGN expr {$$ = Manage_assignexpr__lvalue_ASSIGN_expr(sym_table, yylineno, $1, $3);}
 			;
 
-primary:	lvalue											{$$ = Manage_primary__lvalue($1); }
+primary:	lvalue											{$$ = Manage_primary__lvalue(sym_table, yylineno, $1); }
 			| call											{$$ = Manage_primary__call($1); }
 			| objectdef										{$$ = Manage_primary__objectdef($1); }
 			| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS	{$$ = Manage_primary__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS($2); }
@@ -155,13 +163,13 @@ lvalue:	IDENTIFIER					{$$ = Manage_lvalue__IDENTIFIER(sym_table, $1, yylineno);
 		| member					{$$ = Manage_lvalue__member($1); }
 		;
 
-member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER($1, $3);}
-		| lvalue LEFT_BRACKET expr RIGHT_BRACKET	{$$=Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET($1, $3);}
-		| call DOT IDENTIFIER						{$$=Manage_member__call_DOT_IDENTIFIER();}
-		| call LEFT_BRACKET expr RIGHT_BRACKET		{$$=Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET();}
+member:	lvalue DOT IDENTIFIER						{$$=Manage_member__lvalue_DOT_IDENTIFIER(sym_table, yylineno, $1, $3);}
+		| lvalue LEFT_BRACKET expr RIGHT_BRACKET	{$$=Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET(sym_table, yylineno, $1, $3);}
+		| call DOT IDENTIFIER						{$$=Manage_member__call_DOT_IDENTIFIER(sym_table, yylineno, $1, $3);}
+		| call LEFT_BRACKET expr RIGHT_BRACKET		{$$=Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET(sym_table, yylineno, $1, $3);}
 		;
 
-call:	call normcall	{$$ = Manage_call__call_normcall(sym_table, yylineno, $1, $2;}
+call:	call normcall	{$$ = Manage_call__call_normcall(sym_table, yylineno, $1, $2);}
 		| lvalue callsuffix								{$$ = Manage_call__lvalue_callsuffix(sym_table, yylineno, $1, $2);}
 		| LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS normcall	{$$ = Manage_call__LEFT_PARENTHESIS_funcdef_RIGHT_PARENTHESIS_normcall(sym_table, yylineno, $2, $4);}
 		;
@@ -184,18 +192,18 @@ elist:	expr tmp_elist	{$$ = Manage_elist__expr_tmp_elist($1, $2);}
 		| %empty 		{$$ = Manage_elist__empty();}
 		;
 
-objectdef:	LEFT_BRACKET elist RIGHT_BRACKET		{$$ = Manage_objectdef_LEFT_BRACKET_elist_RIGHT_BRACKET();}
-			| LEFT_BRACKET indexed RIGHT_BRACKET	{$$ = Manage_objectdef_LEFT_BRACKET_indexed_RIGHT_BRACKET();}
+objectdef:	LEFT_BRACKET elist RIGHT_BRACKET		{$$ = Manage_objectdef__LEFT_BRACKET_elist_RIGHT_BRACKET(sym_table, yylineno, $2);}
+			| LEFT_BRACKET indexed RIGHT_BRACKET	{$$ = Manage_objectdef__LEFT_BRACKET_indexed_RIGHT_BRACKET(sym_table, yylineno, $2);}
 			;
 
-tmp_indexed:	tmp_indexed COMMA indexedelem	{$$ = Manage_tmp_indexed_tmp_indexed_COMMA_indexedelem();}
-				|%empty							{$$ = Manage_tmp_indexed_empty();}
+tmp_indexed:	tmp_indexed COMMA indexedelem	{$$ = Manage_tmp_indexed__tmp_indexed_COMMA_indexedelem($1, $3);}
+				|%empty							{$$ = Manage_tmp_indexed__empty();}
 				;
 
-indexed:	indexedelem tmp_indexed	{$$ = Manage_indexed__indexedelem_tmp_indexed();}
+indexed:	indexedelem tmp_indexed	{$$ = Manage_indexed__indexedelem_tmp_indexed($1, $2);}
 			;
 
-indexedelem:	LEFT_BRACE expr COLON expr RIGHT_BRACE {$$ = Manage_indexedelem_LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE();}
+indexedelem:	LEFT_BRACE expr COLON expr RIGHT_BRACE {$$ = Manage_indexedelem__LEFT_BRACE_expr_COLON_expr_RIGHT_BRACE($2, $4);}
 				;
 
 block_open:		LEFT_BRACE	{$$ = Manage_block_open__LEFT_BRACE();}

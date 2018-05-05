@@ -66,14 +66,14 @@ namespace intermediate_code {
              * is the unknown label to jump to.
              * @return The truelist
              */
-            const std::vector& get_truelist() const;
+            const std::vector<unsigned int>& get_truelist() const;
 
             /**
              * Returns the falselist. The falselist is a vector of quad numbers of incomplete instructions: "jump ??" where ?? is the unknown
              * label to jump to. Those jumps are after the instructions "if_relop ..." mentioned in the get_truelist()
              * @return The falselist
              */
-            const std::vector& get_falselist() const;
+            const std::vector<unsigned int>& get_falselist() const;
 
         private:
 
@@ -81,7 +81,7 @@ namespace intermediate_code {
             std::vector<unsigned int> falselist;
         };
 
-        type type;
+        type expr_type;
         syntax_analyzer::symbol_table::entry *sym_entry;
         expr *index;            //used by TABLE_ITEM_E exprs to indicate their index within the table
         struct act_as_union {   //c++ does not allow objects within unions
@@ -102,10 +102,30 @@ namespace intermediate_code {
         static expr* make_lvalue_expr(syntax_analyzer::symbol_table::entry *sym_entry);
 
         /**
+         * Creates a new expr of type::TABLE_ITEM_E. This is used whenever we want a table's element as an expr*
+         * Caller is responsible to free the returned object.
+         *
+         * @param sym_entry A symbol table entry pointing to the table
+         * @param index The index that the returned expr has within the table.
+         * @return A pointer to the new expr
+         */
+        static expr* make_table_item(syntax_analyzer::symbol_table::entry *sym_entry, expr *index);
+
+        /**
+         * Creates a new expr of type::TABLE_ITEM_E. This is used whenever we want a table's element as an expr*
+         * Caller is responsible to free the returned object.
+         *
+         * @param sym_entry A symbol table entry pointing to the table
+         * @param id The string index that the returned expr has within the table. (e.g. "x" if we have "table.x")
+         * @return A pointer to the new expr
+         */
+        static expr* make_table_item(syntax_analyzer::symbol_table::entry *sym_entry, const std::string &id);
+
+        /**
          * Creates a new generic expr with the given type and nullptr sym_entry and index
          * @return A pointer to the new expr
          */
-        static expr* make_expr(type type);
+        static expr* make_expr(type t);
 
         /**
          * Creates a new expr for the given constant num. Caller is responsible to free the returned object.
@@ -145,6 +165,12 @@ namespace intermediate_code {
          * @return True if it can participate. False otherwise.
          */
         bool can_participate_in_relop() const;
+
+        /**
+         * Returns a string representation of this object
+         * @return The string representation
+         */
+        std::string to_string() const;
 
     private:
         /**
