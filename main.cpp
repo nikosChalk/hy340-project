@@ -36,7 +36,7 @@ int main (int argc, char *argv[]) {
             cout << "Using output file: " << argv[2] << endl;
         }
     }
-    
+
     try {
         ret_val = yyparse(sym_table);
         fprintf(yyout, "%s\n", sym_table.to_string().c_str());
