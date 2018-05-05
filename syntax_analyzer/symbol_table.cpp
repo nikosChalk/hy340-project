@@ -99,7 +99,7 @@ namespace syntax_analyzer {
 
     /* ~~~~~~ symbol_table::func_entry implementation ~~~~~~ */
     symbol_table::func_entry::func_entry(unsigned int scope, unsigned int line, const string &name, sym_type symbol_type, unsigned int iaddress)
-        : entry(scope, line, (name.empty() ? ("__gfunc" + std::to_string(generic_names++)) : name), symbol_type) {
+        : entry(scope, line, (name.empty() ? ("_gfunc" + std::to_string(generic_names++)) : name), symbol_type) {
         if(symbol_type != LIB_FUNC && symbol_type != USER_FUNC)
             throw std::runtime_error("Invalid symbol type");
         this->iaddress = iaddress;

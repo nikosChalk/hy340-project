@@ -12,7 +12,7 @@ hidden_var_handler::hidden_var_handler() {
 
 symbol_table::entry* hidden_var_handler::make_new(symbol_table &sym_table, scope_handler &scope_handler, unsigned int lineno) {
     unsigned int scope = scope_handler.get_current_scope();
-    string hidden_var_id = "__t" + to_string(count);  //hidden variables are always locals
+    string hidden_var_id = "_t" + to_string(count);  //hidden variables are always locals
     vector<symbol_table::entry *> const &local_entries = sym_table.lookup(hidden_var_id, scope);
 
     if (local_entries.empty()) {

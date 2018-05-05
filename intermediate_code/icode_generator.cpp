@@ -35,21 +35,31 @@ unsigned int icode_generator::next_quad_label() const {
     return (unsigned int)quad_vector.size();
 }
 
+#define MAX_TABS string("\t\t\t")
+#define MAX_TABS_COUNT (MAX_TABS).length()
+#define TAB(str) (string(MAX_TABS_COUNT - ((str).length()/8), '\t'))
 std::string icode_generator::to_string() const {
     stringstream ss;
+    const string splitter = "----------------------------------------------------------------------------------------------------------------";
 
-    const string sp = " \t\t";
-    const string splitter = "---------------------------------------------------------------------------------------------";
-
-    ss << "quad#" << sp << "opcode" << sp << "result" << sp << "arg1" << sp << "arg2" << "label" << endl;
+    ss << "quad#" << "\t" << "opcode" << MAX_TABS << "result" << MAX_TABS << "arg1" << MAX_TABS << "arg2" << MAX_TABS << "label" << endl;
     ss <<  splitter << endl;
+
+    int quadno_counter = 0;
     for(quad const *q : this->quad_vector) {
+        string iopcode_str = quad::iopcode_to_str(q->opcode);
         string arg1_str = (q->arg1 == nullptr) ? "" : q->arg1->to_string();
         string arg2_str = (q->arg2 == nullptr) ? "" : q->arg2->to_string();
-        string res_str = (q->result == nullptr) ? "" : q->result->to_string();
+        string res_str = (q->result == nullptr) ? "" : q->result->to_string();;
 
-        ss << quad::iopcode_to_str(q->opcode) << sp << res_str << sp
-           << arg1_str << sp << arg2_str << sp << std::to_string(q->label) << endl;
+        ss << std::to_string(quadno_counter) << ":" << "\t"
+           << iopcode_str << TAB(iopcode_str)
+           << res_str << TAB(res_str)
+           << arg1_str << TAB(arg1_str)
+           << arg2_str << TAB(arg2_str)
+           << std::to_string(q->label)
+           << endl;
+        quadno_counter++;
     }
     ss << splitter << endl;
     return ss.str();
