@@ -9,32 +9,32 @@ using namespace intermediate_code;
 
 std::string quad::iopcode_to_str(intermediate_code::quad::iopcode iopcode) {
     switch(iopcode) {
-        case iopcode::assign:   return "assign";
-        case iopcode::add:      return "add";
-        case iopcode::sub:      return "sub";
-        case iopcode::mul:      return "mul";
-        case iopcode::div:      return "div";
-        case iopcode::mod:      return "mod";
-        case iopcode::uminus:   return "uminus";
-        case iopcode::logical_and:  return "and";
-        case iopcode::logical_or:   return "or";
-        case iopcode::logical_not:  return "not";
-        case iopcode::if_eq:        return "if_eq";
-        case iopcode::if_noteq:     return "if_noteq";
-        case iopcode::if_lesseq:    return "if_lesseq";
-        case iopcode::if_greatereq: return "if_greatereq";
-        case iopcode::if_less:      return "if_less";
-        case iopcode::if_greater:   return "if_greater";
-        case iopcode::call:         return "call";
-        case iopcode::param:        return "param";
-        case iopcode::ret:          return "ret";
-        case iopcode::getretval:    return "getretval";
-        case iopcode::funcstart:    return "funcstart";
-        case iopcode::funcend:      return "funcend";
-        case iopcode::tablecreate:  return "tablecreate";
-        case iopcode::tablegetelem: return "tablegetelem";
-        case iopcode::tablesetelem: return "tablesetelem";
-        case iopcode::jump:         return "jump";
+	case quad::iopcode::assign:   return "assign";
+	case quad::iopcode::add:      return "add";
+	case quad::iopcode::sub:      return "sub";
+	case quad::iopcode::mul:      return "mul";
+	case quad::iopcode::div:      return "div";
+	case quad::iopcode::mod:      return "mod";
+	case quad::iopcode::uminus:   return "uminus";
+	case quad::iopcode::logical_and:  return "and";
+	case quad::iopcode::logical_or:   return "or";
+	case quad::iopcode::logical_not:  return "not";
+	case quad::iopcode::if_eq:        return "if_eq";
+	case quad::iopcode::if_noteq:     return "if_noteq";
+	case quad::iopcode::if_lesseq:    return "if_lesseq";
+	case quad::iopcode::if_greatereq: return "if_greatereq";
+	case quad::iopcode::if_less:      return "if_less";
+	case quad::iopcode::if_greater:   return "if_greater";
+	case quad::iopcode::call:         return "call";
+	case quad::iopcode::param:        return "param";
+	case quad::iopcode::ret:          return "ret";
+	case quad::iopcode::getretval:    return "getretval";
+	case quad::iopcode::funcstart:    return "funcstart";
+	case quad::iopcode::funcend:      return "funcend";
+	case quad::iopcode::tablecreate:  return "tablecreate";
+	case quad::iopcode::tablegetelem: return "tablegetelem";
+	case quad::iopcode::tablesetelem: return "tablesetelem";
+	case quad::iopcode::jump:         return "jump";
         default:
             assert(false);  //unreachable statement
     }
