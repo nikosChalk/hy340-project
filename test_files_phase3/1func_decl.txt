@@ -1,10 +1,10 @@
-z = x + y;
+//z = x + y;
 function f(a,b) { return a+b; }
 function g() {function h() {} }
 x = g;
 x = (function() {});
 x = (function(a,b){ return a+b;});
-(function() {})();
+(function(z,w,q) {})(5, true, q);
 
 /*
 ~~~ VM okeanos ~~~
@@ -19,7 +19,7 @@ x = (function(a,b){ return a+b;});
 6: add ^0 a b [line 2]
 7: return ^0 [line 2]
 8: jump 9 [line 2]
-9: funcend f [line 2]
+9: funcend f [line 2]tablesetelem		x			_t0			b
 
 10: jump 16 [line 3]
 11: funcstart g [line 3]

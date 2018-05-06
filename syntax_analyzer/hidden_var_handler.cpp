@@ -12,7 +12,7 @@ hidden_var_handler::hidden_var_handler() {
 
 symbol_table::entry* hidden_var_handler::make_new(symbol_table &sym_table, scope_handler &scope_handler, unsigned int lineno) {
     unsigned int scope = scope_handler.get_current_scope();
-    string hidden_var_id = "_t" + to_string(count);  //hidden variables are always locals
+    string hidden_var_id = "_t" + to_string(count++);  //hidden variables are always locals
     vector<symbol_table::entry *> const &local_entries = sym_table.lookup(hidden_var_id, scope);
 
     if (local_entries.empty()) {
@@ -20,8 +20,6 @@ symbol_table::entry* hidden_var_handler::make_new(symbol_table &sym_table, scope
                 scope, lineno, hidden_var_id, symbol_table::entry::LOCAL, scope_handler.get_current_ss(), scope_handler.fetch_and_incr_cur_ssoffset()
         );
         sym_table.insert(new_hidden_var);
-        count++;
-
         return new_hidden_var;
     } else {
         assert(local_entries.size() == 1); //only one visible hidden var should exist with the hidden_var_id

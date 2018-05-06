@@ -6,10 +6,7 @@ using namespace std;
 using namespace intermediate_code;
 
 call_suffix::call_suffix(call_suffix::type suffix_type, const deque<expr*> &elist) {
-    this->elist = deque<expr*>();
-
-    for(auto it=elist.begin(); it!=elist.end(); it++)
-        this->elist.push_front(*it);
+    this->elist = elist;
     this->suffix_type = suffix_type;
 }
 

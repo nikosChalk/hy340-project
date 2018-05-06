@@ -1,7 +1,7 @@
 x = f();
 while (x) {
 	function g() {
-		break;
+//		break;
 		while(true){
 			continue;
 		}

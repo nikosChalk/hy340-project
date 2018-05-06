@@ -168,7 +168,7 @@ namespace syntax_analyzer {
      *
      * @throws intermediate_code::semantic_error if arg1 and arg2 cannot participate in a relational operation
      */
-    static expr* handle_expr_relop_expr(quad::iopcode iopcode, expr *arg1, expr *arg2, symbol_table &sym_table, unsigned int lineno) {
+    static expr* handle_expr_relop_expr(quad::iopcode iopcode, expr *arg1, expr *arg2, unsigned int lineno) {
         assert(arg1 && arg2);
 
         switch(iopcode) {
@@ -218,11 +218,10 @@ namespace syntax_analyzer {
             result = expr::make_const_bool(const_val);
         } else {
             result = expr::make_expr(expr::type::BOOL_E);
-            result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
 
             result->short_circ_extn.append_to_truelist(icode_gen.next_quad_label());
             result->short_circ_extn.append_to_falselist(icode_gen.next_quad_label()+1);
-            icode_gen.emit_quad(new quad(iopcode, result, arg1, arg2, lineno), 0);  //if relop is true, goto ... (wait for short-circuit backpatching)
+            icode_gen.emit_quad(new quad(iopcode, nullptr, arg1, arg2, lineno), 0);  //if relop is true, goto ... (wait for short-circuit backpatching)
             icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);   //else
         }
 
@@ -321,9 +320,10 @@ namespace syntax_analyzer {
     }
 
     /**
-     * Handles the quad emit for the reduction of grammar rules "expr->expr logicalop expr" where logicalop
-     * is either AND or the OR token. Note that if short-circuit evaluation is followed.
-     * The left operand is considered to be arg1 and the right operand to be arg2.
+     * Handles the quad emit for the reduction of grammar rules "expr-> (and_prefix | or_prefix) logicalop expr" where logicalop
+     * is either AND or the OR token. Note that short-circuit evaluation is followed.
+     * The left operand is considered to be arg1 and the right operand to be arg2 and are considered to be already converted
+     * to expr::type::BOOL_E
      *
      * @param iopcode The intermediate opcode for the logical operation. Must be one of the bellow:
      * quad::iopcode::logical_and or logical_or
@@ -345,9 +345,6 @@ namespace syntax_analyzer {
         }
 
         expr *result;
-        convert_expr_to_bool_e(arg1, sym_table, lineno);
-        convert_expr_to_bool_e(arg2, sym_table, lineno);
-
         result = expr::make_expr(expr::type::BOOL_E);
         result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
 
@@ -525,45 +522,59 @@ namespace syntax_analyzer {
     }
 
 	/* relop */
-	expr* Manage_expr__expr_GT_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
+	expr* Manage_expr__expr_GT_expr(unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr > expr\n");
-        return handle_expr_relop_expr(quad::iopcode::if_greater, leftOperand, rightOperand, sym_table, lineno);
+        return handle_expr_relop_expr(quad::iopcode::if_greater, leftOperand, rightOperand, lineno);
     }
-    expr* Manage_expr__expr_GE_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
+    expr* Manage_expr__expr_GE_expr(unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr >= expr\n");
-        return handle_expr_relop_expr(quad::iopcode::if_greatereq, leftOperand, rightOperand, sym_table, lineno);
+        return handle_expr_relop_expr(quad::iopcode::if_greatereq, leftOperand, rightOperand, lineno);
     }
-    expr* Manage_expr__expr_LT_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
+    expr* Manage_expr__expr_LT_expr(unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr < expr\n");
-        return handle_expr_relop_expr(quad::iopcode::if_less, leftOperand, rightOperand, sym_table, lineno);
+        return handle_expr_relop_expr(quad::iopcode::if_less, leftOperand, rightOperand, lineno);
     }
-    expr* Manage_expr__expr_LE_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
+    expr* Manage_expr__expr_LE_expr(unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr <= expr\n");
-        return handle_expr_relop_expr(quad::iopcode::if_lesseq, leftOperand, rightOperand, sym_table, lineno);
+        return handle_expr_relop_expr(quad::iopcode::if_lesseq, leftOperand, rightOperand, lineno);
     }
-    expr* Manage_expr__expr_EQ_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
+    expr* Manage_expr__expr_EQ_expr(unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr == expr\n");
-        return handle_expr_relop_expr(quad::iopcode::if_eq, leftOperand, rightOperand, sym_table, lineno);
+        return handle_expr_relop_expr(quad::iopcode::if_eq, leftOperand, rightOperand, lineno);
     }
-    expr* Manage_expr__expr_NE_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
+    expr* Manage_expr__expr_NE_expr(unsigned int lineno, expr *leftOperand, expr *rightOperand) {
         fprintf(yyout, "expr -> expr != expr\n");
-        return handle_expr_relop_expr(quad::iopcode::if_noteq, leftOperand, rightOperand, sym_table, lineno);
+        return handle_expr_relop_expr(quad::iopcode::if_noteq, leftOperand, rightOperand, lineno);
     }
 
     /* logicalop */
-    expr* Manage_expr__expr_AND__log_next_quad_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand,
-                                                    expr *rightOperand, unsigned int right_op_first_quadno) {
-        fprintf(yyout, "expr -> expr AND log_next_quad expr\n");
+    expr* Manage_expr__and_prefix_log_next_quad_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand,
+                                                     expr *rightOperand, unsigned int right_op_first_quadno) {
+        fprintf(yyout, "expr -> and_prefix log_next_quad expr\n");
+        convert_expr_to_bool_e(rightOperand, sym_table, lineno);
         return handle_expr_logicalop_expr(quad::iopcode::logical_and, leftOperand, rightOperand, right_op_first_quadno, sym_table, lineno);
     }
-    expr* Manage_expr__expr_OR_log_next_quad_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand,
-                                    unsigned int right_op_first_quadno) {
-        fprintf(yyout, "expr -> expr OR log_next_quad expr\n");
+    expr* Manage_expr__or_prefix_log_next_quad_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand,
+                                                    expr *rightOperand, unsigned int right_op_first_quadno) {
+        fprintf(yyout, "expr -> or_prefix log_next_quad expr\n");
+        convert_expr_to_bool_e(rightOperand, sym_table, lineno);
         return handle_expr_logicalop_expr(quad::iopcode::logical_or, leftOperand, rightOperand, right_op_first_quadno, sym_table, lineno);
     }
     expr* Manage_expr__term(expr *term) {
         fprintf(yyout, "expr -> term\n");
         return term;
+    }
+
+    expr* Manage_and_prefix__expr_AND(symbol_table &sym_table, unsigned int lineno, expr *left_operand) {
+        fprintf(yyout, "and_prefix -> expr AND");
+        convert_expr_to_bool_e(left_operand, sym_table, lineno);
+        return left_operand;
+    }
+
+    expr* Manage_or_prefix__expr_OR(symbol_table &sym_table, unsigned int lineno, expr *left_operand) {
+        fprintf(yyout, "or_prefix -> expr OR");
+        convert_expr_to_bool_e(left_operand, sym_table, lineno);
+        return left_operand;
     }
 
 	expr* Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(expr *expr){
@@ -946,7 +957,7 @@ namespace syntax_analyzer {
 			scope, lineno, id, symbol_table::entry::USER_FUNC, icode_gen.next_quad_label()
 		);
 		sym_table.insert(new_func_entry);
-		icode_gen.emit_quad(new quad(quad::iopcode::funcstart, expr::make_lvalue_expr(new_func_entry), nullptr, nullptr, lineno));
+		icode_gen.emit_quad(new quad(quad::iopcode::funcstart, nullptr, expr::make_lvalue_expr(new_func_entry), nullptr, lineno));
 
         scp_handler.enter_formal_arg_ss();
         scp_handler.increase_scope();
@@ -973,7 +984,7 @@ namespace syntax_analyzer {
         fprintf(yyout, "funcdef -> funcprefix funcargs funcbody\n");
         func_entry->set_total_locals(total_func_locals);
 
-		icode_gen.emit_quad(new quad(quad::iopcode::funcend, expr::make_lvalue_expr(func_entry), nullptr, nullptr, lineno));
+		icode_gen.emit_quad(new quad(quad::iopcode::funcend, nullptr, expr::make_lvalue_expr(func_entry), nullptr, lineno));
         return func_entry;
     }
 
@@ -1137,6 +1148,6 @@ namespace syntax_analyzer {
     unsigned int Manage_emit_incomplete_jmp__empty(unsigned int lineno) {
         fprintf(yyout, "emit_incomplete_jmp -> <empty>\n");
         icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);   //in-complete jump
-        return icode_gen.next_quad_label();
+        return icode_gen.next_quad_label()-1;
     }
 }

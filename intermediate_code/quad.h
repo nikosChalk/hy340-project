@@ -28,7 +28,7 @@ namespace intermediate_code {
             param,  //arg1=parameter, arg2,result=nullptr
             ret,    //arg1=return value, arg2,result=nullptr
             getretval,  //result=return value, arg1,arg2=nullptr
-            funcstart,  funcend,
+            funcstart,  funcend,    //arg1= function that starts/ends, arg2=nullptr, result=nullptr
 
             tablecreate,    //arg1=table to create, arg2=nullptr, result=nullptr
             tablegetelem,   //result=variable to store arg1[arg2], arg1 = table, arg2 = index

@@ -59,34 +59,37 @@ namespace syntax_analyzer {
                                                         intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
 
     /* Manage_expr__expr_relop_expr */
-	intermediate_code::expr* Manage_expr__expr_GT_expr(symbol_table &sym_table, unsigned int lineno,
-                                                       intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
+	intermediate_code::expr* Manage_expr__expr_GT_expr(unsigned int lineno, intermediate_code::expr *leftOperand,
+                                                       intermediate_code::expr *rightOperand);
 
-    intermediate_code::expr* Manage_expr__expr_GE_expr(symbol_table &sym_table, unsigned int lineno,
-                                                       intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
+    intermediate_code::expr* Manage_expr__expr_GE_expr(unsigned int lineno, intermediate_code::expr *leftOperand,
+                                                       intermediate_code::expr *rightOperand);
 
-    intermediate_code::expr* Manage_expr__expr_LT_expr(symbol_table &sym_table, unsigned int lineno,
-                                                       intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
+    intermediate_code::expr* Manage_expr__expr_LT_expr(unsigned int lineno, intermediate_code::expr *leftOperand,
+                                                       intermediate_code::expr *rightOperand);
 
-    intermediate_code::expr* Manage_expr__expr_LE_expr(symbol_table &sym_table, unsigned int lineno,
-                                                       intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
+    intermediate_code::expr* Manage_expr__expr_LE_expr(unsigned int lineno, intermediate_code::expr *leftOperand,
+                                                       intermediate_code::expr *rightOperand);
 
-    intermediate_code::expr* Manage_expr__expr_EQ_expr(symbol_table &sym_table, unsigned int lineno,
-                                                       intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
+    intermediate_code::expr* Manage_expr__expr_EQ_expr(unsigned int lineno, intermediate_code::expr *leftOperand,
+                                                       intermediate_code::expr *rightOperand);
 
-    intermediate_code::expr* Manage_expr__expr_NE_expr(symbol_table &sym_table, unsigned int lineno,
-                                                       intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
+    intermediate_code::expr* Manage_expr__expr_NE_expr(unsigned int lineno, intermediate_code::expr *leftOperand,
+                                                       intermediate_code::expr *rightOperand);
 
     /* Manage_expr__expr_boolop_expr */
-    intermediate_code::expr* Manage_expr__expr_AND__log_next_quad_expr(symbol_table &sym_table, unsigned int lineno,
-                                                                          intermediate_code::expr *leftOperand,
-                                                                          intermediate_code::expr *rightOperand, unsigned int right_op_first_quadno);
-
-    intermediate_code::expr* Manage_expr__expr_OR_log_next_quad_expr(symbol_table &sym_table, unsigned int lineno,
+    intermediate_code::expr* Manage_expr__and_prefix_log_next_quad_expr(symbol_table &sym_table, unsigned int lineno,
                                                                         intermediate_code::expr *leftOperand,
                                                                         intermediate_code::expr *rightOperand, unsigned int right_op_first_quadno);
 
+    intermediate_code::expr* Manage_expr__or_prefix_log_next_quad_expr(symbol_table &sym_table, unsigned int lineno,
+                                                                       intermediate_code::expr *leftOperand,
+                                                                       intermediate_code::expr *rightOperand, unsigned int right_op_first_quadno);
+
     intermediate_code::expr* Manage_expr__term(intermediate_code::expr *expr);
+
+    intermediate_code::expr* Manage_and_prefix__expr_AND(symbol_table &sym_table, unsigned int lineno, intermediate_code::expr *left_operand);
+    intermediate_code::expr* Manage_or_prefix__expr_OR(symbol_table &sym_table, unsigned int lineno, intermediate_code::expr *left_operand);
 
 	/* Manage_term() */
 	intermediate_code::expr* Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS(intermediate_code::expr *expr);

@@ -1,12 +1,12 @@
 if (x+y >= z-w)
-f(x,y,z);
+	f(x,y,z);
 
-if (a || b)
+if (a or b)
     x=y;
 else
     y = z;
 
-if (a || b){
+if (a or b){
     x=y;
 }
 else{

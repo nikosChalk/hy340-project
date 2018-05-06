@@ -66,6 +66,7 @@
 %type <strVal> funcname
 %type <unsignedIntVal> funcbody	/* contains the number of local variables within the function */
 %type <unsignedIntVal> ifprefix elseprefix whilecond
+%type <exprPtr> and_prefix or_prefix
 %type <funcEntryPtr> funcprefix
 %type <dequeExpr> tmp_elist
 %type <dequeExprPair> tmp_indexed
@@ -126,16 +127,22 @@ expr:	assignexpr 			{$$ = Manage_expr__assignexpr($1);}
 		| expr MUL expr 	{$$ = Manage_expr__expr_MUL_expr	(sym_table, yylineno, $1,$3);}
 		| expr DIV expr 	{$$ = Manage_expr__expr_DIV_expr	(sym_table, yylineno, $1,$3);}
 		| expr MOD expr 	{$$ = Manage_expr__expr_MOD_expr	(sym_table, yylineno, $1,$3);}
-		| expr GT expr 		{$$ = Manage_expr__expr_GT_expr		(sym_table, yylineno, $1,$3);}
-		| expr GE expr 		{$$ = Manage_expr__expr_GE_expr		(sym_table, yylineno, $1,$3);}
-		| expr LT expr 		{$$ = Manage_expr__expr_LT_expr		(sym_table, yylineno, $1,$3);}
-		| expr LE expr 		{$$ = Manage_expr__expr_LE_expr		(sym_table, yylineno, $1,$3);}
-		| expr EQ expr 		{$$ = Manage_expr__expr_EQ_expr		(sym_table, yylineno, $1,$3);}
-		| expr NE expr 		{$$ = Manage_expr__expr_NE_expr		(sym_table, yylineno, $1,$3);}
-		| expr AND log_next_quad expr		{$$ = Manage_expr__expr_AND__log_next_quad_expr	(sym_table, yylineno, $1, $4, $3);}
-		| expr OR log_next_quad expr		{$$ = Manage_expr__expr_OR_log_next_quad_expr	(sym_table, yylineno, $1, $4, $3);}
+		| expr GT expr 		{$$ = Manage_expr__expr_GT_expr		(yylineno, $1,$3);}
+		| expr GE expr 		{$$ = Manage_expr__expr_GE_expr		(yylineno, $1,$3);}
+		| expr LT expr 		{$$ = Manage_expr__expr_LT_expr		(yylineno, $1,$3);}
+		| expr LE expr 		{$$ = Manage_expr__expr_LE_expr		(yylineno, $1,$3);}
+		| expr EQ expr 		{$$ = Manage_expr__expr_EQ_expr		(yylineno, $1,$3);}
+		| expr NE expr 		{$$ = Manage_expr__expr_NE_expr		(yylineno, $1,$3);}
+		| and_prefix log_next_quad expr %prec AND	{$$ = Manage_expr__and_prefix_log_next_quad_expr	(sym_table, yylineno, $1, $3, $2);}
+		| or_prefix log_next_quad expr %prec OR		{$$ = Manage_expr__or_prefix_log_next_quad_expr		(sym_table, yylineno, $1, $3, $2);}
 		| term 				{$$ = Manage_expr__term($1);}
 		;
+
+and_prefix:	expr AND	{$$ = Manage_and_prefix__expr_AND(sym_table, yylineno, $1);}
+			;
+
+or_prefix:	expr OR		{$$ = Manage_or_prefix__expr_OR(sym_table, yylineno, $1);}
+			;
 
 term:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS		{$$ = Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS($2);}
     	| MINUS expr %prec UMINUS 					{$$ = Manage_term__MINUS_expr			(sym_table, yylineno, $2);}	/* Special precedence for this rule */
