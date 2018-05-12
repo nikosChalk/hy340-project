@@ -346,7 +346,6 @@ namespace syntax_analyzer {
 
         expr *result;
         result = expr::make_expr(expr::type::BOOL_E);
-        result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
 
         if(iopcode == quad::iopcode::logical_and) {
             icode_gen.patch_label(arg1->short_circ_extn.get_truelist(), arg2_first_quadno); //patch leftOperand's truelist to jump to the evaluation of the rightOperand
@@ -597,14 +596,12 @@ namespace syntax_analyzer {
         expr *result;
         convert_expr_to_bool_e(not_expr, sym_table, lineno);
         result = expr::make_expr(expr::type::BOOL_E);
-		result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
 
 		//invert truelist and falselist
         result->short_circ_extn.append_to_truelist(not_expr->short_circ_extn.get_falselist());
         result->short_circ_extn.append_to_falselist(not_expr->short_circ_extn.get_truelist());
 
-        //emit quad
-		icode_gen.emit_quad(new quad(quad::iopcode::logical_not, result, not_expr, nullptr, lineno));
+        //No quad need to be emitted since we simulate the logical_not operator through short-circuit evaluation
 		return result;
 	}
 	expr* Manage_term__PLUS_PLUS_lvalue(symbol_table &sym_table, unsigned int lineno, expr *lvalue) {

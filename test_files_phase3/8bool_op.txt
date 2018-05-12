@@ -1,6 +1,6 @@
 //a = y and z;
 
-a = x or y and z;	// a = x or (y and z)
+//a = x or y and z;	// a = x or (y and z)
 
 function f(){}
-a = (t=[]) or f and print;
+a = (t=[]) or not (f and print); 
