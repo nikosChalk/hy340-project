@@ -99,7 +99,7 @@ stmts:		stmts stmt		{$$ = Manage_stmts__stmts_stmt();}
 			| %empty		{$$ = Manage_stmts__empty();}
 			;
 
-stmt:	expr SEMICOLON			{$$ = Manage_stmt__expr_SEMICOLON(); 	}
+stmt:	expr SEMICOLON			{$$ = Manage_stmt__expr_SEMICOLON(yylineno, $1); }
     	| ifstmt 				{$$ = Manage_stmt__ifstmt(); 			}
 		| whilestmt 			{$$ = Manage_stmt__whilestmt(); 		}
 		| forstmt 				{$$ = Manage_stmt__forstmt(); 			}

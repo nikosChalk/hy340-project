@@ -176,16 +176,17 @@ namespace syntax_analyzer {
             case quad::iopcode::if_greatereq:
             case quad::iopcode::if_less:
             case quad::iopcode::if_lesseq:
+                if(!arg1->can_participate_in_relop())
+                    throw semantic_error("arg1 cannot participate in relational operation", lineno);
+                if(!arg2->can_participate_in_relop())
+                    throw semantic_error("arg2 cannot participate in relational operation", lineno);
+                break;
             case quad::iopcode::if_eq:
             case quad::iopcode::if_noteq:
                 break;
             default:
                 assert(false);  //Invalid iopcode
         }
-        if(!arg1->can_participate_in_relop())
-            throw semantic_error("arg1 cannot participate in relational operation", lineno);
-        if(!arg2->can_participate_in_relop())
-            throw semantic_error("arg2 cannot participate in relational operation", lineno);
 
         expr *result;
         if(arg1->expr_type == arg2->expr_type && arg2->expr_type == expr::type::CONST_NUM_E) {
@@ -414,8 +415,14 @@ namespace syntax_analyzer {
     }
 
 
-    void_t Manage_stmt__expr_SEMICOLON() {
-        fprintf(yyout, "stmt -> expr ;\n");
+    void_t Manage_stmt__expr_SEMICOLON(unsigned int lineno, expr *e) {
+        fprintf(yyout, "stmt -> expr;\n");
+        if(e->expr_type == expr::type::BOOL_E) {  //needs backpatching even though the logical expression is practically junk
+            icode_gen.patch_label(e->short_circ_extn.get_truelist(), icode_gen.next_quad_label());
+            icode_gen.patch_label(e->short_circ_extn.get_falselist(), icode_gen.next_quad_label());
+            icode_gen.emit_quad(new quad(quad::iopcode::nop, nullptr, nullptr, nullptr, lineno));
+        }
+
         hvar_handler.reset_count();
         return void_value;
     }

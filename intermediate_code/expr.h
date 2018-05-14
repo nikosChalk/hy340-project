@@ -161,7 +161,8 @@ namespace intermediate_code {
         bool can_participate_in_arithmop() const;
 
         /**
-         * Checks at compile time, whether or not this expr can participate in an relational operation.
+         * Checks at compile time, whether or not this expr can participate in an relational operation, that is an
+         * expr op expr where op is >, >=, <, <=
          * @return True if it can participate. False otherwise.
          */
         bool can_participate_in_relop() const;

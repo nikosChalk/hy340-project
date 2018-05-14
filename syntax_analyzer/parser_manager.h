@@ -15,7 +15,7 @@ namespace syntax_analyzer {
 	/**
 	 * Resets the hidden variable count
 	 */
-    void_t Manage_stmt__expr_SEMICOLON();
+    void_t Manage_stmt__expr_SEMICOLON(unsigned int lineno, intermediate_code::expr *e);
     void_t Manage_stmt__ifstmt();
     void_t Manage_stmt__whilestmt();
     void_t Manage_stmt__forstmt();
