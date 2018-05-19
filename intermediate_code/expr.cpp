@@ -107,7 +107,6 @@ std::string expr::to_string() const {
         case type::PROGRAM_FUNC_E:
         case type::LIBRARY_FUNC_E:
         case type::ARITHM_E:
-        case type::BOOL_E:
         case type::ASSIGN_E:
         case type::NEW_TABLE_E:
             assert(sym_entry);
@@ -120,6 +119,8 @@ std::string expr::to_string() const {
             return string(const_val.str);
         case type::CONST_NIL_E:
             return string("nil");
+
+        case type::BOOL_E:  //BOOL_E is an internal expr for handling short-circuit evaluation. No quad should have an operand of BOOL_E
         default:
             assert(0);  //unreachable statement
     }

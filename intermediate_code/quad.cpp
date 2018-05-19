@@ -35,7 +35,6 @@ std::string quad::iopcode_to_str(intermediate_code::quad::iopcode iopcode) {
 	case quad::iopcode::tablegetelem: return "tablegetelem";
 	case quad::iopcode::tablesetelem: return "tablesetelem";
 	case quad::iopcode::jump:         return "jump";
-	case quad::iopcode::nop:          return "nop";
         default:
             assert(false);  //unreachable statement
     }

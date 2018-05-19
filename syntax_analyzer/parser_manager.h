@@ -15,7 +15,7 @@ namespace syntax_analyzer {
 	/**
 	 * Resets the hidden variable count
 	 */
-    void_t Manage_stmt__expr_SEMICOLON(unsigned int lineno, intermediate_code::expr *e);
+    void_t Manage_stmt__expr_SEMICOLON(symbol_table &sym_table, unsigned int lineno, intermediate_code::expr *e);
     void_t Manage_stmt__ifstmt();
     void_t Manage_stmt__whilestmt();
     void_t Manage_stmt__forstmt();
@@ -71,11 +71,16 @@ namespace syntax_analyzer {
     intermediate_code::expr* Manage_expr__expr_LE_expr(unsigned int lineno, intermediate_code::expr *leftOperand,
                                                        intermediate_code::expr *rightOperand);
 
-    intermediate_code::expr* Manage_expr__expr_EQ_expr(unsigned int lineno, intermediate_code::expr *leftOperand,
-                                                       intermediate_code::expr *rightOperand);
+    intermediate_code::expr* Manage_expr__eq_prefix_expr(symbol_table &sym_table, unsigned int lineno,
+                                                         intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
 
-    intermediate_code::expr* Manage_expr__expr_NE_expr(unsigned int lineno, intermediate_code::expr *leftOperand,
-                                                       intermediate_code::expr *rightOperand);
+    intermediate_code::expr* Manage_expr__ne_prefix_expr(symbol_table &sym_table, unsigned int lineno,
+                                                         intermediate_code::expr *leftOperand, intermediate_code::expr *rightOperand);
+
+    intermediate_code::expr* Manage_eq_prefix__expr_EQ(symbol_table &sym_table, unsigned int lineno,
+                                                       intermediate_code::expr* leftOperand);
+    intermediate_code::expr* Manage_ne_prefix__expr_NE(symbol_table &sym_table, unsigned int lineno,
+                                                       intermediate_code::expr* leftOperand);
 
     /* Manage_expr__expr_boolop_expr */
     intermediate_code::expr* Manage_expr__and_prefix_log_next_quad_expr(symbol_table &sym_table, unsigned int lineno,

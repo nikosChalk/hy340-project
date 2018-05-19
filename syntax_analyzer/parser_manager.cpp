@@ -134,6 +134,8 @@ namespace syntax_analyzer {
                     break;
                 case quad::iopcode::div:
                     const_val = arg1_val / arg2_val;
+                    if(arg2_val == 0)
+                        throw semantic_error("Division by 0", lineno);
                     break;
                 case quad::iopcode::mod:
                     const_val = (long long int)arg1_val % (long long int)arg2_val;
@@ -181,8 +183,15 @@ namespace syntax_analyzer {
                 if(!arg2->can_participate_in_relop())
                     throw semantic_error("arg2 cannot participate in relational operation", lineno);
                 break;
+
             case quad::iopcode::if_eq:
             case quad::iopcode::if_noteq:
+                //In these two cases, arg1 and arg2 must be backpatched since we will emit an "if_eq arg1 arg2 label"
+                //and thus arg1 arg2 need storage space. A BOOL_E does NOT have storage and is not allowed in the emitted code.
+                //Note that in the cases of "if_greater, if_less, etc" arguments are checked at compile time and thus if they
+                //are BOOL_E, a semantic error is thrown. However, in "if_eq, if_ne" boolean arguments are allowed and thus we
+                //use temporary variables in that case with expr_type == VAR_E
+                assert(arg1->expr_type != expr::type::BOOL_E && arg2->expr_type != expr::type::BOOL_E);
                 break;
             default:
                 assert(false);  //Invalid iopcode
@@ -382,7 +391,7 @@ namespace syntax_analyzer {
         expr *result;
 
         if(possible_sc_expr->must_be_patched()) {
-            result = expr::make_expr(expr::type::BOOL_E);
+            result = expr::make_expr(expr::type::VAR_E);
             result->sym_entry = hvar_handler.make_new(sym_table, scp_handler, lineno);
 
             icode_gen.patch_label(possible_sc_expr->short_circ_extn.get_truelist(), icode_gen.next_quad_label());     //jump to sc_result = true
@@ -415,14 +424,11 @@ namespace syntax_analyzer {
     }
 
 
-    void_t Manage_stmt__expr_SEMICOLON(unsigned int lineno, expr *e) {
+    void_t Manage_stmt__expr_SEMICOLON(symbol_table &sym_table, unsigned int lineno, expr *e) {
         fprintf(yyout, "stmt -> expr;\n");
-        if(e->expr_type == expr::type::BOOL_E) {  //needs backpatching even though the logical expression is practically junk
-            icode_gen.patch_label(e->short_circ_extn.get_truelist(), icode_gen.next_quad_label());
-            icode_gen.patch_label(e->short_circ_extn.get_falselist(), icode_gen.next_quad_label());
-            icode_gen.emit_quad(new quad(quad::iopcode::nop, nullptr, nullptr, nullptr, lineno));
-        }
 
+        //could need backpatching if e->type == BOOL_E in order to work properly. In case e->type == BOOL_E the "expr;" is practically junk.
+        patch_possible_sc_expr(e, sym_table, lineno);
         hvar_handler.reset_count();
         return void_value;
     }
@@ -480,7 +486,7 @@ namespace syntax_analyzer {
     void_t Manage_breakstmt__BREAK_SEMICOLON(unsigned int lineno) {
         fprintf(yyout, "break -> BREAK;");
         if(!lp_handler.is_in_loop())
-            throw syntax_error("break; not within loop", lineno);
+            throw semantic_error("break; not within loop", lineno);
 
         lp_handler.append_to_break_list(icode_gen.next_quad_label());
         icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);   //jump out of loop
@@ -491,7 +497,7 @@ namespace syntax_analyzer {
     void_t Manage_continuestmt__CONTINUE_SEMICOLON(unsigned int lineno) {
         fprintf(yyout, "continue -> CONTINUE;");
         if(!lp_handler.is_in_loop())
-            throw syntax_error("continue; not within loop", lineno);
+            throw semantic_error("continue; not within loop", lineno);
 
         lp_handler.append_to_continue_list(icode_gen.next_quad_label());
         icode_gen.emit_quad(new quad(quad::iopcode::jump, nullptr, nullptr, nullptr, lineno), 0);   //jump to next iteratin
@@ -544,13 +550,29 @@ namespace syntax_analyzer {
         fprintf(yyout, "expr -> expr <= expr\n");
         return handle_expr_relop_expr(quad::iopcode::if_lesseq, leftOperand, rightOperand, lineno);
     }
-    expr* Manage_expr__expr_EQ_expr(unsigned int lineno, expr *leftOperand, expr *rightOperand) {
-        fprintf(yyout, "expr -> expr == expr\n");
+
+    /* relops: ==, != */
+    expr* Manage_expr__eq_prefix_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
+        fprintf(yyout, "expr -> eq_prefix expr\n");
+        rightOperand = patch_possible_sc_expr(rightOperand, sym_table, lineno); //left operand has already been patched
+
         return handle_expr_relop_expr(quad::iopcode::if_eq, leftOperand, rightOperand, lineno);
     }
-    expr* Manage_expr__expr_NE_expr(unsigned int lineno, expr *leftOperand, expr *rightOperand) {
-        fprintf(yyout, "expr -> expr != expr\n");
+    expr* Manage_expr__ne_prefix_expr(symbol_table &sym_table, unsigned int lineno, expr *leftOperand, expr *rightOperand) {
+        fprintf(yyout, "expr -> ne_prefix expr\n");
+        rightOperand = patch_possible_sc_expr(rightOperand, sym_table, lineno); //left operand has already been patched
+
         return handle_expr_relop_expr(quad::iopcode::if_noteq, leftOperand, rightOperand, lineno);
+    }
+
+    expr* Manage_eq_prefix__expr_EQ(symbol_table &sym_table, unsigned int lineno, expr* leftOperand) {
+        fprintf(yyout, "eq_prefix -> expr EQ\n");
+        return patch_possible_sc_expr(leftOperand, sym_table, lineno);
+	}
+
+    expr* Manage_ne_prefix__expr_NE(symbol_table &sym_table, unsigned int lineno, expr* leftOperand) {
+        fprintf(yyout, "ne_prefix -> expr NE\n");
+        return patch_possible_sc_expr(leftOperand, sym_table, lineno);
     }
 
     /* logicalop */

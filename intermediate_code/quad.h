@@ -35,7 +35,6 @@ namespace intermediate_code {
             tablesetelem,   //arg1=table, arg2=index, result=value to set. That is arg1[arg2] = result
 
             jump,    //result,arg1,arg2=nullptr. label=quadno to jump to.
-            nop    //result,arg1,arg2=nullptr.
         };
 
         /**

@@ -48,10 +48,9 @@ int main (int argc, char *argv[]) {
             fprintf(yyout, "Error while parsing. yyparse returned %d\n", ret_val);
     } catch(runtime_error &err) {
         cerr << "Current Symbol Table Is:" << endl;
-        cerr << sym_table;
+        cerr << sym_table << endl;
 
-        cerr << "Quads Emitted:" << endl;
-        cerr << icode_gen;
+        cerr << icode_gen << endl;
 
         cerr << err.what() << endl;
         cerr << "Parsing Failed" << endl;

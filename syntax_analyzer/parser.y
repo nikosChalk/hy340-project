@@ -66,7 +66,7 @@
 %type <strVal> funcname
 %type <unsignedIntVal> funcbody	/* contains the number of local variables within the function */
 %type <unsignedIntVal> ifprefix elseprefix whilecond
-%type <exprPtr> and_prefix or_prefix
+%type <exprPtr> and_prefix or_prefix eq_prefix ne_prefix
 %type <funcEntryPtr> funcprefix
 %type <dequeExpr> tmp_elist
 %type <dequeExprPair> tmp_indexed
@@ -99,7 +99,7 @@ stmts:		stmts stmt		{$$ = Manage_stmts__stmts_stmt();}
 			| %empty		{$$ = Manage_stmts__empty();}
 			;
 
-stmt:	expr SEMICOLON			{$$ = Manage_stmt__expr_SEMICOLON(yylineno, $1); }
+stmt:	expr SEMICOLON			{$$ = Manage_stmt__expr_SEMICOLON(sym_table, yylineno, $1); }
     	| ifstmt 				{$$ = Manage_stmt__ifstmt(); 			}
 		| whilestmt 			{$$ = Manage_stmt__whilestmt(); 		}
 		| forstmt 				{$$ = Manage_stmt__forstmt(); 			}
@@ -131,17 +131,23 @@ expr:	assignexpr 			{$$ = Manage_expr__assignexpr($1);}
 		| expr GE expr 		{$$ = Manage_expr__expr_GE_expr		(yylineno, $1,$3);}
 		| expr LT expr 		{$$ = Manage_expr__expr_LT_expr		(yylineno, $1,$3);}
 		| expr LE expr 		{$$ = Manage_expr__expr_LE_expr		(yylineno, $1,$3);}
-		| expr EQ expr 		{$$ = Manage_expr__expr_EQ_expr		(yylineno, $1,$3);}
-		| expr NE expr 		{$$ = Manage_expr__expr_NE_expr		(yylineno, $1,$3);}
+		| eq_prefix expr %prec EQ	{$$ = Manage_expr__eq_prefix_expr		(sym_table, yylineno, $1,$2);}
+		| ne_prefix expr %prec NE	{$$ = Manage_expr__ne_prefix_expr		(sym_table, yylineno, $1,$2);}
 		| and_prefix log_next_quad expr %prec AND	{$$ = Manage_expr__and_prefix_log_next_quad_expr	(sym_table, yylineno, $1, $3, $2);}
 		| or_prefix log_next_quad expr %prec OR		{$$ = Manage_expr__or_prefix_log_next_quad_expr		(sym_table, yylineno, $1, $3, $2);}
 		| term 				{$$ = Manage_expr__term($1);}
 		;
 
-and_prefix:	expr AND	{$$ = Manage_and_prefix__expr_AND(sym_table, yylineno, $1);}
+eq_prefix:	expr EQ		{$$ = Manage_eq_prefix__expr_EQ		(sym_table, yylineno, $1);}
 			;
 
-or_prefix:	expr OR		{$$ = Manage_or_prefix__expr_OR(sym_table, yylineno, $1);}
+ne_prefix:	expr NE		{$$ = Manage_ne_prefix__expr_NE		(sym_table, yylineno, $1);}
+			;
+
+and_prefix:	expr AND	{$$ = Manage_and_prefix__expr_AND	(sym_table, yylineno, $1);}
+			;
+
+or_prefix:	expr OR		{$$ = Manage_or_prefix__expr_OR		(sym_table, yylineno, $1);}
 			;
 
 term:	LEFT_PARENTHESIS expr RIGHT_PARENTHESIS		{$$ = Manage_term__LEFT_PARENTHESIS_expr_RIGHT_PARENTHESIS($2);}
