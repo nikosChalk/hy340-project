@@ -45,9 +45,14 @@ namespace virtual_machine {
         unsigned int value;
 
         /**
+         * Default initialization. (Junk)
+         */
+        VMarg();
+
+        /**
          * Initializes the VMarg with the given arguments
          */
-        VMarg (Type type, unsigned int value);
+        VMarg(Type type, unsigned int value);
     };
 
     struct VMinstruction {
@@ -56,6 +61,11 @@ namespace virtual_machine {
         VMarg     arg1;
         VMarg     arg2;
         unsigned int source_line;
+
+        /**
+         * Default initialization. (Junk)
+         */
+        VMinstruction();
 
         /**
          * Initializes the VMinstructions with the given arguments
@@ -70,6 +80,11 @@ namespace virtual_machine {
         unsigned int address;
         unsigned int nr_locals;
         std::string  name;
+
+        /**
+         * Default initialization. (Junk)
+         */
+        Userfunc();
 
         /**
          * Initializes the user function representation with the given attributes
