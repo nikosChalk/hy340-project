@@ -1,6 +1,7 @@
 #include "rdp.h"
 
 using namespace std;
+using namespace target_code;
 
 /*Global variable for rdp*/
 rdp parser;
@@ -13,108 +14,108 @@ rdp::rdp()
 	total_String_Consts = 0;
 	named_Lib_Funcs = vector <string>();
 	total_Named_Lib_Funcs = 0;
-	user_Funcs = vector <struct user_func>();
+	user_Funcs = vector <target_instruction::user_func>();
 	total_User_Funcs = 0;
-	instr_code_vector = vector <instruction>();
+	instr_code_vector = vector <target_instruction::instruction>();
 	total_Instractions = 0;
 }
 
-rdp::vmopcode opcode_type(unsigned int type){
+target_instruction::vmopcode opcode_type(unsigned int type){
 	switch (type)
 	{
 	case 0:
-		return rdp::vmopcode::assign_v;
+		return target_instruction::vmopcode::assign_v;
 	case 1:
-		return rdp::vmopcode::add_v;
+		return target_instruction::vmopcode::add_v;
 	case 2:
-		return rdp::vmopcode::sub_v;
+		return target_instruction::vmopcode::sub_v;
 	case 3:
-		return rdp::vmopcode::mul_v;
+		return target_instruction::vmopcode::mul_v;
 	case 4:
-		return rdp::vmopcode::div_v;
+		return target_instruction::vmopcode::div_v;
 	case 5:
-		return rdp::vmopcode::mod_v;
+		return target_instruction::vmopcode::mod_v;
 	case 6:
-		return rdp::vmopcode::uminus_v;
+		return target_instruction::vmopcode::uminus_v;
 	case 7:
-		return rdp::vmopcode::and_v;
+		return target_instruction::vmopcode::and_v;
 	case 8:
-		return rdp::vmopcode::or_v;
+		return target_instruction::vmopcode::or_v;
 	case 9:
-		return rdp::vmopcode::not_v;
+		return target_instruction::vmopcode::not_v;
 	case 10:
-		return rdp::vmopcode::jeq_v;
+		return target_instruction::vmopcode::jeq_v;
 	case 11:
-		return rdp::vmopcode::jne_v;
+		return target_instruction::vmopcode::jne_v;
 	case 12:
-		return rdp::vmopcode::jle_v;
+		return target_instruction::vmopcode::jle_v;
 	case 13:
-		return rdp::vmopcode::jge_v;
+		return target_instruction::vmopcode::jge_v;
 	case 14:
-		return rdp::vmopcode::jlt_v;
+		return target_instruction::vmopcode::jlt_v;
 	case 15:
-		return rdp::vmopcode::jgt_v;
+		return target_instruction::vmopcode::jgt_v;
 	case 16:
-		return rdp::vmopcode::call_v;
+		return target_instruction::vmopcode::call_v;
 	case 17:
-		return rdp::vmopcode::pusharg_v;
+		return target_instruction::vmopcode::pusharg_v;
 	case 18:
-		return rdp::vmopcode::funcenter_v;
+		return target_instruction::vmopcode::funcenter_v;
 	case 19:
-		return rdp::vmopcode::funcexit_v;
+		return target_instruction::vmopcode::funcexit_v;
 	case 20:
-		return rdp::vmopcode::newtable_v;
+		return target_instruction::vmopcode::newtable_v;
 	case 21:
-		return rdp::vmopcode::tablegetelem_v;
+		return target_instruction::vmopcode::tablegetelem_v;
 	case 22:
-		return rdp::vmopcode::tablesetelem_v;
+		return target_instruction::vmopcode::tablesetelem_v;
 	case 23:
-		return rdp::vmopcode::nop_v;
+		return target_instruction::vmopcode::nop_v;
 	default:
 		cerr << "Invalid opcode !!!\n";
 		assert(0);
 	}
-	return (rdp::vmopcode)0;
+	return (target_instruction::vmopcode)0;
 }
 
-rdp::vmarg_t vmarg_type(unsigned int type){
+target_instruction::vmarg_t vmarg_type(unsigned int type){
 	switch (type)
 	{
 	case 0:
-		return rdp::vmarg_t::label_a;
+		return target_instruction::vmarg_t::label_a;
 	case 1:
-		return rdp::vmarg_t::global_a;
+		return target_instruction::vmarg_t::global_a;
 	case 2:
-		return rdp::vmarg_t::formal_a;
+		return target_instruction::vmarg_t::formal_a;
 	case 3:
-		return rdp::vmarg_t::local_a;
+		return target_instruction::vmarg_t::local_a;
 	case 4:
-		return rdp::vmarg_t::number_a;
+		return target_instruction::vmarg_t::number_a;
 	case 5:
-		return rdp::vmarg_t::string_a;
+		return target_instruction::vmarg_t::string_a;
 	case 6:
-		return rdp::vmarg_t::bool_a;
+		return target_instruction::vmarg_t::bool_a;
 	case 7:
-		return rdp::vmarg_t::nil_a;
+		return target_instruction::vmarg_t::nil_a;
 	case 8:
-		return rdp::vmarg_t::userfunc_a;
+		return target_instruction::vmarg_t::userfunc_a;
 	case 9:
-		return rdp::vmarg_t::libfunc_a;
+		return target_instruction::vmarg_t::libfunc_a;
 	case 10:
-		return rdp::vmarg_t::retval_a;
+		return target_instruction::vmarg_t::retval_a;
 	default:
 		cerr << "Invalid vm argument type !!!\n";
 		assert(0);
 	}
-	return (rdp::vmarg_t)0;
+	return (target_instruction::vmarg_t)0;
 }
 
 void RDP_Parser(void){
 	string tmp_string;
 	double tmp_double;
 	unsigned int tmp_uint;
-	rdp::user_func tmp_user_func;
-	rdp::instruction tmp_instr;
+	target_instruction::user_func tmp_user_func;
+	target_instruction::instruction tmp_instr;
 
 	ifstream binary_f;
 	parser = rdp::rdp();
