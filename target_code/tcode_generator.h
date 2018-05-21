@@ -6,6 +6,7 @@
 #include "../intermediate_code/expr.h"
 #include "../intermediate_code/quad.h"
 #include "../common_interface/vm_types.h"
+#include "types.h"
 
 
 using namespace std;
