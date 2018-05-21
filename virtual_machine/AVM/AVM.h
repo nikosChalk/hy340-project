@@ -19,6 +19,11 @@ namespace virtual_machine {
     public:
 
         /**
+         * Signature for library functions
+         */
+        typedef void (AVM::*lib_func_t)();
+
+        /**
          * Initializes the virtual machine. Note that for each vector argument, an internal copy is made.
          * @param instructions The vector containing the instructions
          * @param doubles The constant vector for the doubles
@@ -65,25 +70,33 @@ namespace virtual_machine {
          */
         void execute_cycle();
 
-        /**
-         * execute_<VMinstruction opcode> functions. Each function has the sole task of executing the given instruction.
-         * The instruction's opcode must match the function's name. All these functions alter the state of the AVM
-         * Implementations are in the "dispatcher" directory
-         */
+        /**************************************   execute_<VMinstruction opcode>  *************************************** */
+        /* execute_<VMinstruction opcode> functions. Each function has the sole task of executing the given instruction.  */
+        /* The instruction's opcode must match the function's name. All these functions alter the state of the AVM        *
+        /* Implementations are in the "dispatcher" directory                                                              */
+        /**************************************   ------------------------------  *************************************** */
+
         void execute_assign(VMinstruction const &instr);
 
-        void execute_add(VMinstruction const &instr);
-        void execute_sub(VMinstruction const &instr);
-        void execute_mul(VMinstruction const &instr);
-        void execute_div(VMinstruction const &instr);
-        void execute_mod(VMinstruction const &instr);
+        void execute_arithmetic(VMinstruction const &instr);
+        #define execute_add execute_arithmetic
+        #define execute_sub execute_arithmetic
+        #define execute_mul execute_arithmetic
+        #define execute_div execute_arithmetic
+        #define execute_mod execute_arithmetic
+
 
         void execute_jeq(VMinstruction const &instr);
         void execute_jne(VMinstruction const &instr);
-        void execute_jle(VMinstruction const &instr);
-        void execute_jge(VMinstruction const &instr);
-        void execute_jlt(VMinstruction const &instr);
-        void execute_jgt(VMinstruction const &instr);
+
+        /**
+         * Handles VMopcodes::jle, jge, jlt, jgt
+         */
+        void execute_relational(VMinstruction const &instr);
+        #define execute_jle execute_relational
+        #define execute_jge execute_relational
+        #define execute_jlt execute_relational
+        #define execute_jgt execute_relational
 
         void execute_call(VMinstruction const &instr);
         void execute_pusharg(VMinstruction const &instr);
@@ -103,6 +116,18 @@ namespace virtual_machine {
         /* Their implementation can be found in the corresponding .cpp in the dispatcher directory  */
         /**********************************   ----------------  *********************************** */
 
+        /**
+         * Returns the library function that matches to the given name
+         * @param name A builtin library function name, declared in "common_interface/Builtin_funcs.h"
+         * @return The executable library function
+         */
+        lib_func_t get_library_function(const std::string &name);
+
+        /**
+         * Calls the library function with the given name
+         * @param name The name of the library function which is a name, declared in "common_interface/Builtin_funcs.h"
+         */
+        void call_library_function(const std::string &name);
 
         /**
          * Prints a warning message to cerr concerning the AVM due to a soft error during the execution of an instruction
@@ -110,6 +135,17 @@ namespace virtual_machine {
          * @param source_line The source line of the instruction that caused the warning
          */
         void print_warning(const std::string &msg, unsigned int source_line) const;
+
+
+        /*********************************** Built in functuins *********************************** */
+        /* Builtin functions must have the prefix "libfunc_" before their actual name               */
+        /*********************************** ------------------ *********************************** */
+
+        void libfunc_print();
+
+
+        /********************************** Private Static Stuff ********************************** */
+        /********************************** -------------------- *********************************** */
 
         /**
          * Type declaration of the execute functions for convenience

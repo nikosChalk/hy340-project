@@ -6,8 +6,10 @@
 using namespace std;
 using namespace virtual_machine;
 
-void AVM::execute_assign(const virtual_machine::VMinstruction &instr) {
-    Memcell *lv = translate_operand(&instr.result);
+void AVM::execute_assign(const VMinstruction &instr) {
+    assert(instr.opcode == VMopcode::assign);
+
+    Memcell *lv = translate_operand(instr.result);
     Memcell *rv = translate_operand(&instr.arg1, &ax);
 
     assert(lv && (program_stack.is_in_stack(lv) || lv == &retval));

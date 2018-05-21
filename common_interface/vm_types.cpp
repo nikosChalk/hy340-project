@@ -14,10 +14,13 @@ VMarg::VMarg(virtual_machine::VMarg::Type type, unsigned int value)
 
 VMarg::VMarg() = default;
 
-VMinstruction::VMinstruction(VMopcode opcode, const VMarg &result, const VMarg &arg1, const VMarg &arg2, unsigned int source_line)
+VMinstruction::VMinstruction(VMopcode opcode, VMarg *result, VMarg *arg1, VMarg *arg2, unsigned int source_line)
         :  opcode(opcode), result(result), arg1(arg1), arg2(arg2), source_line(source_line) { }
 
-VMinstruction::VMinstruction() = default;
+VMinstruction::VMinstruction() {
+    opcode = add;   //uses all 3 fields, so it is very likely that an assertion will be hit
+    result = arg1 = arg2 = nullptr;
+}
 
 
 Userfunc::Userfunc(unsigned int address, unsigned int nr_locals, const std::string &name)

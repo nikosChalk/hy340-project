@@ -20,10 +20,11 @@
 /* |_______________|__________________________|______________________|___________________|  */
 /* |    pusharg    |         unused           |   any except label   |     unused        |  */
 /* |_______________|__________________________|______________________|___________________|  */
-/* |   funcenter   |                          |                      |                   |  */
-/* |   funcexit    |         unused           |       userfunc       |     unused        |  */
+/* |   funcenter   |         unused           |       userfunc       |     unused        |  */
 /* |_______________|__________________________|______________________|___________________|  */
-/* |    newtable   |         unused           | program formal local |                   |  */
+/* |   funcexit    |         unused           |       unused         |     unused        |  */
+/* |_______________|__________________________|______________________|___________________|  */
+/* |    newtable   |         unused           | program formal local |     unused        |  */
 /* |_______________|__________________________|______________________|___________________|  */
 /* |               |                          | program formal local |                   |  */
 /* | tablegetelem  |   program formal local   | retval               |  any except label |  */
@@ -35,6 +36,7 @@
 /* |_______________|__________________________|______________________|___________________|  */
 /* |      nop      |         unused           |        unused        |       unused      |  */
 /* |_______________|__________________________|______________________|___________________|  */
+/*                                                                                          */
 
 #ifndef HY340_PROJECT_VM_TYPES_H
 #define HY340_PROJECT_VM_TYPES_H
@@ -54,7 +56,8 @@ namespace virtual_machine {
 
         call,                   //arg1=function to call, arg2,result=nullptr
         pusharg,                //arg1=parameter, arg2,result=nullptr
-        funcenter, funcexit,    //arg1=function that starts/ends, arg2=nullptr, result=nullptr
+        funcenter,              //arg1=function that starts/ends, arg2=nullptr, result=nullptr
+        funcexit,               //arg1, arg2, result = nullptr
 
         newtable,               //arg1=table to create, arg2=nullptr, result=nullptr
         tablegetelem,           //result=variable to store arg1[arg2], arg1 = table, arg2 = index
@@ -93,9 +96,9 @@ namespace virtual_machine {
 
     struct VMinstruction {
         VMopcode  opcode;
-        VMarg     result;
-        VMarg     arg1;
-        VMarg     arg2;
+        VMarg     *result;
+        VMarg     *arg1;
+        VMarg     *arg2;
         unsigned int source_line;
 
         /**
@@ -106,7 +109,13 @@ namespace virtual_machine {
         /**
          * Initializes the VMinstructions with the given arguments
          */
-        VMinstruction(VMopcode opcode, const VMarg &result, const VMarg &arg1, const VMarg &arg2, unsigned int source_line);
+        VMinstruction(VMopcode opcode, VMarg *result, VMarg *arg1, VMarg *arg2, unsigned int source_line);
+
+        /**
+         * Returns the string representation of this object
+         * @return The string representation
+         */
+        std::string to_string() const;
     };
 
     /**

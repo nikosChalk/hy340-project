@@ -25,9 +25,6 @@ namespace virtual_machine {
         Constants_pool(const std::vector<double> &doubles, const std::vector<std::string> &strings,
                        const std::vector<std::string> &libfuncs, const std::vector<Userfunc> &userfuncs);
 
-        //TODO: double get_double(unsigned int idx) const;
-        //Synithws thelw access se ENA element kai oxi se diathoxika
-
         /**
          * Returns the numeric constant at the given index
          * @param idx The index
@@ -45,16 +42,23 @@ namespace virtual_machine {
         /**
          * Returns the library function constant at the given index
          * @param idx The index
-         * @return The library function constant
+         * @return The library function's name
          */
         const std::string& get_libfunc(unsigned int idx) const;
 
         /**
          * Returns the user function constant at the given index
          * @param idx The index
-         * @return The user function constant
+         * @return The user function
          */
-        const Userfunc& get_userfunc(unsigned int idx) const;
+        const Userfunc& get_userfunc_on_idx(unsigned int idx) const;
+
+        /**
+         * Returns the user function constant that its VMinstruction "funcstart" is in the given userfunc_addr
+         * @param userfunc_addr The address of the "funcstart" user function
+         * @return The user function
+         */
+        const Userfunc& get_userfunc_on_address(unsigned int userfunc_addr) const;
 
 
 
