@@ -17,7 +17,7 @@ namespace target_code{
 	{
 	public:
 		/*initializes the t-code generator*/
-		tcode_generator();
+		tcode_generator(vector<intermediate_code::quad*> quad_vector);
 
 		/**
 		* Appends the instruction to the end of the instruction_vector and changes its label field to match the
@@ -45,6 +45,7 @@ namespace target_code{
 		unsigned int total_Named_Lib_Funcs;
 		vector <Userfunc> user_Funcs;
 		unsigned int total_User_Funcs;
+		unsigned int total_Instractions;
 
 		/*This function translate expressions* to vmargs*/
 		void make_operand(intermediate_code::expr* e, VMarg* arg);
@@ -82,13 +83,14 @@ namespace target_code{
 		void generate_FUNCEND(intermediate_code::quad*);
 
 		/*basic generate function*/
-		void generate(void);
+		void generate(vector<intermediate_code::quad*> quad_vector);
 		/*helper generate functions*/
 		void generate_arithmetic(VMopcode opcode, intermediate_code::quad* quad);
 		void generate_relational(VMopcode opcode, intermediate_code::quad* quad);
 
 	private:
 		vector<VMinstruction*> instruction_vector;
+	    vector<intermediate_code::quad*> quad_vector;
 	};
 }
 
