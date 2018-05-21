@@ -1,4 +1,40 @@
 
+/* ************************ Instruction Set Info ****************************************** */
+/*  _______________ __________________________ ____________________ _____________________   */
+/* |   opcode      |   result viable types    |  arg1 viable types   | arg2 viable types |  */
+/* |_______________|__________________________|______________________|___________________|  */
+/* |               |  program, formal, local  |   any except label   |     unused        |  */
+/* |  assign       |         retval           |   any except label   |     unused        |  */
+/* |_______________|__________________________|______________________|___________________|  */
+/* |  arithmop     |                          |                      |                   |  */
+/* |(add sub mul)  |  program formal local    |   any except label   |  any except label |  */
+/* |(div mod    )  |                          |                      |                   |  */
+/* |_______________|__________________________|______________________|___________________|  */
+/* | relational op |                          |                      |                   |  */
+/* | (jeq jne jle) |          label           |   any except label   |  any except label |  */
+/* | (jge jlt jgt) |                          |                      |                   |  */
+/* |_______________|__________________________|______________________|___________________|  */
+/* |               |                          | program formal local |                   |  */
+/* |     call      |         unused           | userfunc libfunc     |     unused        |  */
+/* |               |                          |       retval         |                   |  */
+/* |_______________|__________________________|______________________|___________________|  */
+/* |    pusharg    |         unused           |   any except label   |     unused        |  */
+/* |_______________|__________________________|______________________|___________________|  */
+/* |   funcenter   |                          |                      |                   |  */
+/* |   funcexit    |         unused           |       userfunc       |     unused        |  */
+/* |_______________|__________________________|______________________|___________________|  */
+/* |    newtable   |         unused           | program formal local |                   |  */
+/* |_______________|__________________________|______________________|___________________|  */
+/* |               |                          | program formal local |                   |  */
+/* | tablegetelem  |   program formal local   | retval               |  any except label |  */
+/* |_______________|__________________________|______________________|___________________|  */
+/* |               |                          | program formal local |                   |  */
+/* | tablesetelem  |   any except label       | retval               |  any except label |  */
+/* |_______________|__________________________|______________________|___________________|  */
+/* |      jump     |          label           |        unused        |       unused      |  */
+/* |_______________|__________________________|______________________|___________________|  */
+/* |      nop      |         unused           |        unused        |       unused      |  */
+/* |_______________|__________________________|______________________|___________________|  */
 
 #ifndef HY340_PROJECT_VM_TYPES_H
 #define HY340_PROJECT_VM_TYPES_H
@@ -36,8 +72,8 @@ namespace virtual_machine {
             string,                 //value=Index in the strings' constant pool
             boolean,                //value=1 for true, 0 for false.
             nil,                    //- (value is unused)
-            userfunc,               //value=address of funcenter vm instruction
-            libfunc,                //value=Index in the library constant pool
+            userfunc,               //value=Index in the user function constant pool
+            libfunc,                //value=Index in the library function constant pool
             retval                  //- (value is unused). Indicates that the value is within the "retval" register of the AVM
         };
         Type type;

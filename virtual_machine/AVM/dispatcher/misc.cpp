@@ -10,7 +10,7 @@ void AVM::execute_assign(const virtual_machine::VMinstruction &instr) {
     Memcell *lv = translate_operand(&instr.result);
     Memcell *rv = translate_operand(&instr.arg1, &ax);
 
-    assert(lv && program_stack.is_in_stack(lv));
+    assert(lv && (program_stack.is_in_stack(lv) || lv == &retval));
     assert(rv);
 
     if(rv->type == Memcell::Type::undef)

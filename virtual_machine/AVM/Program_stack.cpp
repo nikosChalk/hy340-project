@@ -12,10 +12,10 @@ using namespace virtual_machine;
 #define assert_index(idx) assert( (top < (idx)) && (idx) < AVM_ENV_SIZE )
 
 Program_stack::Program_stack(unsigned int total_program_vars) {
-    this->total_program_vars = total_program_vars;
     for(unsigned int i=0; i<stack.size(); i++)
         stack[i] = Memcell();
 
+    this->total_program_vars = total_program_vars;
     top = total_program_vars;
     topsp = total_program_vars; //since we do not have a function record
 }

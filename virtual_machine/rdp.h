@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <assert.h>
+#include <cassert>
 
 #include "../common_interface/vm_types.h"
 

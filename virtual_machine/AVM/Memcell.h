@@ -14,7 +14,6 @@ namespace virtual_machine {
             table,      //uses field table_ptr
             userfunc,   //uses field userfunc_addr
             libfunc,    //uses field libfunc_ptr
-            address,    //uses field jump_addr
             nil,        //no fields used
             undef       //no fields used
         };
@@ -30,7 +29,6 @@ namespace virtual_machine {
             bool            boolean;
             Table           *table_ptr;
             unsigned int    userfunc_addr;  //address (label) of "funcstart" vm instruction
-            unsigned int    jump_addr;     //address of instruction to jump to
             char const      *libfunc_ptr;
         } value;
 

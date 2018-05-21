@@ -50,13 +50,13 @@ namespace virtual_machine {
         const std::string& get_libfunc(unsigned int idx) const;
 
         /**
-         * Returns the user function which is at the given address.
-         * A user function's address is the address of the "funcenter" vm instruction
-         * Note that this get() method has different indexing than the others!
-         * @param address The address of the user function
-         * @return The user function
+         * Returns the user function constant at the given index
+         * @param idx The index
+         * @return The user function constant
          */
-        const Userfunc& get_userfunc(unsigned int address) const;
+        const Userfunc& get_userfunc(unsigned int idx) const;
+
+
 
     private:
         std::vector<double> doubles;
