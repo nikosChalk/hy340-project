@@ -16,7 +16,7 @@ namespace intermediate_code {
          */
         enum iopcode {
             assign,                     //stores arg1 to result (result=arg1), arg2=nullptr
-            add, sub, mul, div, mod,    //arg1=left operand, arg2=right operand
+            add, sub, mul, div, mod,    //arg1=left operand, arg2=right operand. result=arg1 op arg2
 
             uminus,                     //arg1=unary operand, result=-arg1, arg2=nullptr
             logical_and, logical_or,    //arg1=lef operand, arg2=right operand. result=arg1 logical_op arg2
