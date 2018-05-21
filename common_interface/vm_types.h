@@ -24,7 +24,8 @@
 /* |_______________|__________________________|______________________|___________________|  */
 /* |   funcexit    |         unused           |       unused         |     unused        |  */
 /* |_______________|__________________________|______________________|___________________|  */
-/* |    newtable   |         unused           | program formal local |     unused        |  */
+/* |               |                          | program formal local |                   |  */
+/* |    newtable   |         unused           |        retval        |     unused        |  */
 /* |_______________|__________________________|______________________|___________________|  */
 /* |               |                          | program formal local |                   |  */
 /* | tablegetelem  |   program formal local   | retval               |  any except label |  */

@@ -78,6 +78,9 @@ namespace virtual_machine {
 
         void execute_assign(VMinstruction const &instr);
 
+        /**
+         * Handles VMopcodes::add, sub, mul, div, mod
+         */
         void execute_arithmetic(VMinstruction const &instr);
         #define execute_add execute_arithmetic
         #define execute_sub execute_arithmetic
@@ -85,9 +88,12 @@ namespace virtual_machine {
         #define execute_div execute_arithmetic
         #define execute_mod execute_arithmetic
 
-
-        void execute_jeq(VMinstruction const &instr);
-        void execute_jne(VMinstruction const &instr);
+        /**
+         * Handles VMopcodes::jeq, jne
+         */
+        void execute_equality(VMinstruction const &instr);
+        #define execute_jeq execute_equality
+        #define execute_jne execute_equality
 
         /**
          * Handles VMopcodes::jle, jge, jlt, jgt

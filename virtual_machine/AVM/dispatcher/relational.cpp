@@ -23,7 +23,7 @@ static bool comparator_jgt(long double leftOperand, long double rightOperand) {
     return leftOperand>rightOperand;
 }
 
-static std::map<unsigned int, comparator_func_t> operator_to_func_map = {
+static std::map<unsigned int, comparator_func_t> relop_to_func_map = {
         {VMopcode::jle, comparator_jle}, {VMopcode::jge, comparator_jge},
         {VMopcode::jlt, comparator_jlt}, {VMopcode::jgt, comparator_jgt}
 };
@@ -41,7 +41,35 @@ void AVM::execute_relational(const VMinstruction &instr) {
     if(leftOperand->type != Memcell::Type::number || rightOperand->type != Memcell::Type::number)
         throw alpha_runtime_error("Not numeric operator in relational operation", instr.source_line);
 
-    comparator_func_t comparator_func = operator_to_func_map.at(instr.opcode);
+    comparator_func_t comparator_func = relop_to_func_map.at(instr.opcode);
     if( (*comparator_func)(leftOperand->value.num, rightOperand->value.num) )   //if true, change pc. Else do nothing
+        pc = instr.result->value;
+}
+
+void AVM::execute_equality(const VMinstruction &instr) {
+    assert(instr.opcode == VMopcode::jeq || instr.opcode == VMopcode::jne);
+    assert(instr.result->type == VMarg::Type::label);
+
+    Memcell *leftOperand = translate_operand(instr.arg1, &ax);
+    Memcell *rightOperand = translate_operand(instr.arg2, &bx);
+    assert(leftOperand && rightOperand);
+
+    bool result;
+    try {
+        switch(instr.opcode) {
+            case VMopcode::jeq:
+                result = (*leftOperand == *rightOperand);
+                break;
+            case VMopcode::jne:
+                result = (*leftOperand != *rightOperand);
+                break;
+            default:
+                assert(false);  //unreachable statement
+        }
+    } catch(std::runtime_error const &err) {    //comparison may throw a runtime_error
+        throw alpha_runtime_error(err.what(), instr.source_line);
+    }
+
+    if(result)  //If condition is true, perform branch by changing pc
         pc = instr.result->value;
 }
