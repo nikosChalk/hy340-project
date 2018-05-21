@@ -96,9 +96,9 @@ namespace virtual_machine {
 
     struct VMinstruction {
         VMopcode  opcode;
-        VMarg     result;
-        VMarg     arg1;
-        VMarg     arg2;
+        VMarg     *result;
+        VMarg     *arg1;
+        VMarg     *arg2;
         unsigned int source_line;
 
         /**
@@ -109,7 +109,7 @@ namespace virtual_machine {
         /**
          * Initializes the VMinstructions with the given arguments
          */
-        VMinstruction(VMopcode opcode, const VMarg &result, const VMarg &arg1, const VMarg &arg2, unsigned int source_line);
+        VMinstruction(VMopcode opcode, VMarg *result, VMarg *arg1, VMarg *arg2, unsigned int source_line);
 
         /**
          * Returns the string representation of this object

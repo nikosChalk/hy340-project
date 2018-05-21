@@ -24,7 +24,7 @@ namespace virtual_machine {
          * Memcell's value based on type. The value is not a reference to an index of the constant pool but an actual value.
          */
         union {
-            double          num;
+            long double     num;
             char const      *str_ptr;    //TODO: VALIDATION: if string manipulation is allowed, const must be removed and malloced string must be used. NOT with "std::string.c_str();"
             bool            boolean;
             Table           *table_ptr;
@@ -50,6 +50,12 @@ namespace virtual_machine {
          * @param rh The right hand side. Must not be NULL/nullptr
          */
         void assign(Memcell const *rh);
+
+        /**
+         * Returns the boolean semantic value of the memcell depending on its type
+         * @return
+         */
+        bool promote_to_bool() const;
 
         /**
          * Returns the string representation of this object

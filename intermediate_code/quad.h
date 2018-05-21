@@ -53,7 +53,7 @@ namespace intermediate_code {
         unsigned int lineno;
 
         /**
-         * Creates a quad with the given attributes and with a default label and taddress equal to 0.
+         * Creates a quad with the given attributes and with a default label equal to 0.
          * @param lineno The line in the source file which triggered the creation of the quad
          */
         quad(iopcode opcode, expr *result, expr *arg1, expr *arg2, unsigned int lineno, unsigned int label=0);

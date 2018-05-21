@@ -14,6 +14,8 @@
 #include "../intermediate_code/types.h"
 #include "../intermediate_code/icode_generator.h"
 #include "../intermediate_code/semantic_error.h"
+#include "../common_interface/arithm_ops.h"
+#include "../common_interface/errors/numeric_error.h"
 
 using namespace std;
 using namespace intermediate_code;
@@ -124,21 +126,23 @@ namespace syntax_analyzer {
 
             switch(iopcode) {
                 case quad::iopcode::add:
-                    const_val = arg1_val + arg2_val;
+                    const_val = arithmetic_operations::add(arg1_val, arg2_val);
                     break;
                 case quad::iopcode::sub:
-                    const_val = arg1_val - arg2_val;
+                    const_val = arithmetic_operations::sub(arg1_val, arg2_val);
                     break;
                 case quad::iopcode::mul:
-                    const_val = arg1_val * arg2_val;
+                    const_val = arithmetic_operations::mul(arg1_val, arg2_val);
                     break;
                 case quad::iopcode::div:
-                    const_val = arg1_val / arg2_val;
-                    if(arg2_val == 0)
-                        throw semantic_error("Division by 0", lineno);
+                    try {
+                        const_val = arithmetic_operations::div(arg1_val, arg2_val);
+                    } catch(arithmetic_operations::numeric_error const &err) {
+                        throw semantic_error(err.what(), lineno);
+                    }
                     break;
                 case quad::iopcode::mod:
-                    const_val = (long long int)arg1_val % (long long int)arg2_val;
+                    const_val = arithmetic_operations::mod(arg1_val, arg2_val);
                     break;
                 default:
                     assert(false);  //unreachable statement

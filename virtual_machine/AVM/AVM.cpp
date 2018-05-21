@@ -7,6 +7,7 @@
 #include "Memcell.h"
 #include "errors/stack_overflow_error.h"
 #include "errors/alpha_runtime_error.h"
+#include "../../common_interface/errors/numeric_error.h"
 
 using namespace std;
 using namespace virtual_machine;
@@ -79,13 +80,19 @@ void AVM::execute_cycle() {
 
 	//Execute instruction
 	try {
-	    //Some Execute functions may throw a stack_overflow_error
+	    //Some Execute functions may throw a stack_overflow_error or a numeric_error
         (this->*(AVM::execute_functions_array[cur_instr.opcode]))(cur_instr);    //call execute_<VMinstruction opcode> function
     } catch(stack_overflow_error const &err) {
 	    stringstream ss;
 	    ss << "Stack overflow occured by VM instruction '" << cur_instr.to_string() << "'. " << endl;
 	    ss << err.what();
 	    throw alpha_runtime_error(ss.str(), cur_instr.source_line);
+
+	} catch(arithmetic_operations::numeric_error const &err) {
+        stringstream ss;
+        ss << "Arithmetic error occured by VM instruction '" << cur_instr.to_string() << "'. " << endl;
+        ss << err.what();
+        throw alpha_runtime_error(ss.str(), cur_instr.source_line);
 	}
 
 	//pc may change due to branches, jump, call and funcexit.

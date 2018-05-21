@@ -70,25 +70,33 @@ namespace virtual_machine {
          */
         void execute_cycle();
 
-        /**
-         * execute_<VMinstruction opcode> functions. Each function has the sole task of executing the given instruction.
-         * The instruction's opcode must match the function's name. All these functions alter the state of the AVM
-         * Implementations are in the "dispatcher" directory
-         */
+        /**************************************   execute_<VMinstruction opcode>  *************************************** */
+        /* execute_<VMinstruction opcode> functions. Each function has the sole task of executing the given instruction.  */
+        /* The instruction's opcode must match the function's name. All these functions alter the state of the AVM        *
+        /* Implementations are in the "dispatcher" directory                                                              */
+        /**************************************   ------------------------------  *************************************** */
+
         void execute_assign(VMinstruction const &instr);
 
-        void execute_add(VMinstruction const &instr);
-        void execute_sub(VMinstruction const &instr);
-        void execute_mul(VMinstruction const &instr);
-        void execute_div(VMinstruction const &instr);
-        void execute_mod(VMinstruction const &instr);
+        void execute_arithmetic(VMinstruction const &instr);
+        #define execute_add execute_arithmetic
+        #define execute_sub execute_arithmetic
+        #define execute_mul execute_arithmetic
+        #define execute_div execute_arithmetic
+        #define execute_mod execute_arithmetic
+
 
         void execute_jeq(VMinstruction const &instr);
         void execute_jne(VMinstruction const &instr);
-        void execute_jle(VMinstruction const &instr);
-        void execute_jge(VMinstruction const &instr);
-        void execute_jlt(VMinstruction const &instr);
-        void execute_jgt(VMinstruction const &instr);
+
+        /**
+         * Handles VMopcodes::jle, jge, jlt, jgt
+         */
+        void execute_relational(VMinstruction const &instr);
+        #define execute_jle execute_relational
+        #define execute_jge execute_relational
+        #define execute_jlt execute_relational
+        #define execute_jgt execute_relational
 
         void execute_call(VMinstruction const &instr);
         void execute_pusharg(VMinstruction const &instr);
@@ -127,6 +135,13 @@ namespace virtual_machine {
          * @param source_line The source line of the instruction that caused the warning
          */
         void print_warning(const std::string &msg, unsigned int source_line) const;
+
+
+        /*********************************** Built in functuins *********************************** */
+        /* Builtin functions must have the prefix "libfunc_" before their actual name               */
+        /*********************************** ------------------ *********************************** */
+
+        void libfunc_print();
 
 
         /********************************** Private Static Stuff ********************************** */

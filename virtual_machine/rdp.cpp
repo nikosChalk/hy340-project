@@ -138,19 +138,19 @@ void rdp::RDP_Parser() {
 		tmp_instr.opcode = opcode_type(tmp_uint);
 		/*result*/
 		binary_f.read((char *)&tmp_uint, sizeof(char));
-		tmp_instr.result.type = vmarg_type(tmp_uint);
+		tmp_instr.result->type = vmarg_type(tmp_uint);
 		binary_f.read((char *)&tmp_uint, sizeof(unsigned int));
-		tmp_instr.result.value = tmp_uint;
+		tmp_instr.result->value = tmp_uint;
 		/*arg1*/
 		binary_f.read((char *)&tmp_uint, sizeof(char));
-		tmp_instr.arg1.type = vmarg_type(tmp_uint);
+		tmp_instr.arg1->type = vmarg_type(tmp_uint);
 		binary_f.read((char *)&tmp_uint, sizeof(unsigned int));
-		tmp_instr.arg1.value = tmp_uint;
+		tmp_instr.arg1->value = tmp_uint;
 		/*arg2*/
 		binary_f.read((char *)&tmp_uint, sizeof(char));
-		tmp_instr.arg2.type = vmarg_type(tmp_uint);
+		tmp_instr.arg2->type = vmarg_type(tmp_uint);
 		binary_f.read((char *)&tmp_uint, sizeof(unsigned int));
-		tmp_instr.arg2.value = tmp_uint;
+		tmp_instr.arg2->value = tmp_uint;
 		/*scrline*/
 		binary_f.read((char *)&tmp_uint, sizeof(unsigned int));
 		tmp_instr.source_line = tmp_uint;

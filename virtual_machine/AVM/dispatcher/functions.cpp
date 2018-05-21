@@ -13,7 +13,7 @@ using namespace virtual_machine;
 void AVM::execute_call(const VMinstruction &instr) {
     assert(instr.opcode == VMopcode::call);
 
-    Memcell *func = translate_operand(&instr.arg1, &ax);
+    Memcell *func = translate_operand(instr.arg1, &ax);
     assert(func);
 
     //Prepare to save environment
@@ -58,7 +58,7 @@ void AVM::execute_call(const VMinstruction &instr) {
 void AVM::execute_funcenter(const VMinstruction &instr) {
     assert(instr.opcode == VMopcode::funcenter);
 
-    Memcell *func = translate_operand(&instr.arg1, &ax);
+    Memcell *func = translate_operand(instr.arg1, &ax);
     assert(func && func->type == Memcell::userfunc);
     assert(pc == func->value.userfunc_addr);
 
@@ -74,7 +74,7 @@ void AVM::execute_funcexit(const VMinstruction &instr) {
 void AVM::execute_pusharg(const VMinstruction &instr) {
     assert(instr.opcode == VMopcode::pusharg);
 
-    Memcell *arg = translate_operand(&instr.arg1, &ax);
+    Memcell *arg = translate_operand(instr.arg1, &ax);
     assert(arg);
 
     program_stack.push_actual_arg(arg);
