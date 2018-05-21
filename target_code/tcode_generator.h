@@ -5,8 +5,11 @@
 #include <string>
 #include "../intermediate_code/expr.h"
 #include "../intermediate_code/quad.h"
+#include "../common_interface/vm_types.h"
+
 
 using namespace std;
+using namespace virtual_machine;
 
 namespace target_code{
 
@@ -21,7 +24,7 @@ namespace target_code{
 		* position of the instruction within the instruction_vector.
 		* @param instruction The instruction to emit. Must not be NULL/nullptr
 		*/
-		void emit_instruction(target_instruction::instruction *instruction);
+		void emit_instruction(VMinstruction *instruction);
 
 		/**
 		* Returns the label of the next instruction which will be emitted
@@ -40,16 +43,16 @@ namespace target_code{
 		unsigned int total_String_Consts;
 		vector <string> named_Lib_Funcs;
 		unsigned int total_Named_Lib_Funcs;
-		vector <target_code::target_instruction::user_func> user_Funcs;
+		vector <Userfunc> user_Funcs;
 		unsigned int total_User_Funcs;
 
 		/*This function translate expressions* to vmargs*/
-		void make_operand(intermediate_code::expr* e, target_code::target_instruction::vmarg* arg);
+		void make_operand(intermediate_code::expr* e, VMarg* arg);
 
 		/*Helper functions to produce common arguments for generated functions*/
-		void make_number_operand(target_code::target_instruction::vmarg* arg, double val);
-		void make_bool_operand(target_code::target_instruction::vmarg* arg, unsigned int val);
-		void make_retval_operand(target_code::target_instruction::vmarg* arg);
+		void make_number_operand(VMarg* arg, double val);
+		void make_bool_operand(VMarg* arg, unsigned int val);
+		void make_retval_operand(VMarg* arg);
 
 		/*generate functions*/
 		void generate_ADD(intermediate_code::quad*);
@@ -81,11 +84,11 @@ namespace target_code{
 		/*basic generate function*/
 		void generate(void);
 		/*helper generate functions*/
-		void generate_arithmetic(target_code::target_instruction::vmopcode opcode, intermediate_code::quad* quad);
-		void generate_relational(target_code::target_instruction::vmopcode opcode, intermediate_code::quad* quad);
+		void generate_arithmetic(VMopcode opcode, intermediate_code::quad* quad);
+		void generate_relational(VMopcode opcode, intermediate_code::quad* quad);
 
 	private:
-		vector<target_instruction::instruction*> instruction_vector;
+		vector<VMinstruction*> instruction_vector;
 	};
 }
 
