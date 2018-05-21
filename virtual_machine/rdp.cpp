@@ -80,6 +80,7 @@ void rdp::RDP_Parser() {
 	Userfunc tmp_user_func;
 	VMinstruction tmp_instr;
 
+
 	ifstream binary_f;
 
 	binary_f.open("binary.abc", ios::in | ios::binary);

@@ -1,8 +1,8 @@
-#include <vector>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <cassert>
+#include <vector>
 
 #include "../common_interface/vm_types.h"
 
