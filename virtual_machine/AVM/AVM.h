@@ -19,6 +19,11 @@ namespace virtual_machine {
     public:
 
         /**
+         * Signature for library functions
+         */
+        typedef void (AVM::*lib_func_t)();
+
+        /**
          * Initializes the virtual machine. Note that for each vector argument, an internal copy is made.
          * @param instructions The vector containing the instructions
          * @param doubles The constant vector for the doubles
@@ -103,6 +108,18 @@ namespace virtual_machine {
         /* Their implementation can be found in the corresponding .cpp in the dispatcher directory  */
         /**********************************   ----------------  *********************************** */
 
+        /**
+         * Returns the library function that matches to the given name
+         * @param name A builtin library function name, declared in "common_interface/Builtin_funcs.h"
+         * @return The executable library function
+         */
+        lib_func_t get_library_function(const std::string &name);
+
+        /**
+         * Calls the library function with the given name
+         * @param name The name of the library function which is a name, declared in "common_interface/Builtin_funcs.h"
+         */
+        void call_library_function(const std::string &name);
 
         /**
          * Prints a warning message to cerr concerning the AVM due to a soft error during the execution of an instruction
@@ -110,6 +127,10 @@ namespace virtual_machine {
          * @param source_line The source line of the instruction that caused the warning
          */
         void print_warning(const std::string &msg, unsigned int source_line) const;
+
+
+        /********************************** Private Static Stuff ********************************** */
+        /********************************** -------------------- *********************************** */
 
         /**
          * Type declaration of the execute functions for convenience

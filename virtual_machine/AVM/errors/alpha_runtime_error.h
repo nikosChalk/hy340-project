@@ -14,7 +14,7 @@ namespace virtual_machine {
          * @param info A descriptive message of the error
          * @param source_line The source line that triggered the error
          */
-        alpha_runtime_error(std::string &info, unsigned int source_line);
+        alpha_runtime_error(std::string info, unsigned int source_line);
 
         /**
          * Throws a runtime error caused by some instruction within the virtual machine

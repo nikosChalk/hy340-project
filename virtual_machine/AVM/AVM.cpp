@@ -2,8 +2,11 @@
 
 #include <cassert>
 #include <iostream>
+#include <sstream>
 #include "AVM.h"
 #include "Memcell.h"
+#include "errors/stack_overflow_error.h"
+#include "errors/alpha_runtime_error.h"
 
 using namespace std;
 using namespace virtual_machine;
@@ -26,7 +29,7 @@ Memcell* AVM::translate_operand(const VMarg *vmarg, Memcell *reg /*=nullptr*/) {
     //Handle the cases in which vmarg is binded to the program stack or retval register
     switch(vmarg->type) {
         case VMarg::Type::program:  return program_stack.get_program_var(vmarg->value);
-        case VMarg::Type::formal:   return program_stack.get_formal_arg(vmarg->value);
+        case VMarg::Type::formal:   return program_stack.get_actual_arg(vmarg->value);
         case VMarg::Type::local:    return program_stack.get_local_var(vmarg->value);
         case VMarg::Type::retval:   return &retval;
         default:
@@ -53,7 +56,7 @@ Memcell* AVM::translate_operand(const VMarg *vmarg, Memcell *reg /*=nullptr*/) {
             return reg;
         case VMarg::Type::userfunc:
             reg->type = Memcell::Type::userfunc;
-            reg->value.userfunc_addr = const_pool.get_userfunc(vmarg->value).address;
+            reg->value.userfunc_addr = const_pool.get_userfunc_on_idx(vmarg->value).address;
         case VMarg::Type::libfunc:
             reg->type = Memcell::Type::libfunc;
             reg->value.libfunc_ptr = const_pool.get_libfunc(vmarg->value).c_str();
@@ -73,7 +76,17 @@ void AVM::execute_cycle() {
 	assert(pc < AVM_ENDING_PC);
 	const VMinstruction &cur_instr = instructions.at(pc);
 	unsigned int old_pc = pc;
-	( this->*(AVM::execute_functions_array[cur_instr.opcode]) )(cur_instr);	//call execute_<VMinstruction opcode> function
+
+	//Execute instruction
+	try {
+	    //Some Execute functions may throw a stack_overflow_error
+        (this->*(AVM::execute_functions_array[cur_instr.opcode]))(cur_instr);    //call execute_<VMinstruction opcode> function
+    } catch(stack_overflow_error const &err) {
+	    stringstream ss;
+	    ss << "Stack overflow occured by VM instruction '" << cur_instr.to_string() << "'. " << endl;
+	    ss << err.what();
+	    throw alpha_runtime_error(ss.str(), cur_instr.source_line);
+	}
 
 	//pc may change due to branches, jump, call and funcexit.
 	if(pc == old_pc) //We advance pc to the next instruction only if it wasn't changed by one of the above instructions

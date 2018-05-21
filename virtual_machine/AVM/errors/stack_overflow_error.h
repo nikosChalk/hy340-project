@@ -14,14 +14,14 @@ namespace virtual_machine {
          * and overflow occured
          * @param info A descriptive message of the error
          */
-        stack_overflow_error(std::string &info);
+        explicit stack_overflow_error(std::string &info);
 
         /**
          * Throws a runtime error caused by some instruction that tried to allocate memory in the Program_stack, but
          * and overflow occured
          * @param info A descriptive message of the error
          */
-        stack_overflow_error(const char *info);
+        explicit stack_overflow_error(const char *info);
 
         virtual char const *what() const noexcept;
     };
