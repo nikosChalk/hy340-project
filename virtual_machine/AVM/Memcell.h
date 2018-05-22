@@ -32,11 +32,11 @@ namespace virtual_machine {
          */
         union {
             long double     num;
-            char const      *str_ptr;    //TODO: VALIDATION: if string manipulation is allowed, const must be removed and malloced string must be used. NOT with "std::string.c_str();"
+            char            *str_ptr;       //must be malloced and freed
             bool            boolean;
             Table           *table_ptr;
             unsigned int    userfunc_addr;  //address (label) of "funcstart" vm instruction
-            char const      *libfunc_ptr;
+            char const      *libfunc_ptr;   //no need to malloc/free. These pointers point to strings of Constant_pool
         } value;
 
         /**
@@ -47,6 +47,7 @@ namespace virtual_machine {
         /**
          * Clears the memcell by setting its type to Type::undef.
          * If the memcell was of type table, then the table's reference counter is also decreased
+         * If the memcell was of type string, then the string is freed
          */
         void clear();
 
@@ -78,6 +79,8 @@ namespace virtual_machine {
          * Compares *this with other. See operator==() for more information
          * @param other The other to compare
          * @return Returns !(*this == other)
+         *
+         * @throws std::runtime_error
          */
         bool operator!=(const Memcell &other) const;
 
@@ -89,7 +92,78 @@ namespace virtual_machine {
 
     private:
 
-        /* Functions that convert the value of the Memcell to bool, based on a given type */
+        /* Functions that assign another Memcell to *this through deep copy, based on a given fixed same type           */
+        /* this->type is considered valid, while this->value is considered invalid and is set through these functions   */
+
+        /**
+         * Sets value.num to other.value.num
+         */
+        void assign_number(const Memcell *other);
+
+        /**
+         * Sets value.str_ptr to string copy of other.value.str_ptr. Pointers will point to different memory with the same content
+         */
+        void assign_string(const Memcell *other);
+
+        /**
+         * Sets value.boolean to other.value.boolean
+         */
+        void assign_boolean(const Memcell *other);
+
+        /**
+         * Sets value.table_ptr to other.value.table_ptr and increases the table's reference counter if need be.
+         */
+        void assign_table(const Memcell *other);
+
+        /**
+         * Sets value.userfunc_addr to other.value.userfunc_addr
+         */
+        void assign_userfunc(const Memcell *other);
+
+        /**
+         * Sets value.libfunc_ptr to other.value.libfunc_ptr. Both pointers will point to the same memory address
+         */
+        void assign_libfunc(const Memcell *other);
+
+        /**
+         * No action is needed.
+         */
+        void assign_nil(const Memcell *other);
+
+        /**
+         * No action is taken
+         */
+        void assign_undef(const Memcell *other);
+
+        typedef void (Memcell::*assign_func_t)(const Memcell *other);
+        static const std::map<unsigned int, assign_func_t> assign_func_table = {
+                {Type::number, assign_number}, {Type::string, assign_string}, {Type::boolean, assign_boolean},
+                {Type::table, assign_table}, {Type::userfunc, assign_userfunc}, {Type::libfunc, assign_libfunc},
+                {Type::nil, assign_nil}, {Type::undef, assign_undef}
+        };
+
+
+        /* Functions that clear the content of the Memcell, based on a given fixed type */
+
+        /**
+         * De-allocates the string
+         */
+        void string_clear();
+
+        /**
+         * Decreases the table's reference counter
+         */
+        void table_clear();
+
+        typedef void (Memcell::*clear_func_t)();
+        static const std::map<unsigned int, clear_func_t> clear_func_table = {
+                {Type::number, nullptr}, {Type::string, string_clear}, {Type::boolean, nullptr},
+                {Type::table, table_clear}, {Type::userfunc, nullptr}, {Type::libfunc, nullptr},
+                {Type::nil, nullptr}, {Type::undef, nullptr}
+                //Values "nullptr" indicate that no clean up action is needed
+        };
+
+        /* Functions that convert the value of the Memcell to bool, based on a given fixed type */
 
         /**
          * Returns true if the value.num not zero. False otherwise

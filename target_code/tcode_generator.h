@@ -52,7 +52,8 @@ namespace target_code{
 		void generate_FUNCSTART(intermediate_code::quad* quad);
 		void generate_RETURN(intermediate_code::quad* quad);
 		void generate_FUNCEND(intermediate_code::quad* quad);
-		void generate_NOP(intermediate_code::quad* quad);
+		void generate_UMINUS(intermediate_code::quad* quad);
+		void generate_NOP();
 
 		/*basic generate function*/
 		void generate(vector<intermediate_code::quad*> quad_vector);
