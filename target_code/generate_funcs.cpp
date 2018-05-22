@@ -3,9 +3,9 @@
 #include <iostream>
 #include <cassert>
 
-void target_code::tcode_generator::generate(vector<intermediate_code::quad*> quad_vector){
-	for (intermediate_code::quad *q : quad_vector){
-		switch (q->opcode)
+void target_code::tcode_generator::generate(vector<target_code::Tcode_quad*> quad_vector){
+	for (target_code::Tcode_quad *q : quad_vector){
+		switch (q->tquad->opcode)
 		{
 		case intermediate_code::quad::iopcode::add:
 			target_code::tcode_generator::generate(virtual_machine::VMopcode::add, q);
@@ -26,7 +26,7 @@ void target_code::tcode_generator::generate(vector<intermediate_code::quad*> qua
 		case intermediate_code::quad::iopcode::assign:
 			target_code::tcode_generator::generate(virtual_machine::VMopcode::assign, q);
 		case intermediate_code::quad::iopcode::jump:
-			target_code::tcode_generator::generate_relational (virtual_machine::VMopcode::jump, q);
+			target_code::tcode_generator::generate_relational(virtual_machine::VMopcode::jump, q);
 		case intermediate_code::quad::iopcode::if_eq:
 			target_code::tcode_generator::generate_relational(virtual_machine::VMopcode::jeq, q);
 		case intermediate_code::quad::iopcode::if_noteq:
@@ -57,12 +57,83 @@ void target_code::tcode_generator::generate(vector<intermediate_code::quad*> qua
 			cerr << "Invalid opcode !!!\n";
 			assert(0);
 		}
+		this->curr_proc_quad++; /*counter for curr_processed_quad() function*/
 	}
 	target_code::tcode_generator::generate_NOP();
 }
 
-/*simplirosi generate functions*/
+/*helper generate functions*/
+void target_code::tcode_generator::generate(VMopcode opcode, target_code::Tcode_quad* quad){
+	VMinstruction instruction;
+	instruction.opcode = opcode;
 
-void target_code::tcode_generator::generate_UMINUS(intermediate_code::quad* quad){
+	make_operand(quad->tquad->arg1, instruction.arg1);
+	make_operand(quad->tquad->arg2, instruction.arg2);
+	make_operand(quad->tquad->result, instruction.result);
+	quad->taddress = next_instruction_label();
+	emit_instruction(instruction);
+}
 
+void target_code::tcode_generator::generate_relational(VMopcode opcode, target_code::Tcode_quad* quad){
+	VMinstruction instruction;
+	instruction.opcode = opcode;
+
+	make_operand(quad->tquad->arg1, instruction.arg1);
+	make_operand(quad->tquad->arg2, instruction.arg2);
+
+	instruction.result->type = VMarg::Type::label;
+
+
+	if (quad->tquad->label < curr_processed_quad())
+		instruction.result->value = quad_vector.at(quad->tquad->label)->taddress;
+	else
+		add_incomplete_jump(next_instruction_label(), quad->tquad->label);
+	quad->taddress = next_instruction_label();
+	emit_instruction(instruction);
+}
+
+void target_code::tcode_generator::generate_PARAM(target_code::Tcode_quad* quad){
+	quad->taddress = next_instruction_label();
+	VMinstruction instruction;
+	instruction.opcode = VMopcode::pusharg;
+	make_operand(quad->tquad->arg1, instruction.arg1);
+	emit_instruction(instruction);
+}
+
+void target_code::tcode_generator::generate_CALL(target_code::Tcode_quad* quad){
+	quad->taddress = next_instruction_label();
+	VMinstruction instruction;
+	instruction.opcode = VMopcode::call;
+	make_operand(quad->tquad->arg1, instruction.arg1);
+	emit_instruction(instruction);
+}
+
+void target_code::tcode_generator::generate_GETRETVAL(target_code::Tcode_quad* quad){
+	quad->taddress = next_instruction_label();
+	VMinstruction instruction;
+	instruction.opcode = VMopcode::assign;
+	make_operand(quad->tquad->result, instruction.result);
+	make_retval_operand(instruction.arg1);
+	emit_instruction(instruction);
+}
+
+void target_code::tcode_generator::generate_UMINUS(target_code::Tcode_quad* quad){
+	VMinstruction instruction;
+	int flag = 0;
+	instruction.opcode = VMopcode::mul;
+	make_operand(quad->tquad->arg1, instruction.arg1);
+	for (int i = 0; i < num_Consts.size(); i++){
+		if (num_Consts.at(i) == -1){
+			instruction.arg2->value = i;
+			instruction.arg2->type = virtual_machine::VMarg::Type::number;
+			flag = 1;/*we have a -1 record in constants number array*/
+			break;
+		}
+	}
+	if (flag == 0){ /*make a new record in constants number array*/
+		instruction.arg2->value = tcode_generator::consts_new_number(-1);
+		instruction.arg2->type = virtual_machine::VMarg::Type::number;
+	}
+	make_operand(quad->tquad->result, instruction.result);
+	emit_instruction(instruction);
 }

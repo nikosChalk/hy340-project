@@ -11,18 +11,23 @@ tcode_generator::tcode_generator(vector<intermediate_code::quad*> quad_vector){
 	this->string_Consts = vector <string>();
 	this->named_Lib_Funcs = vector <string>();
 	this->user_Funcs = vector <Userfunc*>();
-	this->instruction_vector = vector<VMinstruction*>();
-	this->quad_vector = quad_vector;
+	this->instruction_vector = vector<VMinstruction>();
+	for(intermediate_code::quad* q : quad_vector)
+		this->quad_vector.push_back(new Tcode_quad(q, 0));
 	this->incomplete_jump_vector = vector<Incomplete_Jump*>();
+	this->curr_proc_quad = 0;
 }
 
-void tcode_generator::emit_instruction(VMinstruction *instruction){
-	assert(instruction);
+void tcode_generator::emit_instruction(VMinstruction instruction){
 	instruction_vector.push_back(instruction);
 }
 
 unsigned int tcode_generator::next_instruction_label() const {
 	return (unsigned int)instruction_vector.size();
+}
+
+unsigned int tcode_generator::curr_processed_quad() const {
+	return this->curr_proc_quad;
 }
 
 void tcode_generator::make_operand(intermediate_code::expr* e, VMarg* arg){
@@ -113,4 +118,5 @@ void tcode_generator::patch_incomplete_jumps(void){
 void tcode_generator::add_incomplete_jump(unsigned int instrNo, unsigned int iaddress){
 	incomplete_jump_vector.push_back(new Incomplete_Jump(instrNo,iaddress));
 }
+
 
