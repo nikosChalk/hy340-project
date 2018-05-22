@@ -1,4 +1,4 @@
-
+#include "../intermediate_code/quad.h"
 
 #ifndef HY340_PROJECT_TYPES_H
 #define HY340_PROJECT_TYPES_H
@@ -20,7 +20,7 @@ namespace target_code {
     };
 	
 	struct Tcode_quad{
-		quad tquad;
+		intermediate_code::quad* tquad;
 		unsigned int taddress;
 		/**
         * Default initialization. (Junk)
@@ -31,7 +31,7 @@ namespace target_code {
         * @param tquad
         * @param taddress
         */
-        Tcode_quad(quad tquad, unsigned int taddress);
+		Tcode_quad(intermediate_code::quad* tquad, unsigned int taddress);
 	};
 }
 

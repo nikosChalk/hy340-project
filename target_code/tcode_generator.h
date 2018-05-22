@@ -25,13 +25,19 @@ namespace target_code{
 		* position of the instruction within the instruction_vector.
 		* @param instruction The instruction to emit. Must not be NULL/nullptr
 		*/
-		void emit_instruction(VMinstruction *instruction);
+		void emit_instruction(VMinstruction instruction);
 
 		/**
 		* Returns the label of the next instruction which will be emitted
 		* @return The label of the next instruction which will be emitted
 		*/
 		unsigned int next_instruction_label() const;
+
+		/**
+		* Returns the number of current quad
+		* @return the number of current quad
+		*/
+		unsigned int curr_processed_quad() const;
 
 		/*functions fill constants arrays of values-functions*/
 		unsigned int consts_new_string(string s);
@@ -46,20 +52,20 @@ namespace target_code{
 		void make_retval_operand(VMarg* arg);
 
 		/*generate functions*/
-		void generate_PARAM(intermediate_code::quad* quad);
-		void generate_CALL(intermediate_code::quad* quad);
-		void generate_GETRETVAL(intermediate_code::quad* quad);
-		void generate_FUNCSTART(intermediate_code::quad* quad);
-		void generate_RETURN(intermediate_code::quad* quad);
-		void generate_FUNCEND(intermediate_code::quad* quad);
-		void generate_UMINUS(intermediate_code::quad* quad);
+		void generate_PARAM(target_code::Tcode_quad* quad);
+		void generate_CALL(target_code::Tcode_quad* quad);
+		void generate_GETRETVAL(target_code::Tcode_quad* quad);
+		void generate_FUNCSTART(target_code::Tcode_quad* quad);
+		void generate_RETURN(target_code::Tcode_quad* quad);
+		void generate_FUNCEND(target_code::Tcode_quad* quad);
+		void generate_UMINUS(target_code::Tcode_quad* quad);
 		void generate_NOP();
 
 		/*basic generate function*/
-		void generate(vector<intermediate_code::quad*> quad_vector);
+		void generate(vector<target_code::Tcode_quad*> quad_vector);
 		/*helper generate functions*/
-		void generate(VMopcode opcode, intermediate_code::quad* quad);
-		void generate_relational(VMopcode opcode, intermediate_code::quad* quad);
+		void generate(VMopcode opcode, target_code::Tcode_quad* quad);
+		void generate_relational(VMopcode opcode, target_code::Tcode_quad* quad);
 		
 		/*this function fills incomplete jump instruction number in result field*/
 		void patch_incomplete_jumps(void);
@@ -71,9 +77,10 @@ namespace target_code{
 		vector <string> string_Consts;
 		vector <string> named_Lib_Funcs;
 		vector <Userfunc*> user_Funcs;
-		vector<VMinstruction*> instruction_vector;
+		vector<VMinstruction> instruction_vector;
 	    vector<Tcode_quad*> quad_vector;
 		vector<Incomplete_Jump*> incomplete_jump_vector;
+		unsigned int curr_proc_quad;
 	};
 }
 
