@@ -2,7 +2,7 @@
 
 #include <cassert>
 #include "Program_stack.h"
-#include "errors/stack_overflow_error.h"
+#include "errors/internal_error.h"
 #include "Memcell.h"
 
 using namespace std;
@@ -21,7 +21,7 @@ using namespace virtual_machine;
 /**
  * Offsets from "topsp" index for the corresponding environmental values
  */
-#define AVM_SAVED_TOSP_OFFSET   (+1)
+#define AVM_SAVED_TOPSP_OFFSET   (+1)
 #define AVM_SAVED_TOP_OFFSET    (+2)
 #define AVM_SAVED_PC_OFFSET     (+3)
 #define AVM_SAVED_TOTAL_ACTUALS (+4)
@@ -41,7 +41,7 @@ void Program_stack::allocate_memcells(unsigned int n) {
     //Start allocation
     for(unsigned int i=0; i<n; i++) {
         if(top == -1)   //Check for overflow
-            throw stack_overflow_error("Stack Overflow");
+            throw internal_error("Stack Overflow");
 
         //No overflow will occur. Safely allocate one memcell
         top--;
@@ -69,7 +69,7 @@ unsigned int Program_stack::restore_environment() {
     //Restore environment
     unsigned int pc = get_env_value((unsigned int)(topsp+AVM_SAVED_PC_OFFSET));
     top = get_env_value((unsigned int)(topsp + AVM_SAVED_TOP_OFFSET));
-    topsp = get_env_value((unsigned int)(topsp + AVM_SAVED_TOSP_OFFSET));
+    topsp = get_env_value((unsigned int)(topsp + AVM_SAVED_TOPSP_OFFSET));
 
     //Clear de-allocated cells
     while(++old_top <= top)     //Intentionally ignore first
@@ -86,7 +86,7 @@ void Program_stack::push_actual_arg(Memcell const *actual_arg) {
 }
 
 unsigned int Program_stack::get_env_value(unsigned int idx) {
-    assert(idx == topsp+AVM_SAVED_TOSP_OFFSET || idx == topsp+AVM_SAVED_TOP_OFFSET ||
+    assert(idx == topsp+AVM_SAVED_TOPSP_OFFSET || idx == topsp+AVM_SAVED_TOP_OFFSET ||
            idx == topsp+AVM_SAVED_PC_OFFSET   || idx == topsp+AVM_SAVED_TOTAL_ACTUALS);
     assert(stack[idx].type == Memcell::Type::number);   //environmental values are numbers
 

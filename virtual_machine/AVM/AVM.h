@@ -143,11 +143,21 @@ namespace virtual_machine {
         void print_warning(const std::string &msg, unsigned int source_line) const;
 
 
-        /*********************************** Built in functuins *********************************** */
-        /* Builtin functions must have the prefix "libfunc_" before their actual name               */
+        /*********************************** Built in functions *********************************** */
+        /* Builtin library functions must have the prefix "libfunc_" before their actual name       */
+        /* All these functions have their arguments in the stack and use "retval" register for      */
+        /* return value                                                                             */
         /*********************************** ------------------ *********************************** */
 
+        /**
+         * Takes variadic arguments and prints them in cout
+         */
         void libfunc_print();
+
+        /**
+         * Takes one argument and returns its type as string representation
+         */
+        void libfunc_typeof();
 
 
         /********************************** Private Static Stuff ********************************** */

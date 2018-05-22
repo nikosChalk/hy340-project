@@ -3,9 +3,10 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
+#include <cstring>
 #include "AVM.h"
 #include "Memcell.h"
-#include "errors/stack_overflow_error.h"
+#include "errors/internal_error.h"
 #include "errors/alpha_runtime_error.h"
 #include "../../common_interface/errors/numeric_error.h"
 
@@ -39,6 +40,7 @@ Memcell* AVM::translate_operand(const VMarg *vmarg, Memcell *reg /*=nullptr*/) {
 
     //Handle the cases where a register is used
     assert(reg);
+    //TODO: Should the register "reg" be cleared before use?
     switch(vmarg->type) {
         case VMarg::Type::number:
             reg->type = Memcell::Type::number;
@@ -46,7 +48,7 @@ Memcell* AVM::translate_operand(const VMarg *vmarg, Memcell *reg /*=nullptr*/) {
             return reg;
         case VMarg::Type::string:
             reg->type = Memcell::Type::string;
-            reg->value.str_ptr = const_pool.get_string(vmarg->value).c_str();
+            reg->value.str_ptr = strdup(const_pool.get_string(vmarg->value).c_str());
             return reg;
         case VMarg::Type::boolean:
             reg->type = Memcell::Type::boolean;
@@ -80,19 +82,13 @@ void AVM::execute_cycle() {
 
 	//Execute instruction
 	try {
-	    //Some Execute functions may throw a stack_overflow_error or a numeric_error
+	    //Some Execute functions may throw a internal_error or a numeric_error
         (this->*(AVM::execute_functions_array[cur_instr.opcode]))(cur_instr);    //call execute_<VMinstruction opcode> function
-    } catch(stack_overflow_error const &err) {
+    } catch(internal_error const &err) {
 	    stringstream ss;
-	    ss << "Stack overflow occured by VM instruction '" << cur_instr.to_string() << "'. " << endl;
+	    ss << "Error caused by VM instruction '" << cur_instr.to_string() << "'. " << endl;
 	    ss << err.what();
 	    throw alpha_runtime_error(ss.str(), cur_instr.source_line);
-
-	} catch(arithmetic_operations::numeric_error const &err) {
-        stringstream ss;
-        ss << "Arithmetic error occured by VM instruction '" << cur_instr.to_string() << "'. " << endl;
-        ss << err.what();
-        throw alpha_runtime_error(ss.str(), cur_instr.source_line);
 	}
 
 	//pc may change due to branches, jump, call and funcexit.

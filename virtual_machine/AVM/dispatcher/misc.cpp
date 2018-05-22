@@ -10,7 +10,7 @@ void AVM::execute_assign(const VMinstruction &instr) {
     assert(instr.opcode == VMopcode::assign);
 
     Memcell *lv = translate_operand(instr.result);
-    Memcell *rv = translate_operand(&instr.arg1, &ax);
+    Memcell *rv = translate_operand(instr.arg1, &ax);
 
     assert(lv && (program_stack.is_in_stack(lv) || lv == &retval));
     assert(rv);

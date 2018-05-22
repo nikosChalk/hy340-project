@@ -3,7 +3,7 @@
 #include <map>
 #include <cassert>
 #include "../AVM.h"
-#include "../errors/alpha_runtime_error.h"
+#include "../errors/internal_error.h"
 
 using namespace std;
 using namespace virtual_machine;
@@ -39,7 +39,7 @@ void AVM::execute_relational(const VMinstruction &instr) {
     assert(leftOperand && rightOperand);
 
     if(leftOperand->type != Memcell::Type::number || rightOperand->type != Memcell::Type::number)
-        throw alpha_runtime_error("Not numeric operator in relational operation", instr.source_line);
+        throw internal_error("Not numeric operator in relational operation");
 
     comparator_func_t comparator_func = relop_to_func_map.at(instr.opcode);
     if( (*comparator_func)(leftOperand->value.num, rightOperand->value.num) )   //if true, change pc. Else do nothing
@@ -58,16 +58,16 @@ void AVM::execute_equality(const VMinstruction &instr) {
     try {
         switch(instr.opcode) {
             case VMopcode::jeq:
-                result = (*leftOperand == *rightOperand);
+                result = (*leftOperand == *rightOperand);   //comparison may throw a runtime_error
                 break;
             case VMopcode::jne:
-                result = (*leftOperand != *rightOperand);
+                result = (*leftOperand != *rightOperand);   //comparison may throw a runtime_error
                 break;
             default:
                 assert(false);  //unreachable statement
         }
     } catch(std::runtime_error const &err) {    //comparison may throw a runtime_error
-        throw alpha_runtime_error(err.what(), instr.source_line);
+        throw internal_error(err.what());
     }
 
     if(result)  //If condition is true, perform branch by changing pc
