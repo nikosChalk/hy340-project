@@ -24,10 +24,11 @@
 /* |_______________|__________________________|______________________|___________________|  */
 /* |   funcexit    |         unused           |       unused         |     unused        |  */
 /* |_______________|__________________________|______________________|___________________|  */
-/* |    newtable   |         unused           | program formal local |     unused        |  */
-/* |_______________|__________________________|______________________|___________________|  */
 /* |               |                          | program formal local |                   |  */
-/* | tablegetelem  |   program formal local   | retval               |  any except label |  */
+/* |    newtable   |         unused           |        retval        |     unused        |  */
+/* |_______________|__________________________|______________________|___________________|  */
+/* |               |   program formal local   | program formal local |                   |  */
+/* | tablegetelem  |   retval                 | retval               |  any except label |  */
 /* |_______________|__________________________|______________________|___________________|  */
 /* |               |                          | program formal local |                   |  */
 /* | tablesetelem  |   any except label       | retval               |  any except label |  */
@@ -139,21 +140,6 @@ namespace virtual_machine {
          */
         Userfunc(unsigned int address, unsigned int nr_locals, const std::string &name);
     };
-
-	struct Incomplete_Jump{
-		unsigned int instrNo;
-		unsigned int iaddress;
-		/**
-		* Default initialization. (Junk)
-		*/
-		Incomplete_Jump();
-		/**
-		* Initializes the Incomplete_Jump representation with the given attributes
-		* @param nr_locals The total number of local variables used by this function
-		* @param name The function's name
-		*/
-		Incomplete_Jump(unsigned int instrNo, unsigned int iaddress);
-	};
 };
 
 #endif //HY340_PROJECT_VM_TYPES_H

@@ -2,10 +2,12 @@
 
 #include <cassert>
 #include <map>
+#include <sstream>
 #include "../AVM.h"
-#include "../errors/alpha_runtime_error.h"
-#include "../../../common_interface/arithm_ops.h"
 #include "../Memcell.h"
+#include "../errors/internal_error.h"
+#include "../../../common_interface/arithm_ops.h"
+#include "../../../common_interface/errors/numeric_error.h"
 
 using namespace std;
 using namespace virtual_machine;
@@ -29,10 +31,19 @@ void AVM::execute_arithmetic(const VMinstruction &instr) {
     assert(leftOperand && rightOperand);
 
     if(leftOperand->type != Memcell::Type::number || rightOperand->type != Memcell::Type::number)
-        throw alpha_runtime_error("Not numeric operator in arithmetic operation", instr.source_line);
+        throw internal_error("Not numeric operator in arithmetic operation");
 
     arithmetic_func_t operation_func = operator_to_func_map.at(instr.opcode);
     lv->clear();
     lv->type = Memcell::Type::number;
-    lv->value.num = (*operation_func)(leftOperand->value.num, rightOperand->value.num);
+
+    try {
+        lv->value.num = (*operation_func)(leftOperand->value.num, rightOperand->value.num);
+    } catch(arithmetic_operations::numeric_error const &err) {
+        stringstream ss;
+        ss << "Arithmetic error occured" << endl;
+        ss << err.what();
+        throw internal_error(ss.str());
+    }
+
 }

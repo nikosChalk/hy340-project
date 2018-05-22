@@ -10,6 +10,7 @@
 #include "Constants_pool.h"
 #include "Memcell.h"
 #include "Program_stack.h"
+#include "../../common_interface/Builtin_funcs.h"
 
 #define AVM_ENDING_PC (this->instructions.size())
 
@@ -38,7 +39,8 @@ namespace virtual_machine {
             unsigned int total_program_vars);
 
         /**
-         * Executes the alpha binary file
+         * Executes the alpha binary file.
+         * @throws alpha_runtime_error If something went wrong
          */
         void run();
 
@@ -47,7 +49,7 @@ namespace virtual_machine {
         Constants_pool const_pool;
         Program_stack program_stack;
 
-        Memcell ax, bx, cx; //general purpose registers
+        Memcell ax, bx;     //general purpose registers
         Memcell retval;     //special purpose register. Used for function return value
         unsigned int pc;	//address of the current instruction to execute
 
@@ -67,6 +69,7 @@ namespace virtual_machine {
          * Executes the instruction currently pointed by pc, effectively changing the state of the AVM
          * If no more instructions exist to execute then finished is set to 1.
          * Also if finished is already 1, then no action is taken.
+         * @throws alpha_runtime_error If something went wrong
          */
         void execute_cycle();
 
@@ -78,6 +81,9 @@ namespace virtual_machine {
 
         void execute_assign(VMinstruction const &instr);
 
+        /**
+         * Handles VMopcodes::add, sub, mul, div, mod
+         */
         void execute_arithmetic(VMinstruction const &instr);
         #define execute_add execute_arithmetic
         #define execute_sub execute_arithmetic
@@ -85,9 +91,12 @@ namespace virtual_machine {
         #define execute_div execute_arithmetic
         #define execute_mod execute_arithmetic
 
-
-        void execute_jeq(VMinstruction const &instr);
-        void execute_jne(VMinstruction const &instr);
+        /**
+         * Handles VMopcodes::jeq, jne
+         */
+        void execute_equality(VMinstruction const &instr);
+        #define execute_jeq execute_equality
+        #define execute_jne execute_equality
 
         /**
          * Handles VMopcodes::jle, jge, jlt, jgt
@@ -117,13 +126,6 @@ namespace virtual_machine {
         /**********************************   ----------------  *********************************** */
 
         /**
-         * Returns the library function that matches to the given name
-         * @param name A builtin library function name, declared in "common_interface/Builtin_funcs.h"
-         * @return The executable library function
-         */
-        lib_func_t get_library_function(const std::string &name);
-
-        /**
          * Calls the library function with the given name
          * @param name The name of the library function which is a name, declared in "common_interface/Builtin_funcs.h"
          */
@@ -137,11 +139,50 @@ namespace virtual_machine {
         void print_warning(const std::string &msg, unsigned int source_line) const;
 
 
-        /*********************************** Built in functuins *********************************** */
-        /* Builtin functions must have the prefix "libfunc_" before their actual name               */
+        /*********************************** Built in functions *********************************** */
+        /* Builtin library functions must have the prefix "libfunc_" before their actual name       */
+        /* All these functions have their arguments in the stack and use "retval" register for      */
+        /* return value                                                                             */
         /*********************************** ------------------ *********************************** */
 
+        /**
+         * Takes variadic arguments and prints them in cout
+         */
         void libfunc_print();
+
+        void libfunc_input();
+        void libfunc_objectmemberkeys();
+        void libfunc_objecttotalmembers();
+        void libfunc_objectcopy();
+        void libfunc_totalarguments();
+        void libfunc_argument();
+
+        /**
+         * Takes one argument and returns its type as string representation
+         */
+        void libfunc_typeof();
+        void libfunc_strtonum();
+        void libfunc_sqrt();
+        void libfunc_cos();
+        void libfunc_sin();
+
+        static const std::map<std::string, lib_func_t> name_to_libfunc_map = {
+                {Builtin_funcs::libname_print, libfunc_print}, {Builtin_funcs::libname_input, libfunc_input},
+                {Builtin_funcs::libname_objectmemberkeys, libfunc_objectmemberkeys},
+                {Builtin_funcs::libname_objecttotalmembers, libfunc_objecttotalmembers},
+                {Builtin_funcs::libname_objectcopy, libfunc_objectcopy},
+                {Builtin_funcs::libname_totalarguments, libfunc_totalarguments},
+                {Builtin_funcs::libname_argument, libfunc_argument}, {Builtin_funcs::libname_strtonum, libfunc_strtonum},
+                {Builtin_funcs::libname_sqrt, libfunc_sqrt}, {Builtin_funcs::libname_cos, libfunc_cos},
+                {Builtin_funcs::libname_sin, libfunc_sin},
+        };
+
+        /**
+         * Returns the library function that matches to the given name
+         * @param name A builtin library function name, declared in "common_interface/Builtin_funcs.h"
+         * @return The executable library function
+         */
+        static lib_func_t get_library_function(const std::string &name);
 
 
         /********************************** Private Static Stuff ********************************** */

@@ -57,7 +57,7 @@ namespace virtual_machine {
 
         /**
          * Allocates n memcell in the stack
-         * @throws stack_overflow_error If the allocation would cause a stack overflow
+         * @throws internal_error If the allocation would cause a stack overflow
          */
         void allocate_memcells(unsigned int n);
 
@@ -66,7 +66,7 @@ namespace virtual_machine {
          * This function should be called by the AVM before entering a function
          * @param pc The current pc, i.e. the one that triggered the save_environment()
          *
-         * @throws stack_overflow_error If the saving the environment would case a stack overflow
+         * @throws internal_error If the saving the environment would case a stack overflow
          * If an overflow occurs, the stack's content is undefined
          */
         void save_environment(unsigned int pc);
@@ -83,7 +83,7 @@ namespace virtual_machine {
          * This function should be called when the AVM wants to push a function actual argument
          * @param actual_arg The argument to push. Must not be NULL/nullptr
          *
-         * @throws stack_overflow_error If pushing this argument would cause a stack overflow
+         * @throws internal_error If pushing this argument would cause a stack overflow
          */
         void push_actual_arg(Memcell const *actual_arg);
 

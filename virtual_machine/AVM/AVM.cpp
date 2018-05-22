@@ -3,9 +3,10 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
+#include <cstring>
 #include "AVM.h"
 #include "Memcell.h"
-#include "errors/stack_overflow_error.h"
+#include "errors/internal_error.h"
 #include "errors/alpha_runtime_error.h"
 #include "../../common_interface/errors/numeric_error.h"
 
@@ -20,8 +21,9 @@ AVM::AVM(const std::vector<virtual_machine::VMinstruction> &instructions, const 
 {
     ax = Memcell();
     bx = Memcell();
-    cx = Memcell();
     retval = Memcell();
+    pc = 0;
+    finished = false;
 }
 
 Memcell* AVM::translate_operand(const VMarg *vmarg, Memcell *reg /*=nullptr*/) {
@@ -39,6 +41,7 @@ Memcell* AVM::translate_operand(const VMarg *vmarg, Memcell *reg /*=nullptr*/) {
 
     //Handle the cases where a register is used
     assert(reg);
+    reg->clear();   //TODO: validate that this is legal
     switch(vmarg->type) {
         case VMarg::Type::number:
             reg->type = Memcell::Type::number;
@@ -46,7 +49,7 @@ Memcell* AVM::translate_operand(const VMarg *vmarg, Memcell *reg /*=nullptr*/) {
             return reg;
         case VMarg::Type::string:
             reg->type = Memcell::Type::string;
-            reg->value.str_ptr = const_pool.get_string(vmarg->value).c_str();
+            reg->value.str_ptr = strdup(const_pool.get_string(vmarg->value).c_str());
             return reg;
         case VMarg::Type::boolean:
             reg->type = Memcell::Type::boolean;
@@ -68,6 +71,11 @@ Memcell* AVM::translate_operand(const VMarg *vmarg, Memcell *reg /*=nullptr*/) {
     }
 }
 
+void AVM::run() {
+    while(!finished)
+        execute_cycle();
+}
+
 void AVM::execute_cycle() {
 	//Check if we have already finished
 	if(finished)
@@ -80,19 +88,13 @@ void AVM::execute_cycle() {
 
 	//Execute instruction
 	try {
-	    //Some Execute functions may throw a stack_overflow_error or a numeric_error
+	    //Some Execute functions may throw an internal_error
         (this->*(AVM::execute_functions_array[cur_instr.opcode]))(cur_instr);    //call execute_<VMinstruction opcode> function
-    } catch(stack_overflow_error const &err) {
+    } catch(internal_error const &err) {
 	    stringstream ss;
-	    ss << "Stack overflow occured by VM instruction '" << cur_instr.to_string() << "'. " << endl;
+	    ss << "Error caused by VM instruction '" << cur_instr.to_string() << "'. " << endl;
 	    ss << err.what();
 	    throw alpha_runtime_error(ss.str(), cur_instr.source_line);
-
-	} catch(arithmetic_operations::numeric_error const &err) {
-        stringstream ss;
-        ss << "Arithmetic error occured by VM instruction '" << cur_instr.to_string() << "'. " << endl;
-        ss << err.what();
-        throw alpha_runtime_error(ss.str(), cur_instr.source_line);
 	}
 
 	//pc may change due to branches, jump, call and funcexit.
@@ -102,6 +104,10 @@ void AVM::execute_cycle() {
 	//Check if the program has ended
 	if(pc == AVM_ENDING_PC)
 		finished = true;
+}
+
+AVM::lib_func_t AVM::get_library_function(const std::string &name) {
+    return AVM::name_to_libfunc_map.at(name);
 }
 
 void AVM::print_warning(const std::string &msg, unsigned int source_line) const {

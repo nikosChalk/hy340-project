@@ -3,7 +3,7 @@
 #include <map>
 #include <cassert>
 #include "../AVM.h"
-#include "../errors/alpha_runtime_error.h"
+#include "../errors/internal_error.h"
 
 using namespace std;
 using namespace virtual_machine;
@@ -23,7 +23,7 @@ static bool comparator_jgt(long double leftOperand, long double rightOperand) {
     return leftOperand>rightOperand;
 }
 
-static std::map<unsigned int, comparator_func_t> operator_to_func_map = {
+static std::map<unsigned int, comparator_func_t> relop_to_func_map = {
         {VMopcode::jle, comparator_jle}, {VMopcode::jge, comparator_jge},
         {VMopcode::jlt, comparator_jlt}, {VMopcode::jgt, comparator_jgt}
 };
@@ -39,9 +39,37 @@ void AVM::execute_relational(const VMinstruction &instr) {
     assert(leftOperand && rightOperand);
 
     if(leftOperand->type != Memcell::Type::number || rightOperand->type != Memcell::Type::number)
-        throw alpha_runtime_error("Not numeric operator in relational operation", instr.source_line);
+        throw internal_error("Not numeric operator in relational operation");
 
-    comparator_func_t comparator_func = operator_to_func_map.at(instr.opcode);
+    comparator_func_t comparator_func = relop_to_func_map.at(instr.opcode);
     if( (*comparator_func)(leftOperand->value.num, rightOperand->value.num) )   //if true, change pc. Else do nothing
+        pc = instr.result->value;
+}
+
+void AVM::execute_equality(const VMinstruction &instr) {
+    assert(instr.opcode == VMopcode::jeq || instr.opcode == VMopcode::jne);
+    assert(instr.result->type == VMarg::Type::label);
+
+    Memcell *leftOperand = translate_operand(instr.arg1, &ax);
+    Memcell *rightOperand = translate_operand(instr.arg2, &bx);
+    assert(leftOperand && rightOperand);
+
+    bool result;
+    try {
+        switch(instr.opcode) {
+            case VMopcode::jeq:
+                result = (*leftOperand == *rightOperand);   //comparison may throw a runtime_error
+                break;
+            case VMopcode::jne:
+                result = (*leftOperand != *rightOperand);   //comparison may throw a runtime_error
+                break;
+            default:
+                assert(false);  //unreachable statement
+        }
+    } catch(std::runtime_error const &err) {    //comparison may throw a runtime_error
+        throw internal_error(err.what());
+    }
+
+    if(result)  //If condition is true, perform branch by changing pc
         pc = instr.result->value;
 }
