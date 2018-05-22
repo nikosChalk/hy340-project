@@ -51,6 +51,8 @@ void target_code::tcode_generator::generate(vector<intermediate_code::quad*> qua
 			target_code::tcode_generator::generate_FUNCEND(q);
 		case intermediate_code::quad::iopcode::ret:
 			target_code::tcode_generator::generate_RETURN(q);
+		case intermediate_code::quad::iopcode::uminus:
+			target_code::tcode_generator::generate_UMINUS(q);
 		default:
 			cerr << "Invalid opcode !!!\n";
 			assert(0);
@@ -60,3 +62,7 @@ void target_code::tcode_generator::generate(vector<intermediate_code::quad*> qua
 }
 
 /*simplirosi generate functions*/
+
+void target_code::tcode_generator::generate_UMINUS(intermediate_code::quad* quad){
+
+}

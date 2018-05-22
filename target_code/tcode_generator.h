@@ -45,12 +45,13 @@ namespace target_code{
 		void make_retval_operand(VMarg* arg);
 
 		/*generate functions*/
-		void generate_PARAM(intermediate_code::quad*);
-		void generate_CALL(intermediate_code::quad*);
-		void generate_GETRETVAL(intermediate_code::quad*);
-		void generate_FUNCSTART(intermediate_code::quad*);
-		void generate_RETURN(intermediate_code::quad*);
-		void generate_FUNCEND(intermediate_code::quad*);
+		void generate_PARAM(intermediate_code::quad* quad);
+		void generate_CALL(intermediate_code::quad* quad);
+		void generate_GETRETVAL(intermediate_code::quad* quad);
+		void generate_FUNCSTART(intermediate_code::quad* quad);
+		void generate_RETURN(intermediate_code::quad* quad);
+		void generate_FUNCEND(intermediate_code::quad* quad);
+		void generate_UMINUS(intermediate_code::quad* quad);
 		void generate_NOP();
 
 		/*basic generate function*/
