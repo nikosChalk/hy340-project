@@ -16,6 +16,7 @@ tcode_generator::tcode_generator(vector<intermediate_code::quad*> quad_vector){
 		this->quad_vector.push_back(new Tcode_quad(q, 0));
 	this->incomplete_jump_vector = vector<Incomplete_Jump*>();
 	this->curr_proc_quad = 0;
+	this->func_stack = stack<vector<unsigned int>>();
 }
 
 void tcode_generator::emit_instruction(VMinstruction instruction){
@@ -35,7 +36,7 @@ void tcode_generator::make_operand(intermediate_code::expr* e, VMarg* arg){
 	{
 	case intermediate_code::expr::type::TABLE_ITEM_E:
 	case intermediate_code::expr::type::ARITHM_E:
-	case intermediate_code::expr::type::BOOL_E:
+	case intermediate_code::expr::type::ASSIGN_E:
 	case intermediate_code::expr::type::NEW_TABLE_E:
 	case intermediate_code::expr::type::VAR_E:
 		assert(e->sym_entry);
@@ -113,10 +114,21 @@ unsigned int tcode_generator::userfuncs__new_func(syntax_analyzer::symbol_table:
 }
 
 void tcode_generator::patch_incomplete_jumps(void){
-	/*TODO:fill*/
+	for (target_code::Incomplete_Jump *incomp_jump : incomplete_jump_vector){
+		if (incomp_jump->iaddress == quad_vector.size())
+			instruction_vector.at(incomp_jump->instrNo).result->value = instruction_vector.size();
+		else
+			instruction_vector.at(incomp_jump->instrNo).result->value = quad_vector.at(incomp_jump->iaddress)->taddress;
+	}
 }
 void tcode_generator::add_incomplete_jump(unsigned int instrNo, unsigned int iaddress){
 	incomplete_jump_vector.push_back(new Incomplete_Jump(instrNo,iaddress));
+}
+
+void tcode_generator::back_patch(vector<unsigned int> list, unsigned int t_value){
+	for (unsigned int i : list){
+		instruction_vector.at(i).result->value = t_value;
+	}
 }
 
 

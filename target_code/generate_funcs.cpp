@@ -137,3 +137,37 @@ void target_code::tcode_generator::generate_UMINUS(target_code::Tcode_quad* quad
 	make_operand(quad->tquad->result, instruction.result);
 	emit_instruction(instruction);
 }
+
+void target_code::tcode_generator::generate_FUNCSTART(target_code::Tcode_quad* quad){
+	VMinstruction instruction;
+	vector<unsigned int> list = vector<unsigned int>();
+	quad->taddress = next_instruction_label();
+	tcode_generator::userfuncs__new_func(quad->tquad->result->sym_entry);
+	func_stack.push(list);
+	instruction.opcode = VMopcode::funcenter;
+	make_operand(quad->tquad->result,instruction.result);
+	emit_instruction(instruction);
+}
+void target_code::tcode_generator::generate_RETURN(target_code::Tcode_quad* quad){
+	VMinstruction instruction;
+	quad->taddress = next_instruction_label();
+	instruction.opcode = VMopcode::assign;
+	make_retval_operand(instruction.result);
+	make_operand(quad->tquad->arg1, instruction.arg1);
+	emit_instruction(instruction);
+	func_stack.top().push_back(next_instruction_label());
+	instruction.opcode = VMopcode::jump;
+	instruction.arg1 = nullptr;
+	instruction.arg2 = nullptr;
+	instruction.result->type = VMarg::Type::label;
+	emit_instruction(instruction);
+}
+void target_code::tcode_generator::generate_FUNCEND(target_code::Tcode_quad* quad){
+	VMinstruction instruction;
+	back_patch(func_stack.top(),next_instruction_label());
+	func_stack.pop();
+	quad->taddress = next_instruction_label();
+	instruction.opcode = VMopcode::funcexit;
+	make_operand(quad->tquad->result,instruction.result);
+	emit_instruction(instruction);
+}

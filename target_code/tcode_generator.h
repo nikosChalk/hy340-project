@@ -71,6 +71,8 @@ namespace target_code{
 		void patch_incomplete_jumps(void);
 		/*this function adds an incomplete jump in incomplete jump vector*/
 		void add_incomplete_jump(unsigned int instrNo, unsigned int iaddress);
+		/*this function fills incomplete jump instruction number in result->value field*/
+		void back_patch(vector<unsigned int> list, unsigned int t_value);
 
 	private:
 		vector <double> num_Consts;
@@ -81,6 +83,7 @@ namespace target_code{
 	    vector<Tcode_quad*> quad_vector;
 		vector<Incomplete_Jump*> incomplete_jump_vector;
 		unsigned int curr_proc_quad;
+		stack<vector<unsigned int>> func_stack;
 	};
 }
 
