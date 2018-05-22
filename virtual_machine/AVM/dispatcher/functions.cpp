@@ -66,7 +66,7 @@ void AVM::execute_pusharg(const VMinstruction &instr) {
 }
 
 void AVM::call_library_function(const std::string &name) {
-    lib_func_t func = get_library_function(name);
+    lib_func_t func = AVM::get_library_function(name);
     assert(func);
 
     (this->*func)();    //call built in library function

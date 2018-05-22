@@ -20,3 +20,16 @@ void AVM::execute_assign(const VMinstruction &instr) {
 
     lv->assign(rv);
 }
+
+void AVM::execute_jump(const VMinstruction &instr) {
+    assert(instr.opcode == VMopcode::jump);
+    assert(instr.result->type == VMarg::Type::label);
+
+    //Perform jump
+    pc = instr.result->value;
+}
+
+void AVM::execute_nop(const VMinstruction &instr) {
+    assert(instr.opcode == VMopcode::nop);
+    //nop. Nothing to do here
+}

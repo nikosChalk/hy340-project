@@ -56,7 +56,8 @@ namespace virtual_machine {
          * Returns the value of the table at the given index
          * @param idx The index within the table. Note that the only types supported for indexing
          * are Memcell::Type number, string
-         * @return The value of the table at the given index
+         * @return The value of the table at the given index. If no element was found with the given idx as key,
+         * then nullptr is returned
          */
         Memcell* get_elem(Memcell const *idx) const;
 
@@ -66,7 +67,9 @@ namespace virtual_machine {
          * are Memcell::Type number, string
          * @param val The value to set at the given idx
          */
-        void set_elem(Memcell *idx, Memcell *val);  //TODO: do not forget the assertion of max size for each hash map
+        void set_elem(Memcell const *idx, Memcell *val);  //TODO: do not forget the assertion of max size for each hash map
+        //TODO: gia to implementation: To Type::nil val afairei stoixeia. (33/36)
+        //TODO: epishs xrhsimopoioume avm_assign kai avm_memclear!
 
     private:
         unsigned int ref_counter;

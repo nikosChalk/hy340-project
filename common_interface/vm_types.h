@@ -27,8 +27,8 @@
 /* |               |                          | program formal local |                   |  */
 /* |    newtable   |         unused           |        retval        |     unused        |  */
 /* |_______________|__________________________|______________________|___________________|  */
-/* |               |                          | program formal local |                   |  */
-/* | tablegetelem  |   program formal local   | retval               |  any except label |  */
+/* |               |   program formal local   | program formal local |                   |  */
+/* | tablegetelem  |   retval                 | retval               |  any except label |  */
 /* |_______________|__________________________|______________________|___________________|  */
 /* |               |                          | program formal local |                   |  */
 /* | tablesetelem  |   any except label       | retval               |  any except label |  */
