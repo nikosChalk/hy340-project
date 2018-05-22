@@ -30,10 +30,16 @@ void AVM::execute_tablegetelem(const VMinstruction &instr) {
     assert(table && (program_stack.is_in_stack(table) || table == &retval));
     assert(idx);
 
+    //Clear lvalue's old content
     lv->clear();
 
-    if(table->type != Memcell::Type::table) //Check if we have indeed a table
+    //Check if we have indeed a table
+    if(table->type != Memcell::Type::table)
         throw internal_error("Illegal use of type " + Memcell::type_to_string(table->type) + " as table!");
+
+    //Check if we are accessing with undef index and generate a warning in that case
+    if(idx->type == Memcell::Type::undef)
+        print_warning("Accessing table element with undef index", instr.source_line);
 
     //Get content
     Memcell *content = table->value.table_ptr->get_elem(idx);
@@ -55,8 +61,17 @@ void AVM::execute_tablesetelem(const VMinstruction &instr) {
     assert(table && program_stack.is_in_stack(table));  //table is always a variable stored ONLY in stack. Vlepe Dialeksh 15 slide 33/36 apo typwmenes shmeiwseis gia ton logo
     assert(idx && content);
 
-    if(table->type != Memcell::Type::table) //Check if we have indeed a table
+    //Check if we have indeed a table
+    if(table->type != Memcell::Type::table)
         throw internal_error("Illegal use of type " + Memcell::type_to_string(table->type) + " as table!");
+
+    //Check if we are accessing with undef index and generate a warning in that case
+    if(idx->type == Memcell::Type::undef)
+        print_warning("Accessing table element with undef index", instr.source_line);
+
+    //Check if we are setting undef content
+    if(content->type == Memcell::Type::undef)
+        print_warning("Assigning to table element from undef content", instr.source_line);
 
     //Set content
     table->value.table_ptr->set_elem(idx, content);
