@@ -18,6 +18,21 @@ namespace target_code {
         */
         Incomplete_Jump(unsigned int instrNo, unsigned int iaddress);
     };
+	
+	struct Tcode_quad{
+		quad tquad;
+		unsigned int taddress;
+		/**
+        * Default initialization. (Junk)
+        */
+        Tcode_quad();
+        /**
+        * Initializes the Tcode_quad representation with the given attributes
+        * @param tquad
+        * @param taddress
+        */
+        Tcode_quad(quad tquad, unsigned int taddress);
+	};
 }
 
 #endif //HY340_PROJECT_TYPES_H

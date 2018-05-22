@@ -41,25 +41,25 @@ namespace target_code{
 
 		/*This function translate expressions* to vmargs*/
 		void make_operand(intermediate_code::expr* e, VMarg* arg);
-
+		
 		/*Helper functions to produce common arguments for generated functions*/
 		void make_retval_operand(VMarg* arg);
 
 		/*generate functions*/
-		void generate_PARAM(intermediate_code::quad*);
-		void generate_CALL(intermediate_code::quad*);
-		void generate_GETRETVAL(intermediate_code::quad*);
-		void generate_FUNCSTART(intermediate_code::quad*);
-		void generate_RETURN(intermediate_code::quad*);
-		void generate_FUNCEND(intermediate_code::quad*);
-		void generate_NOP();
+		void generate_PARAM(intermediate_code::quad* quad);
+		void generate_CALL(intermediate_code::quad* quad);
+		void generate_GETRETVAL(intermediate_code::quad* quad);
+		void generate_FUNCSTART(intermediate_code::quad* quad);
+		void generate_RETURN(intermediate_code::quad* quad);
+		void generate_FUNCEND(intermediate_code::quad* quad);
+		void generate_NOP(intermediate_code::quad* quad);
 
 		/*basic generate function*/
 		void generate(vector<intermediate_code::quad*> quad_vector);
 		/*helper generate functions*/
 		void generate(VMopcode opcode, intermediate_code::quad* quad);
 		void generate_relational(VMopcode opcode, intermediate_code::quad* quad);
-
+		
 		/*this function fills incomplete jump instruction number in result field*/
 		void patch_incomplete_jumps(void);
 		/*this function adds an incomplete jump in incomplete jump vector*/
@@ -71,7 +71,7 @@ namespace target_code{
 		vector <string> named_Lib_Funcs;
 		vector <Userfunc*> user_Funcs;
 		vector<VMinstruction*> instruction_vector;
-	    vector<intermediate_code::quad*> quad_vector;
+	    vector<Tcode_quad*> quad_vector;
 		vector<Incomplete_Jump*> incomplete_jump_vector;
 	};
 }

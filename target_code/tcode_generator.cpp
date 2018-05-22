@@ -12,7 +12,8 @@ tcode_generator::tcode_generator(vector<intermediate_code::quad*> quad_vector){
 	this->named_Lib_Funcs = vector <string>();
 	this->user_Funcs = vector <Userfunc*>();
 	this->instruction_vector = vector<VMinstruction*>();
-	this->quad_vector = quad_vector;
+	for(intermediate_code::quad* q : quad_vector)
+		this->quad_vector.push_back(new Tcode_quad(q, 0));
 	this->incomplete_jump_vector = vector<Incomplete_Jump*>();
 }
 
@@ -84,6 +85,62 @@ void tcode_generator::make_retval_operand(VMarg* arg){
 	arg->type = virtual_machine::VMarg::Type::retval;
 }
 
+/*helper generate functions*/
+void tcode_generator::generate(VMopcode opcode, intermediate_code::quad* quad){
+	VMinstruction* instruction;
+	instruction.opcode = opcode;
+	
+	make_operand(quad.arg1, &instruction.arg1);
+	make_operand(quad.arg2, &instruction.arg2);
+	make_operand(quad.result, &instruction.result);
+	quad. = next_instruction_label();
+	emit_instruction(instruction);
+}
+
+void tcode_generator::generate_relational(VMopcode opcode, intermediate_code::quad* quad){
+	VMinstruction* instruction;
+	instruction.opcode = opcode;
+	
+	make_operand(quad.arg1, &instruction.arg1);
+	make_operand(quad.arg2, &instruction.arg2);
+	
+	instruction.result.type = VMarg::Type::label;
+	
+	
+	if(quad.label < )
+		instruction.result.value = quad_vector.at(quad.label).;
+	else
+		add_incomplete_jump(next_instruction_label(), quad.label);
+	
+	emit_instruction(instruction);
+}
+
+void tcode_generator::generate_PARAM(intermediate_code::quad* quad){
+	quad. = next_instruction_label();
+	VMinstruction* instruction;
+	instruction.opcode = VMopcode::pusharg;
+	make_operand(quad.arg1, &arg1);
+	emit_instruction(instruction);
+}
+
+void tcode_generator::generate_CALL(intermediate_code::quad* quad){
+	quad. = next_instruction_label();
+	VMinstruction* instruction;
+	instruction.opcode = VMopcode::call;
+	make_operand(quad.arg1, &arg1);
+	emit_instruction(instruction);
+}
+
+void tcode_generator::generate_GETRETVAL(intermediate_code::quad* quad){
+	quad. = next_instruction_label();
+	VMinstruction* instruction;
+	instruction.opcode = VMopcode::assign;
+	make_operand(quad.result, &instruction.result);
+	make_retval_operand(&instruction.arg1);
+	emit_instruction(instruction);
+}
+
+
 unsigned int tcode_generator::consts_new_string(string s){
 	string_Consts.push_back(s);
 	return string_Consts.size() - 1;
@@ -113,4 +170,5 @@ void tcode_generator::patch_incomplete_jumps(void){
 void tcode_generator::add_incomplete_jump(unsigned int instrNo, unsigned int iaddress){
 	incomplete_jump_vector.push_back(new Incomplete_Jump(instrNo,iaddress));
 }
+
 
