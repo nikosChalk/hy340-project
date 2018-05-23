@@ -67,6 +67,7 @@ namespace virtual_machine {
         jump,                   //result=address to jump to, arg1,arg2=nullptr
         nop                     //no fields used
     };
+    std::string vmopcode_to_str(VMopcode opcode);
 
     struct VMarg {
         enum Type {
@@ -80,6 +81,8 @@ namespace virtual_machine {
             libfunc,                //value=Index in the library function constant pool
             retval                  //- (value is unused). Indicates that the value is within the "retval" register of the AVM
         };
+        static std::string type_to_string(Type type);
+
         Type type;
 
         unsigned int value;
@@ -93,6 +96,12 @@ namespace virtual_machine {
          * Initializes the VMarg with the given arguments
          */
         VMarg(Type type, unsigned int value);
+
+        /**
+         * Returns the string representation of this object
+         * @return The string representation
+         */
+        std::string to_string() const;
     };
 
     struct VMinstruction {

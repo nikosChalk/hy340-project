@@ -13,10 +13,10 @@ using namespace std;
 using namespace virtual_machine;
 using namespace arithmetic_operations;
 
-static std::map<unsigned int, arithmetic_func_t> operator_to_func_map = {
-        {VMopcode::add, arithmetic_operations::add}, {VMopcode::sub, arithmetic_operations::sub},
-        {VMopcode::mul, arithmetic_operations::mul}, {VMopcode::div, arithmetic_operations::div},
-        {VMopcode::mod, arithmetic_operations::mod}
+static const std::map<unsigned int, arithmetic_func_t> operator_to_func_map = {
+        {VMopcode::add, &arithmetic_operations::add}, {VMopcode::sub, &arithmetic_operations::sub},
+        {VMopcode::mul, &arithmetic_operations::mul}, {VMopcode::div, &arithmetic_operations::div},
+        {VMopcode::mod, &arithmetic_operations::mod}
 };
 
 void AVM::execute_arithmetic(const VMinstruction &instr) {

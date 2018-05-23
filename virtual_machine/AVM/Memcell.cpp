@@ -5,9 +5,14 @@
 #include <sstream>
 #include <iostream>
 #include "Memcell.h"
+#include "../utilities.h"
 
 using namespace std;
 using namespace virtual_machine;
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/* Initialization of non-class members          */
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 static const std::map<unsigned int, std::string> type_to_str_map = {
         {Memcell::Type::number, "number"}, {Memcell::Type::string, "string"}, {Memcell::Type::boolean, "boolean"},
@@ -15,19 +20,57 @@ static const std::map<unsigned int, std::string> type_to_str_map = {
         {Memcell::Type::nil, "nil"}, {Memcell::Type::undef, "undef"}
 };
 
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/* Initialization of Memcell static class members   */
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+const Memcell::Assign_func_map Memcell::assign_func_map = {
+        {Type::number, &Memcell::assign_number}, {Type::string, &Memcell::assign_string}, {Type::boolean, &Memcell::assign_boolean},
+        {Type::table, &Memcell::assign_table}, {Type::userfunc, &Memcell::assign_userfunc}, {Type::libfunc, &Memcell::assign_libfunc},
+        {Type::nil, &Memcell::assign_nil}, {Type::undef, &Memcell::assign_undef}
+};
+
+const Memcell::Clear_func_map  Memcell::clear_func_map = {
+        {Type::number, nullptr}, {Type::string, &Memcell::string_clear}, {Type::boolean, nullptr},
+        {Type::table, &Memcell::table_clear}, {Type::userfunc, nullptr}, {Type::libfunc, nullptr},
+        {Type::nil, nullptr}, {Type::undef, nullptr}
+};
+
+const Memcell::Tobool_func_map Memcell::tobool_func_map  = {
+        {Type::number, &Memcell::number_tobool}, {Type::string, &Memcell::string_tobool}, {Type::boolean, &Memcell::boolean_tobool},
+        {Type::table, &Memcell::table_tobool}, {Type::userfunc, &Memcell::userfunc_tobool}, {Type::libfunc, &Memcell::libfunc_tobool},
+        {Type::nil, &Memcell::nil_tobool}, {Type::undef, &Memcell::undef_tobool}
+};
+
+const Memcell::Eqcheck_func_map Memcell::eqcheck_func_map  = {
+        {Type::number, &Memcell::number_eqcheck}, {Type::string, &Memcell::string_eqcheck}, {Type::boolean, &Memcell::boolean_eqcheck},
+        {Type::table, &Memcell::table_eqcheck}, {Type::userfunc, &Memcell::userfunc_eqcheck}, {Type::libfunc, &Memcell::libfunc_eqcheck},
+        {Type::nil, &Memcell::nil_eqcheck}, {Type::undef, &Memcell::undef_eqcheck}
+};
+
+const Memcell::Tostr_func_map Memcell::tostr_func_map  = {
+        {Type::number, &Memcell::number_tostr}, {Type::string, &Memcell::string_tostr}, {Type::boolean, &Memcell::boolean_tostr},
+        {Type::table, &Memcell::table_tostr}, {Type::userfunc, &Memcell::userfunc_tostr}, {Type::libfunc, &Memcell::libfunc_tostr},
+        {Type::nil, &Memcell::nil_tostr}, {Type::undef, &Memcell::undef_tostr}
+};
+
 std::string Memcell::type_to_string(Memcell::Type type) {
     return type_to_str_map.at(type);
 }
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/* Implementation of Memcell class              */
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 Memcell::Memcell() {
     this->type = undef;
 }
 
 void Memcell::clear() {
-    clear_func_t clear_func = Memcell::clear_func_table.at(this->type);
+    Clear_membfunc_ptr clear_func = Memcell::clear_func_map.at(this->type);
 
     if(clear_func != nullptr) {
-        (this->*clear_func)();
+        call_member_func_ptr(*this, clear_func)();
         this->type = Type::undef;
     }
 }
@@ -46,7 +89,7 @@ void Memcell::assign(const virtual_machine::Memcell *rh) {
 
     this->clear();          //clear old data, releasing any acquired resources
     this->type = rh->type;
-    ( this->*(Memcell::assign_func_table.at(this->type)) )(rh);
+    call_member_func_ptr(*this, Memcell::assign_func_map.at(this->type))(rh);
 }
 
 /* Assign functions */
@@ -110,7 +153,7 @@ void Memcell::table_clear() {
 /* Bool Promotion */
 
 bool Memcell::promote_to_bool() const {
-    return ( this->*(Memcell::tobool_func_table.at(this->type)) )();
+    return call_member_func_ptr(*this, Memcell::tobool_func_map.at(this->type))();
 }
 
 bool Memcell::number_tobool() const {
@@ -176,7 +219,7 @@ bool Memcell::operator==(const Memcell &other) const {
 
     //Now both have the same type. Perform equality check with dispatching
     assert(this->type == other.type);
-    return (this->*(Memcell::eqcheck_func_table.at(this->type)) )(other);
+    return call_member_func_ptr(*this, Memcell::eqcheck_func_map.at(this->type))(other);
 }
 
 bool Memcell::operator!=(const virtual_machine::Memcell &other) const {
@@ -221,4 +264,50 @@ bool Memcell::nil_eqcheck(const Memcell &other) const {
 bool Memcell::undef_eqcheck(const virtual_machine::Memcell &other) const {
     assert(this->type == other.type && other.type == Type::undef);
     assert(false);
+}
+
+/* To string functions */
+
+std::string Memcell::to_string(const Constants_pool &const_pool) const {
+    return call_member_func_ptr(*this, tostr_func_map.at(this->type))(const_pool);
+}
+
+std::string Memcell::number_tostr(const Constants_pool &unused) const {
+    assert(this->type == Memcell::Type::number);
+    return std::to_string(this->value.num);
+}
+
+std::string Memcell::string_tostr(const virtual_machine::Constants_pool &unused) const {
+    assert(this->type == Memcell::Type::string);
+    return std::string(this->value.str_ptr);
+}
+
+std::string Memcell::boolean_tostr(const Constants_pool &unused) const {
+    assert(this->type == Memcell::Type::boolean);
+    return (this->value.boolean) ? std::string("true") : std::string("false");
+}
+
+std::string Memcell::table_tostr(const Constants_pool &unused) const {
+    assert(this->type == Memcell::Type::table);
+    return this->value.table_ptr->to_string();
+}
+
+std::string Memcell::userfunc_tostr(const Constants_pool &const_pool) const {
+    assert(this->type == Memcell::Type::userfunc);
+    return const_pool.get_userfunc_on_address(this->value.userfunc_addr).name;
+}
+
+std::string Memcell::libfunc_tostr(const Constants_pool &unused) const {
+    assert(this->type == Memcell::Type::libfunc);
+    return std::string(this->value.libfunc_ptr);
+}
+
+std::string Memcell::nil_tostr(const Constants_pool &unused) const {
+    assert(this->type == Memcell::Type::nil);
+    return std::string("nil");
+}
+
+std::string Memcell::undef_tostr(const Constants_pool &unused) const {
+    assert(this->type == Memcell::Type::undef);
+    return std::string("undef");
 }

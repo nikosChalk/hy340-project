@@ -6,7 +6,7 @@
 
 #include <vector>
 #include <string>
-#include <bits/unordered_map.h>
+#include <unordered_map>
 #include "../../common_interface/vm_types.h"
 
 namespace virtual_machine {
@@ -22,7 +22,7 @@ namespace virtual_machine {
          * @param libfuncs The constant vector for the libfuncs
          * @param userfuncs The constant vector for the userfuncs
          */
-        Constants_pool(const std::vector<double> &doubles, const std::vector<std::string> &strings,
+        Constants_pool(const std::vector<long double> &doubles, const std::vector<std::string> &strings,
                        const std::vector<std::string> &libfuncs, const std::vector<Userfunc> &userfuncs);
 
         /**
@@ -63,7 +63,7 @@ namespace virtual_machine {
 
 
     private:
-        std::vector<double> doubles;
+        std::vector<long double> doubles;
         std::vector<std::string> strings;
         std::vector<std::string> libfuncs;
         std::unordered_map<unsigned int, Userfunc> userfuncs;

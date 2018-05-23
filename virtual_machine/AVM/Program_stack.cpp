@@ -26,6 +26,10 @@ using namespace virtual_machine;
 #define AVM_SAVED_PC_OFFSET     (+3)
 #define AVM_SAVED_TOTAL_ACTUALS (+4)
 
+const unsigned int Program_stack::AVM_STACK_SIZE = 4096;
+
+const unsigned int Program_stack::AVM_ENV_SIZE = 4;
+
 Program_stack::Program_stack(unsigned int total_program_vars) {
     for(unsigned int i=0; i<stack.size(); i++)
         stack[i] = Memcell();
@@ -85,46 +89,63 @@ void Program_stack::push_actual_arg(Memcell const *actual_arg) {
     total_actuals++;    //increase the actuals pushed
 }
 
-unsigned int Program_stack::get_env_value(unsigned int idx) {
+unsigned int Program_stack::get_env_value(unsigned int idx) const {
     assert(idx == topsp+AVM_SAVED_TOPSP_OFFSET || idx == topsp+AVM_SAVED_TOP_OFFSET ||
            idx == topsp+AVM_SAVED_PC_OFFSET   || idx == topsp+AVM_SAVED_TOTAL_ACTUALS);
-    assert(stack[idx].type == Memcell::Type::number);   //environmental values are numbers
+    assert(stack.at(idx).type == Memcell::Type::number);   //environmental values are numbers
 
-    unsigned int env_val = (unsigned int)stack[idx].value.num;
-    assert(stack[idx].value.num == (double) env_val);   //validate that the environmental value is indeed an integer
+    unsigned int env_val = (unsigned int)stack.at(idx).value.num;
+    assert(stack.at(idx).value.num == (double) env_val);   //validate that the environmental value is indeed an integer
 
     return env_val;
 }
 
-Memcell* Program_stack::get_program_var(unsigned int offset) {
+unsigned long Program_stack::get_program_var_index(unsigned int offset) const {
     assert(offset < this->total_program_vars);
 
     unsigned long idx = stack.size()-1-offset;
     assert_index(idx);
-
-    return &stack[idx];
+    return idx;
+}
+Memcell* Program_stack::get_program_var(unsigned int offset) {
+    return &stack[get_program_var_index(offset)];
+}
+const Memcell* Program_stack::get_program_var(unsigned int offset) const {
+    return &stack.at(get_program_var_index(offset));
 }
 
-Memcell* Program_stack::get_local_var(unsigned int offset) {
+
+unsigned long Program_stack::get_local_var_index(unsigned int offset) const {
     //validates that we are NOT in the program scope space by checking if at least one saved environment exists
     assert( top < stack.size() - total_program_vars - AVM_ENV_SIZE);
 
     unsigned int idx = topsp-offset;
     assert_index(idx);
-
-    return &stack[idx];
+    return idx;
+}
+Memcell* Program_stack::get_local_var(unsigned int offset) {
+    return &stack[get_local_var_index(offset)];
+}
+const Memcell* Program_stack::get_local_var(unsigned int offset) const {
+    return &stack.at(get_local_var_index(offset));
 }
 
-Memcell* Program_stack::get_actual_arg(unsigned int offset) {
+
+unsigned long Program_stack::get_actual_arg_index(unsigned int offset) const {
     assert(offset < get_total_actuals());    //validate that offset is less thant the total actuals
 
     unsigned int idx = topsp + AVM_ENV_SIZE + 1 + offset;
     assert_index(idx);
-
-    return &stack[idx];
+    return idx;
+}
+Memcell* Program_stack::get_actual_arg(unsigned int offset) {
+    return &stack[get_actual_arg_index(offset)];
+}
+const Memcell* Program_stack::get_actual_arg(unsigned int offset) const {
+    return &stack.at(get_actual_arg_index(offset));
 }
 
-unsigned int Program_stack::get_total_actuals() {
+unsigned int Program_stack::get_total_actuals() const {
     return get_env_value((unsigned int) (topsp + AVM_SAVED_TOTAL_ACTUALS));
 }
 

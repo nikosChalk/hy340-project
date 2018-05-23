@@ -5,14 +5,23 @@
 #include "../AVM.h"
 #include "../Memcell.h"
 #include "../errors/internal_error.h"
+#include "../../../not_implemented_error.h"
 
 using namespace std;
 using namespace virtual_machine;
 
+void AVM::libfunc_input() {
+    throw not_implemented_error(); //TODO: implement
+}
+
 void AVM::libfunc_print() {
     unsigned int total_actuals = program_stack.get_total_actuals();
     for(unsigned int i=0; i<total_actuals; i++)
-        cout << program_stack.get_actual_arg(i)->to_string() << endl;
+        cout << program_stack.get_actual_arg(i)->to_string(const_pool) << endl;
+}
+
+void AVM::libfunc_strtonum() {
+    throw not_implemented_error(); //TODO: implement
 }
 
 void AVM::libfunc_typeof() {

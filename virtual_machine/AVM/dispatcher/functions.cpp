@@ -5,6 +5,7 @@
 #include "../AVM.h"
 #include "../Memcell.h"
 #include "../errors/internal_error.h"
+#include "../../utilities.h"
 
 using namespace std;
 using namespace virtual_machine;
@@ -35,7 +36,7 @@ void AVM::execute_call(const VMinstruction &instr) {
             return;
         default:
             stringstream ss;
-            ss << "call: cannot bind '" << func->to_string() << "' to function!";
+            ss << "call: cannot bind '" << func->to_string(const_pool) << "' to function!";
             throw internal_error(ss.str());
     }
 }
@@ -66,9 +67,10 @@ void AVM::execute_pusharg(const VMinstruction &instr) {
 }
 
 void AVM::call_library_function(const std::string &name) {
-    lib_func_t func = AVM::get_library_function(name);
+    Lib_membfunc_ptr func = AVM::get_library_function(name);
     assert(func);
 
-    (this->*func)();    //call built in library function
+
+    call_member_func_ptr(*this, func)();    //call built in library function
     pc = program_stack.restore_environment();
 }

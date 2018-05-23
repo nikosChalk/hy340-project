@@ -42,9 +42,6 @@
 #include <array>
 #include "Memcell.h"
 
-#define AVM_STACK_SIZE 4096 //Stack's maximum memcells
-#define AVM_ENV_SIZE 4      //Saved environment size, counted in memcells
-
 namespace virtual_machine {
     class Program_stack {
     public:
@@ -93,6 +90,7 @@ namespace virtual_machine {
          * @return The program variable which is within the ALLOCATED stack
          */
         Memcell* get_program_var(unsigned int offset);
+        const Memcell* get_program_var(unsigned int offset) const;
 
         /**
          * Returns the local function variable at the given offset of the current active stack frame
@@ -100,6 +98,7 @@ namespace virtual_machine {
          * @return The local variable which is within the ALLOCATED stack
          */
         Memcell* get_local_var(unsigned int offset);
+        const Memcell* get_local_var(unsigned int offset) const;
 
         /**
          * Returns the actual argument at the given offset of the current active stack frame
@@ -107,12 +106,13 @@ namespace virtual_machine {
          * @return The actual argument which is within the ALLOCATED stack
          */
         Memcell* get_actual_arg(unsigned int offset);
+        const Memcell* get_actual_arg(unsigned int offset) const;
 
         /**
          * Returns the total actual arguments of the current active stack frame
          * @return The total actual arguments
          */
-        unsigned int get_total_actuals();
+        unsigned int get_total_actuals() const;
 
         /**
          * Checks whether or not the given memcell belongs to the stack, i.e. it is within the ALLOCATED stack
@@ -122,6 +122,16 @@ namespace virtual_machine {
         bool is_in_stack(Memcell const *memcell) const;
 
     private:
+        /**
+         * Stack's maximum memcells
+         */
+        static const unsigned int AVM_STACK_SIZE;
+
+        /**
+         * Saved environment size, counted in memcells
+         */
+        static const unsigned int AVM_ENV_SIZE;
+
 
         /**
          * Register that points to the next available (free) memcell within the stack
@@ -147,7 +157,31 @@ namespace virtual_machine {
          * @param idx The index
          * @return The environmental value stored at that index, i.e. stack[idx]
          */
-        unsigned int get_env_value(unsigned int idx);
+        unsigned int get_env_value(unsigned int idx) const;
+
+        /**
+         * Returns the the index where the the program variable can be found within the ALLOCATED stack for the given
+         * program scope space offset
+         * @param offset The offset in the program scope space
+         * @return The index within the ALLOCATED stack, where the program variable can be found
+         */
+        unsigned long get_program_var_index(unsigned int offset) const;
+
+        /**
+         * Returns the index where the local function variable can be found within the ALLOCATED stack for the given
+         * offset of the current active stack frame
+         * @param offset The offset in the function's local scope space
+         * @return The index within the ALLOCATED stack, where the local variable can be found
+         */
+        unsigned long get_local_var_index(unsigned int offset) const;
+
+        /**
+         * Returns the index where the actual argument can be found within the ALLOCATED stack for the given
+         * offset of the current active stack frame
+         * @param offset The offset in the formals scope space, or the actual argument's offset within this stack
+         * @return The index within the ALLOCATED stack, where the actual argument can be found
+         */
+        unsigned long get_actual_arg_index(unsigned int offset) const;
     };
 
 }

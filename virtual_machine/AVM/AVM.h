@@ -6,23 +6,28 @@
 #include <vector>
 #include <string>
 #include <array>
-#include "../../common_interface/vm_types.h"
 #include "Constants_pool.h"
 #include "Memcell.h"
 #include "Program_stack.h"
+#include "../../common_interface/vm_types.h"
 #include "../../common_interface/Builtin_funcs.h"
-
-#define AVM_ENDING_PC (this->instructions.size())
 
 namespace virtual_machine {
 
     class AVM {
     public:
 
+        //Declarations of pointer-to-member function types
         /**
          * Signature for library functions
          */
-        typedef void (AVM::*lib_func_t)();
+        using Lib_membfunc_ptr = void (AVM::*) (void);
+        using Exec_membfunc_ptr = void (AVM::*) (VMinstruction const &instr);
+
+        //Type declarations of mapping: int --> member function
+        using Lib_func_map = std::map<std::string, Lib_membfunc_ptr>;   //matches library function names to callable library functions
+        using Exec_func_map = std::map<unsigned int, Exec_membfunc_ptr> //matches VMopcodes to member "execute_" functions
+
 
         /**
          * Initializes the virtual machine. Note that for each vector argument, an internal copy is made.
@@ -34,7 +39,7 @@ namespace virtual_machine {
          * @param total_program_vars The number of total program scope space variables
          */
         AVM(const std::vector<VMinstruction> &instructions,
-            const std::vector<double> &doubles, const std::vector<std::string> &strings,
+            const std::vector<long double> &doubles, const std::vector<std::string> &strings,
             const std::vector<std::string> &libfuncs, const std::vector<Userfunc> &userfuncs,
             unsigned int total_program_vars);
 
@@ -52,8 +57,8 @@ namespace virtual_machine {
         Memcell ax, bx;     //general purpose registers
         Memcell retval;     //special purpose register. Used for function return value
         unsigned int pc;	//address of the current instruction to execute
-
         bool finished;  //whether or not the execution has finished
+        const unsigned long AVM_ENDING_PC;   //value that indicates that the execution has finished and no more isntructions exist
 
 
         /**
@@ -85,27 +90,16 @@ namespace virtual_machine {
          * Handles VMopcodes::add, sub, mul, div, mod
          */
         void execute_arithmetic(VMinstruction const &instr);
-        #define execute_add execute_arithmetic
-        #define execute_sub execute_arithmetic
-        #define execute_mul execute_arithmetic
-        #define execute_div execute_arithmetic
-        #define execute_mod execute_arithmetic
 
         /**
          * Handles VMopcodes::jeq, jne
          */
         void execute_equality(VMinstruction const &instr);
-        #define execute_jeq execute_equality
-        #define execute_jne execute_equality
 
         /**
          * Handles VMopcodes::jle, jge, jlt, jgt
          */
         void execute_relational(VMinstruction const &instr);
-        #define execute_jle execute_relational
-        #define execute_jge execute_relational
-        #define execute_jlt execute_relational
-        #define execute_jgt execute_relational
 
         void execute_call(VMinstruction const &instr);
         void execute_pusharg(VMinstruction const &instr);
@@ -166,55 +160,22 @@ namespace virtual_machine {
         void libfunc_cos();
         void libfunc_sin();
 
-        static const std::map<std::string, lib_func_t> name_to_libfunc_map = {
-                {Builtin_funcs::libname_print, libfunc_print}, {Builtin_funcs::libname_input, libfunc_input},
-                {Builtin_funcs::libname_objectmemberkeys, libfunc_objectmemberkeys},
-                {Builtin_funcs::libname_objecttotalmembers, libfunc_objecttotalmembers},
-                {Builtin_funcs::libname_objectcopy, libfunc_objectcopy},
-                {Builtin_funcs::libname_totalarguments, libfunc_totalarguments},
-                {Builtin_funcs::libname_argument, libfunc_argument}, {Builtin_funcs::libname_strtonum, libfunc_strtonum},
-                {Builtin_funcs::libname_sqrt, libfunc_sqrt}, {Builtin_funcs::libname_cos, libfunc_cos},
-                {Builtin_funcs::libname_sin, libfunc_sin},
-        };
+        /**
+         * Map that maps all Builtin_funcs::libname_x to the corresponding "libfunx_x"  member function
+         */
+        static const Lib_func_map name_to_libfunc_map;
 
         /**
          * Returns the library function that matches to the given name
          * @param name A builtin library function name, declared in "common_interface/Builtin_funcs.h"
          * @return The executable library function
          */
-        static lib_func_t get_library_function(const std::string &name);
-
-
-        /********************************** Private Static Stuff ********************************** */
-        /********************************** -------------------- *********************************** */
+        static Lib_membfunc_ptr get_library_function(const std::string &name);
 
         /**
-         * Type declaration of the execute functions for convenience
+         * Map that maps all VMopcode:: enumerable values to the corresponding "execute_"  member function
          */
-        typedef void (AVM::*exec_func_t)(VMinstruction const &);
-
-        /**
-         * WARNING: The order of the elements of the array must be the same as the enumeration order
-         * of the VMopcode
-         */
-        static exec_func_t const execute_functions_array[] = {
-                AVM::execute_assign,
-
-                AVM::execute_add, AVM::execute_sub, AVM::execute_mul, AVM::execute_div, AVM::execute_mod,
-
-                AVM::execute_jeq, AVM::execute_jne, AVM::execute_jle, AVM::execute_jge, AVM::execute_jlt, AVM::execute_jgt,
-
-                AVM::execute_call,
-                AVM::execute_pusharg,
-                AVM::execute_funcenter, AVM::execute_funcexit,
-
-                AVM::execute_newtable,
-                AVM::execute_tablegetelem,
-                AVM::execute_tablesetelem,
-
-                AVM::execute_jump,
-                AVM::execute_nop
-        };
+        static const Exec_func_map execute_func_map;
     };
 
 

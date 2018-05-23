@@ -30,8 +30,7 @@ void AVM::execute_tablegetelem(const VMinstruction &instr) {
     assert(table && (program_stack.is_in_stack(table) || table == &retval));
     assert(idx);
 
-    //Clear lvalue's old content
-    lv->clear();
+
 
     //Check if we have indeed a table
     if(table->type != Memcell::Type::table)
@@ -44,10 +43,11 @@ void AVM::execute_tablegetelem(const VMinstruction &instr) {
     //Get content
     Memcell *content = table->value.table_ptr->get_elem(idx);
     if(content) {   //element with the given index was found
-        lv->assign(content);
+        lv->assign(content);    //clearing of lv is handled internally
     } else {        //no element was found with the given index.
+        lv->clear();    //Clear lvalue's old content manually
         lv->type = Memcell::Type::nil;  //default value when the element does not exist
-        print_warning(table->to_string() + "[" + idx->to_string() + "] not found! Assigning nil instead.", instr.source_line);
+        print_warning(table->to_string(const_pool) + "[" + idx->to_string(const_pool) + "] not found! Assigning nil instead.", instr.source_line);
     }
 }
 

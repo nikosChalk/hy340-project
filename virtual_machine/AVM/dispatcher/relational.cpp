@@ -23,9 +23,9 @@ static bool comparator_jgt(long double leftOperand, long double rightOperand) {
     return leftOperand>rightOperand;
 }
 
-static std::map<unsigned int, comparator_func_t> relop_to_func_map = {
-        {VMopcode::jle, comparator_jle}, {VMopcode::jge, comparator_jge},
-        {VMopcode::jlt, comparator_jlt}, {VMopcode::jgt, comparator_jgt}
+static const std::map<unsigned int, comparator_func_t> relop_to_func_map = {
+        {VMopcode::jle, &comparator_jle}, {VMopcode::jge, &comparator_jge},
+        {VMopcode::jlt, &comparator_jlt}, {VMopcode::jgt, &comparator_jgt}
 };
 
 void AVM::execute_relational(const VMinstruction &instr) {
