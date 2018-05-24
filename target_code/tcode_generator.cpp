@@ -131,4 +131,72 @@ void tcode_generator::back_patch(vector<unsigned int> list, unsigned int t_value
 	}
 }
 
+void tcode_generator::binary_file_generator(void){
+
+	ofstream binary_f;
+	binary_f.open("binary.abc", ios::out | ios::binary);
+
+	/*Magic Number*/
+	binary_f << 340200501;
+
+	/*write constants arrays (strings)*/
+	binary_f << string_Consts.size();
+	for (unsigned int i = 0; i < string_Consts.size(); i++){
+		binary_f << string_Consts.at(i).size();
+		for (unsigned int j = 0; j < string_Consts.at(i).size(); j++){
+			binary_f.put(string_Consts.at(i).at(j));
+		}
+		binary_f.put('\0');
+	}
+
+	/*write constants arrays (numbers)*/
+	binary_f << num_Consts.size();
+	for (unsigned int i = 0; i < num_Consts.size(); i++){
+		binary_f << num_Consts.at(i);
+	}
+
+	/*write constants arrays (userfunctions)*/
+	binary_f << user_Funcs.size();
+	for (unsigned int i = 0; i < user_Funcs.size(); i++){
+		binary_f << user_Funcs.at(i)->address;
+		binary_f << user_Funcs.at(i)->nr_locals;
+		binary_f << user_Funcs.at(i)->name.size();
+		for (unsigned int j = 0; j < user_Funcs.at(i)->name.size(); j++){
+			binary_f.put(user_Funcs.at(i)->name.at(j));
+		}
+		binary_f.put('\0');
+	}
+
+	/*write constants arrays (libraryfunctions)*/
+	binary_f << named_Lib_Funcs.size();
+	for (unsigned int i = 0; i < named_Lib_Funcs.size(); i++){
+		binary_f << named_Lib_Funcs.at(i).size();
+		for (unsigned int j = 0; j < named_Lib_Funcs.at(i).size(); j++){
+			binary_f.put(named_Lib_Funcs.at(i).at(j));
+		}
+		binary_f.put('\0');
+	}
+
+	/*write code instructions*/
+	binary_f << instruction_vector.size();
+	for (unsigned int i = 0; i < instruction_vector.size(); i++){
+		/*opcode*/
+		binary_f << instruction_vector.at(i).opcode;
+		/*result*/
+		binary_f << instruction_vector.at(i).result->type;
+		binary_f << instruction_vector.at(i).result->value;
+		/*arg1*/
+		binary_f << instruction_vector.at(i).arg1->type;
+		binary_f << instruction_vector.at(i).arg1->value;
+		/*arg2*/
+		binary_f << instruction_vector.at(i).arg2->type;
+		binary_f << instruction_vector.at(i).arg2->value;
+		/*scrline*/
+		binary_f << instruction_vector.at(i).source_line;
+	}
+
+	binary_f.close();
+	return;
+}
+
 

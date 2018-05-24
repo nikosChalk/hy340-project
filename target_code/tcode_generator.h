@@ -7,6 +7,8 @@
 #include "../intermediate_code/quad.h"
 #include "../common_interface/vm_types.h"
 #include "types.h"
+#include <fstream>
+#include <iostream>
 
 
 using namespace std;
@@ -73,6 +75,9 @@ namespace target_code{
 		void add_incomplete_jump(unsigned int instrNo, unsigned int iaddress);
 		/*this function fills incomplete jump instruction number in result->value field*/
 		void back_patch(vector<unsigned int> list, unsigned int t_value);
+
+		/*binary file generator*/
+		void binary_file_generator(void);
 
 	private:
 		vector <double> num_Consts;
