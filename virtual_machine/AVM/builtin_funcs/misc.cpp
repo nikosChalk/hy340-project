@@ -10,21 +10,21 @@
 using namespace std;
 using namespace virtual_machine;
 
-void AVM::libfunc_input() {
+void AVM::libfunc_input(void) {
     throw not_implemented_error(); //TODO: implement
 }
 
-void AVM::libfunc_print() {
+void AVM::libfunc_print(void) {
     unsigned int total_actuals = program_stack.get_total_actuals();
     for(unsigned int i=0; i<total_actuals; i++)
         cout << program_stack.get_actual_arg(i)->to_string(const_pool) << endl;
 }
 
-void AVM::libfunc_strtonum() {
+void AVM::libfunc_strtonum(void) {
     throw not_implemented_error(); //TODO: implement
 }
 
-void AVM::libfunc_typeof() {
+void AVM::libfunc_typeof(void) {
     unsigned int args = program_stack.get_total_actuals();
 
     if(args != 1)

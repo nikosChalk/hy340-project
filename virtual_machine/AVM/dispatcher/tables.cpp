@@ -3,6 +3,7 @@
 #include <cassert>
 #include "../AVM.h"
 #include "../Memcell.h"
+#include "../Table.h"
 #include "../errors/internal_error.h"
 
 using namespace std;

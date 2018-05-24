@@ -26,20 +26,20 @@ namespace virtual_machine {
 
         //Type declarations of mapping: int --> member function
         using Lib_func_map = std::map<std::string, Lib_membfunc_ptr>;   //matches library function names to callable library functions
-        using Exec_func_map = std::map<unsigned int, Exec_membfunc_ptr> //matches VMopcodes to member "execute_" functions
+        using Exec_func_map = std::map<unsigned int, Exec_membfunc_ptr>; //matches VMopcodes to member "execute_" functions
 
 
         /**
          * Initializes the virtual machine. Note that for each vector argument, an internal copy is made.
          * @param instructions The vector containing the instructions
-         * @param doubles The constant vector for the doubles
+         * @param numbers The constant vector for the doubles
          * @param strings The constant vector for the strings
          * @param libfuncs The constant vector for the libfuncs
          * @param userfuncs The constant vector for the userfuncs
          * @param total_program_vars The number of total program scope space variables
          */
         AVM(const std::vector<VMinstruction> &instructions,
-            const std::vector<long double> &doubles, const std::vector<std::string> &strings,
+            const std::vector<long double> &numbers, const std::vector<std::string> &strings,
             const std::vector<std::string> &libfuncs, const std::vector<Userfunc> &userfuncs,
             unsigned int total_program_vars);
 
@@ -142,23 +142,23 @@ namespace virtual_machine {
         /**
          * Takes variadic arguments and prints them in cout
          */
-        void libfunc_print();
+        void libfunc_print(void);
 
-        void libfunc_input();
-        void libfunc_objectmemberkeys();
-        void libfunc_objecttotalmembers();
-        void libfunc_objectcopy();
-        void libfunc_totalarguments();
-        void libfunc_argument();
+        void libfunc_input(void);
+        void libfunc_objectmemberkeys(void);
+        void libfunc_objecttotalmembers(void);
+        void libfunc_objectcopy(void);
+        void libfunc_totalarguments(void);
+        void libfunc_argument(void);
 
         /**
          * Takes one argument and returns its type as string representation
          */
-        void libfunc_typeof();
-        void libfunc_strtonum();
-        void libfunc_sqrt();
-        void libfunc_cos();
-        void libfunc_sin();
+        void libfunc_typeof(void);
+        void libfunc_strtonum(void);
+        void libfunc_sqrt(void);
+        void libfunc_cos(void);
+        void libfunc_sin(void);
 
         /**
          * Map that maps all Builtin_funcs::libname_x to the corresponding "libfunx_x"  member function

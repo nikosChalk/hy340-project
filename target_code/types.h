@@ -13,8 +13,8 @@ namespace target_code {
         Incomplete_Jump();
         /**
         * Initializes the Incomplete_Jump representation with the given attributes
-        * @param nr_locals The total number of local variables used by this function
-        * @param name The function's name
+        * @param instrNo //TODO: fill it
+        * @param iaddress //TODO: fill it
         */
         Incomplete_Jump(unsigned int instrNo, unsigned int iaddress);
     };
@@ -28,8 +28,8 @@ namespace target_code {
         Tcode_quad();
         /**
         * Initializes the Tcode_quad representation with the given attributes
-        * @param tquad
-        * @param taddress
+        * @param tquad //TODO: fill it
+        * @param taddress //TODO: fill it
         */
 		Tcode_quad(intermediate_code::quad* tquad, unsigned int taddress);
 	};

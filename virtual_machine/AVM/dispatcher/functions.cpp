@@ -7,7 +7,7 @@
 #include "../errors/internal_error.h"
 #include "../../utilities.h"
 
-using namespace std;
+using std::stringstream;
 using namespace virtual_machine;
 
 void AVM::execute_call(const VMinstruction &instr) {
@@ -21,23 +21,24 @@ void AVM::execute_call(const VMinstruction &instr) {
 
     //Call function
     switch(func->type) {
-        case Memcell::Type::userfunc:
+        case Memcell::Type::userfunc: {
             unsigned int userfunc_addr = func->value.userfunc_addr; //address of "funcstart" instruction to which we will jump to
             assert(instructions.at(userfunc_addr).opcode == VMopcode::funcenter);
             assert(userfunc_addr < AVM_ENDING_PC);
             pc = userfunc_addr;
             return;
-
+        }
         case Memcell::Type::string:
             call_library_function(func->value.str_ptr);
             return;
         case Memcell::Type::libfunc:
             call_library_function(func->value.libfunc_ptr);
             return;
-        default:
+        default: {
             stringstream ss;
             ss << "call: cannot bind '" << func->to_string(const_pool) << "' to function!";
             throw internal_error(ss.str());
+        }
     }
 }
 

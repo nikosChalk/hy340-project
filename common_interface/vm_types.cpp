@@ -7,7 +7,7 @@
 using namespace std;
 using namespace virtual_machine;
 
-std::string vmopcode_to_str(VMopcode opcode) {
+std::string virtual_machine::vmopcode_to_str(VMopcode opcode) {
     switch(opcode) {
         case VMopcode::assign:  return "assign";
         case VMopcode::add:     return "add";

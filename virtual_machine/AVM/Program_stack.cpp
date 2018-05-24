@@ -26,10 +26,6 @@ using namespace virtual_machine;
 #define AVM_SAVED_PC_OFFSET     (+3)
 #define AVM_SAVED_TOTAL_ACTUALS (+4)
 
-const unsigned int Program_stack::AVM_STACK_SIZE = 4096;
-
-const unsigned int Program_stack::AVM_ENV_SIZE = 4;
-
 Program_stack::Program_stack(unsigned int total_program_vars) {
     for(unsigned int i=0; i<stack.size(); i++)
         stack[i] = Memcell();

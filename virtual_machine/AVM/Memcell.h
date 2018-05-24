@@ -2,12 +2,11 @@
 #ifndef HY340_PROJECT_MEMCELL_H
 #define HY340_PROJECT_MEMCELL_H
 
-#include "Table.h"
-#include "Program_stack.h"
 #include "Constants_pool.h"
 #include <map>
 
 namespace virtual_machine {
+    class Table;    //Forward declaration to avoid circular dependency
 
     class Memcell {
     public:
@@ -295,7 +294,7 @@ namespace virtual_machine {
         /**
          * Returns the string representation of value.table_ptr
          */
-        std::string table_tostr(Constants_pool const &unused) const;
+        std::string table_tostr(Constants_pool const &const_pool) const;
 
         /**
          * Returns the string representation of value.userfunc_addr, i.e. that is the name of the function

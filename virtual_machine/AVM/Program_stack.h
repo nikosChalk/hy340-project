@@ -125,12 +125,12 @@ namespace virtual_machine {
         /**
          * Stack's maximum memcells
          */
-        static const unsigned int AVM_STACK_SIZE;
+        static const unsigned int AVM_STACK_SIZE = 4096;
 
         /**
          * Saved environment size, counted in memcells
          */
-        static const unsigned int AVM_ENV_SIZE;
+        static const unsigned int AVM_ENV_SIZE = 4;
 
 
         /**

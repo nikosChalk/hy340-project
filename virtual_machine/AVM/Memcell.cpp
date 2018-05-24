@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iostream>
 #include "Memcell.h"
+#include "Table.h"
 #include "../utilities.h"
 
 using namespace std;
@@ -287,9 +288,9 @@ std::string Memcell::boolean_tostr(const Constants_pool &unused) const {
     return (this->value.boolean) ? std::string("true") : std::string("false");
 }
 
-std::string Memcell::table_tostr(const Constants_pool &unused) const {
+std::string Memcell::table_tostr(const Constants_pool &const_pool) const {
     assert(this->type == Memcell::Type::table);
-    return this->value.table_ptr->to_string();
+    return this->value.table_ptr->to_string(const_pool);
 }
 
 std::string Memcell::userfunc_tostr(const Constants_pool &const_pool) const {
