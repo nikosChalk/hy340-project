@@ -6,7 +6,7 @@
 
 #include <vector>
 #include <string>
-#include <unordered_map>
+#include <map>
 #include "../../common_interface/vm_types.h"
 
 namespace virtual_machine {
@@ -61,12 +61,11 @@ namespace virtual_machine {
         const Userfunc& get_userfunc_on_address(unsigned int userfunc_addr) const;
 
 
-
     private:
         std::vector<long double> doubles;
         std::vector<std::string> strings;
         std::vector<std::string> libfuncs;
-        std::unordered_map<unsigned int, Userfunc> userfuncs;
+        std::map<unsigned int, Userfunc> userfuncs;
     };
 
 };
