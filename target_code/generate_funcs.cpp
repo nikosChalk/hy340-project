@@ -66,29 +66,26 @@ void target_code::tcode_generator::generate(vector<target_code::Tcode_quad*> qua
 void target_code::tcode_generator::generate(VMopcode opcode, target_code::Tcode_quad* quad){
 	VMinstruction instruction;
 	instruction.opcode = opcode;
-
 	make_operand(quad->tquad->arg1, instruction.arg1);
 	make_operand(quad->tquad->arg2, instruction.arg2);
 	make_operand(quad->tquad->result, instruction.result);
 	quad->taddress = next_instruction_label();
+	instruction.source_line = quad->tquad->lineno;
 	emit_instruction(instruction);
 }
 
 void target_code::tcode_generator::generate_relational(VMopcode opcode, target_code::Tcode_quad* quad){
 	VMinstruction instruction;
 	instruction.opcode = opcode;
-
 	make_operand(quad->tquad->arg1, instruction.arg1);
 	make_operand(quad->tquad->arg2, instruction.arg2);
-
 	instruction.result->type = VMarg::Type::label;
-
-
 	if (quad->tquad->label < curr_processed_quad())
 		instruction.result->value = quad_vector.at(quad->tquad->label)->taddress;
 	else
 		add_incomplete_jump(next_instruction_label(), quad->tquad->label);
 	quad->taddress = next_instruction_label();
+	instruction.source_line = quad->tquad->lineno;
 	emit_instruction(instruction);
 }
 
@@ -97,6 +94,7 @@ void target_code::tcode_generator::generate_PARAM(target_code::Tcode_quad* quad)
 	VMinstruction instruction;
 	instruction.opcode = VMopcode::pusharg;
 	make_operand(quad->tquad->arg1, instruction.arg1);
+	instruction.source_line = quad->tquad->lineno;
 	emit_instruction(instruction);
 }
 
@@ -105,6 +103,7 @@ void target_code::tcode_generator::generate_CALL(target_code::Tcode_quad* quad){
 	VMinstruction instruction;
 	instruction.opcode = VMopcode::call;
 	make_operand(quad->tquad->arg1, instruction.arg1);
+	instruction.source_line = quad->tquad->lineno;
 	emit_instruction(instruction);
 }
 
@@ -114,6 +113,7 @@ void target_code::tcode_generator::generate_GETRETVAL(target_code::Tcode_quad* q
 	instruction.opcode = VMopcode::assign;
 	make_operand(quad->tquad->result, instruction.result);
 	make_retval_operand(instruction.arg1);
+	instruction.source_line = quad->tquad->lineno;
 	emit_instruction(instruction);
 }
 
@@ -135,6 +135,7 @@ void target_code::tcode_generator::generate_UMINUS(target_code::Tcode_quad* quad
 		instruction.arg2->type = virtual_machine::VMarg::Type::number;
 	}
 	make_operand(quad->tquad->result, instruction.result);
+	instruction.source_line = quad->tquad->lineno;
 	emit_instruction(instruction);
 }
 
@@ -146,6 +147,7 @@ void target_code::tcode_generator::generate_FUNCSTART(target_code::Tcode_quad* q
 	func_stack.push(list);
 	instruction.opcode = VMopcode::funcenter;
 	make_operand(quad->tquad->result,instruction.result);
+	instruction.source_line = quad->tquad->lineno;
 	emit_instruction(instruction);
 }
 void target_code::tcode_generator::generate_RETURN(target_code::Tcode_quad* quad){
@@ -154,12 +156,14 @@ void target_code::tcode_generator::generate_RETURN(target_code::Tcode_quad* quad
 	instruction.opcode = VMopcode::assign;
 	make_retval_operand(instruction.result);
 	make_operand(quad->tquad->arg1, instruction.arg1);
+	instruction.source_line = quad->tquad->lineno;
 	emit_instruction(instruction);
 	func_stack.top().push_back(next_instruction_label());
 	instruction.opcode = VMopcode::jump;
 	instruction.arg1 = nullptr;
 	instruction.arg2 = nullptr;
 	instruction.result->type = VMarg::Type::label;
+	instruction.source_line = quad->tquad->lineno;
 	emit_instruction(instruction);
 }
 void target_code::tcode_generator::generate_FUNCEND(target_code::Tcode_quad* quad){
@@ -169,5 +173,6 @@ void target_code::tcode_generator::generate_FUNCEND(target_code::Tcode_quad* qua
 	quad->taddress = next_instruction_label();
 	instruction.opcode = VMopcode::funcexit;
 	make_operand(quad->tquad->result,instruction.result);
+	instruction.source_line = quad->tquad->lineno;
 	emit_instruction(instruction);
 }
