@@ -48,6 +48,10 @@ unsigned int scope_handler::fetch_and_incr_cur_ssoffset() {
     return ss_offset;
 }
 
+unsigned int scope_handler::get_current_ss_offset() const {
+    return ss_offset_stack.top();
+}
+
 void scope_handler::enter_function_ss() {
     ss_stack.push(FUNCTION_LOCALS_SS);
     ss_offset_stack.push(0);

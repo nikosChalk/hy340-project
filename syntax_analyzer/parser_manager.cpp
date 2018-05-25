@@ -56,6 +56,11 @@ namespace syntax_analyzer {
         }
     }
 
+    unsigned int get_total_program_vars() {
+	    assert(scp_handler.get_current_ss() == scope_handler::scope_space::PROGRAM_SS);
+	    return scp_handler.get_current_ss_offset();
+	}
+
     /**
      * Handles the semantic value of the "call" non-terminal symbol and its intermediate code generation.
      * Used by grammar rules "call -> ..."

@@ -40,13 +40,14 @@ const VMcode_generator::Generate_func_map VMcode_generator::generate_func_map = 
         {quad::iopcode::jump, &VMcode_generator::generate_JUMP},
 };
 
-VMcode_generator::VMcode_generator(vector<intermediate_code::quad*> const &quad_vector) {
+VMcode_generator::VMcode_generator(vector<intermediate_code::quad*> const &quad_vector, unsigned int total_program_vars) {
     vm_instructions = vector<VMinstruction>();
 	incomplete_jumps = vector<Incomplete_jump>();
     address_links = map<unsigned int, Address_link>();;   //key == quad address == value.get_quad_label()
 	func_stack = stack<vector<unsigned int>>();
     binary_ofs = ofstream();
     binary_ofs.exceptions(ofstream::badbit | ofstream::failbit);
+    this->total_program_vars = total_program_vars;
 
     //Start generation process
     for(curr_proc_quad=0; curr_proc_quad<quad_vector.size(); curr_proc_quad++) {
@@ -227,7 +228,7 @@ void VMcode_generator::write_binary_file(const std::string &file_path) {
 	}
 
 	/* total program scope space variables */
-	binary_ofs << (unsigned int) 100;   //TODO: FIX THIS TO AN ACTUAL VALUE!!!!
+	binary_ofs << this->total_program_vars;
 
     binary_ofs.flush();
 	binary_ofs.close();

@@ -4,7 +4,6 @@
 #include <cstdlib>
 #include <sstream>
 #include "alpha_lex/alpha_flex.h"
-#include "syntax_analyzer/symbol_table.h"
 #include "syntax_analyzer/alpha_bison.h"
 #include "intermediate_code/icode_generator.h"
 #include "target_code/VMcode_generator.h"
@@ -72,7 +71,7 @@ int main (int argc, char *argv[]) {
             perror("Error while closing output file.");
     }
 
-    VMcode_generator vmcode_generator = VMcode_generator(icode_gen.get_quad_vector());
+    VMcode_generator vmcode_generator = VMcode_generator(icode_gen.get_quad_vector(), syntax_analyzer::get_total_program_vars());
 
     try {
         vmcode_generator.generate_binary_file(string(src_file));

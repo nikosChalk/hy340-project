@@ -23,8 +23,9 @@ namespace target_code {
 		/**
 		 * Initializes the target code generator and initiates the target code generation process
 		 * @param quad_vector The vector containing all the quads
+		 * @param total_program_vars The number of total program scope space variables used in the alpha binary source code
 		 */
-		explicit VMcode_generator(std::vector<intermediate_code::quad*> const &quad_vector);
+		VMcode_generator(std::vector<intermediate_code::quad*> const &quad_vector, unsigned int total_program_vars);
 
 		/**
 		 * Generates the binary file which is in the same path as the source file. The binary file has the same name as
@@ -50,6 +51,7 @@ namespace target_code {
 
 		std::vector<Incomplete_jump> incomplete_jumps;
         unsigned int curr_proc_quad;    //The address of the quad that is being currently translated
+        unsigned int total_program_vars; //total_program_vars The number of total program scope space variables used in the alpha binary source code
 
         //Stack of vectors. Each time we encounter a "funcstart" we push an empty vector and each time we encounter a "funcend"
         //we pop from the stack. The top vector contains VM instruction addresses, that are incomplete jump instructions and

@@ -2,6 +2,14 @@
 %code requires {
 	#include "symbol_table.h"
 	#include "types.h"
+
+	namespace syntax_analyzer {
+		/**
+		 * Returns the total number of program variables that the program uses. Should be called only after the parsing has been completed
+		 * Implementation in file: parser_manager.cpp
+		 */
+		unsigned int get_total_program_vars();
+	}
 }
 
 %{

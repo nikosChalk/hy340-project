@@ -65,6 +65,12 @@ namespace syntax_analyzer {
         unsigned int fetch_and_incr_cur_ssoffset();
 
         /**
+         * Returns the current scope space offset for the current scope space, i.e. the offset for the next variable
+         * that will be decalred in the current scope space
+         */
+        unsigned int get_current_ss_offset() const;
+
+        /**
          * Enters a function scope space and resets the function offset to zero(0).
          * Note that the scope is not changed
          */
