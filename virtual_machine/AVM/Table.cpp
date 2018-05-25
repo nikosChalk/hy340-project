@@ -36,8 +36,6 @@ const Table::Unregister_func_map Table::unregister_func_map = {
         {Memcell::Type::nil, &Table::unregister_nil_key}, {Memcell::Type::undef, &Table::unregister_undef_key},
 };
 
-const unsigned int Table::MAX_HASH_SIZE = 211;
-
 void Table::increase_ref_counter() {
     ref_counter++;
 }

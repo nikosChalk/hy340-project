@@ -92,11 +92,6 @@ namespace virtual_machine {
         /* True indicates that it has been set and false indicates that it is not used. (never assigned or cleared) */
         std::pair<Memcell, bool> nil_pair;              //used by statements e.g. table[nil];
 
-        /**
-         * Maximum number of elements per map
-         */
-        static const unsigned int MAX_HASH_SIZE; //TODO: Do we need to implement this?
-
         /* Functions that return the Memcell associated with the given key, based on a FIXED key->type. */
         /* If auto_create is true, then if the Memcell with the given key does not exist, it is         */
         /* constructed at the given index with type undef and is returned.                              */

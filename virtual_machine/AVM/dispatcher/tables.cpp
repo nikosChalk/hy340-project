@@ -28,14 +28,12 @@ void AVM::execute_tablegetelem(const VMinstruction &instr) {
     Memcell *idx = translate_operand(instr.arg2, &ax);
 
     assert(lv && (program_stack.is_in_stack(lv) || lv==&retval));
-    assert(table && (program_stack.is_in_stack(table) || table == &retval));
-    assert(idx);
-
-
+    assert(table && idx);
 
     //Check if we have indeed a table
     if(table->type != Memcell::Type::table)
         throw internal_error("Illegal use of type " + Memcell::type_to_string(table->type) + " as table!");
+    assert(program_stack.is_in_stack(table) || table == &retval);
 
     //Check if we are accessing with undef index and generate a warning in that case
     if(idx->type == Memcell::Type::undef)
@@ -59,12 +57,12 @@ void AVM::execute_tablesetelem(const VMinstruction &instr) {
     Memcell *idx = translate_operand(instr.arg2, &ax);
     Memcell *content = translate_operand(instr.result, &bx);    //table[idx] = content
 
-    assert(table && program_stack.is_in_stack(table));  //table is always a variable stored ONLY in stack. Vlepe Dialeksh 15 slide 33/36 apo typwmenes shmeiwseis gia ton logo
-    assert(idx && content);
+    assert(table && idx && content);
 
     //Check if we have indeed a table
     if(table->type != Memcell::Type::table)
         throw internal_error("Illegal use of type " + Memcell::type_to_string(table->type) + " as table!");
+    assert(program_stack.is_in_stack(table)); //table is always a variable stored ONLY in stack. Vlepe Dialeksh 15 slide 33/36 apo typwmenes shmeiwseis gia ton logo
 
     //Check if we are accessing with undef index and generate a warning in that case
     if(idx->type == Memcell::Type::undef)
