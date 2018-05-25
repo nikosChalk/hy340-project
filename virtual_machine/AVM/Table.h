@@ -6,7 +6,7 @@
 #include <map>
 #include <unordered_map>
 #include <string>
-#include "Constants_pool.h"
+#include "../../common_interface/Constants_pool.h"
 #include "Memcell.h"
 
 namespace virtual_machine {

@@ -6,7 +6,8 @@
 #include <vector>
 #include <fstream>
 #include "Token.h"
-#include "../../common_interface/vm_types.h"
+#include "../../common_interface/types.h"
+#include "../../common_interface/Constants_pool.h"
 
 namespace virtual_machine {
     class RDP {
@@ -29,24 +30,10 @@ namespace virtual_machine {
         const std::vector<VMinstruction> get_instructions() const;
 
         /**
-         * Returns the number vector read from the parsed alpha file
+         * Returns the pool of constants which were read from the binary fily
+         * @return The constants pool
          */
-        const std::vector<long double> get_numbers() const;
-
-        /**
-         * Returns the strings read from the parsed alpha file
-         */
-        const std::vector<std::string> get_strings() const;
-
-        /**
-         * Returns the library functions read from the parsed alpha file
-         */
-        const std::vector<std::string> get_libfuncs() const;
-
-        /**
-         * Returns the user functions read from the parsed alpha file
-         */
-        const std::vector<Userfunc> get_userfuncs() const;
+        Constants_pool get_const_pool() const;
 
         /**
          * Returns the number of total program variables used within the alpha file
@@ -54,13 +41,10 @@ namespace virtual_machine {
         unsigned int get_nr_total_program_vars() const;
 
     private:
+        Constants_pool const_pool;
         std::ifstream ifs;      //input file stream for the file which the RDP should parse
 
         std::vector<VMinstruction> instructions;
-        std::vector<long double> numbers;
-        std::vector<std::string> strings;
-        std::vector<std::string> libfuncs;
-        std::vector<Userfunc> userfuncs;
         unsigned int total_program_vars;
 
         /**
@@ -122,11 +106,11 @@ namespace virtual_machine {
         void rule_binaryfile();
         void rule_magicnumber();
 
-        void rule_arrays(); //sets this->numbers vector
+        void rule_arrays();         //adds to strings in const_pool
         std::vector<std::string> rule_strings();
-        void rule_numbers(); //sets this->numbers vector
-        void rule_userfunctions();  //sets this->userfuncs vector
-        void rule_libfunctions();   //sets this->libfuncs vector
+        void rule_numbers();        //adds to numbers in const_pool
+        void rule_userfunctions();  //adds to userfuncs in const_pool
+        void rule_libfunctions();   //adds to libfuncs in const_pool
         void rule_code();           //sets this->instructions vector
         void rule_nr_program_vars();    //sets this->total_program_vars
 
@@ -144,6 +128,7 @@ namespace virtual_machine {
         VMinstruction rule_oneinstruction();
         VMopcode rule_vmopcode();
         VMarg* rule_vmarg();    //The memory where the returned VMarg is stored is allocated through "new" operator
+        bool rule_vmarg_used();
         VMarg::Type  rule_vmarg_type();
         unsigned int rule_vmarg_value();
         unsigned int rule_srcline();

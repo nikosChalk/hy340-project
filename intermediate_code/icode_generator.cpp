@@ -11,6 +11,10 @@ icode_generator::icode_generator() {
     quad_vector = vector<quad*>();
 }
 
+const std::vector<quad*> icode_generator::get_quad_vector() const {
+    return quad_vector;
+}
+
 void icode_generator::emit_quad(quad *quad) {
     emit_quad(quad, this->next_quad_label());
 }

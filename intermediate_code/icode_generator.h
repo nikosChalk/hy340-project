@@ -18,6 +18,11 @@ namespace intermediate_code {
         icode_generator();
 
         /**
+         * Returns the quad vector that the icode_generator has currently emitted
+         */
+        const std::vector<quad*> get_quad_vector() const;
+
+        /**
          * Appends the quad to the end of the quad_vector and changes its label field to match the
          * position of the quad within the quad_vector.
          * @param quad The quad to emit. Must not be NULL/nullptr

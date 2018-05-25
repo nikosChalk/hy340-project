@@ -2,7 +2,7 @@
 #ifndef HY340_PROJECT_MEMCELL_H
 #define HY340_PROJECT_MEMCELL_H
 
-#include "Constants_pool.h"
+#include "../../common_interface/Constants_pool.h"
 #include <map>
 
 namespace virtual_machine {

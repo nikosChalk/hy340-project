@@ -6,10 +6,10 @@
 #include <vector>
 #include <string>
 #include <array>
-#include "Constants_pool.h"
+#include "../../common_interface/Constants_pool.h"
 #include "Memcell.h"
 #include "Program_stack.h"
-#include "../../common_interface/vm_types.h"
+#include "../../common_interface/types.h"
 #include "../../common_interface/Builtin_funcs.h"
 
 namespace virtual_machine {
@@ -38,10 +38,7 @@ namespace virtual_machine {
          * @param userfuncs The constant vector for the userfuncs
          * @param total_program_vars The number of total program scope space variables
          */
-        AVM(const std::vector<VMinstruction> &instructions,
-            const std::vector<long double> &numbers, const std::vector<std::string> &strings,
-            const std::vector<std::string> &libfuncs, const std::vector<Userfunc> &userfuncs,
-            unsigned int total_program_vars);
+        AVM(const std::vector<VMinstruction> &instructions, Constants_pool const &const_pool, unsigned int total_program_vars);
 
         /**
          * Executes the alpha binary file.
@@ -50,15 +47,15 @@ namespace virtual_machine {
         void run();
 
     private:
-        std::vector<VMinstruction> instructions;
-        Constants_pool const_pool;
+        const std::vector<VMinstruction> instructions;
+        const Constants_pool const_pool;
         Program_stack program_stack;
 
         Memcell ax, bx;     //general purpose registers
         Memcell retval;     //special purpose register. Used for function return value
         unsigned int pc;	//address of the current instruction to execute
         bool finished;  //whether or not the execution has finished
-        const unsigned long AVM_ENDING_PC;   //value that indicates that the execution has finished and no more isntructions exist
+        const unsigned long AVM_ENDING_PC;   //value that indicates that the execution has finished and no more instructions exist
 
 
         /**

@@ -16,6 +16,7 @@ string Token::type_to_str(Token::Type type) {
         case Type::DOUBLE_LONG:     return "double long";
         case Type::CHAR:            return "char";
         case Type::UNSIGNED_SHORT:  return "unsigned short";
+        case Type::BOOLEAN:         return "boolean";
         default:
             assert(false);  //unreachable statement
     }

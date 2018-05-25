@@ -1,16 +1,21 @@
 
 
 #include <iostream>
+#include <cstdlib>
+#include <sstream>
 #include "alpha_lex/alpha_flex.h"
 #include "syntax_analyzer/symbol_table.h"
 #include "syntax_analyzer/alpha_bison.h"
 #include "intermediate_code/icode_generator.h"
+#include "target_code/VMcode_generator.h"
 
 using namespace std;
+using namespace target_code;
 
 extern intermediate_code::icode_generator icode_gen;
 
 int main (int argc, char *argv[]) {
+    char const *src_file;
     int ret_val;
     syntax_analyzer::symbol_table sym_table = syntax_analyzer::symbol_table();
 
@@ -19,14 +24,15 @@ int main (int argc, char *argv[]) {
         cerr << "Too few arguments. Expected input file." << endl;
         exit(EXIT_FAILURE);
     }
+    src_file = argv[1];
 
     yyout = stdout;
     if(argc >= 2) {
-        if(!(yyin=fopen(argv[1], "r"))) {
+        if(!(yyin=fopen(src_file, "r"))) {
             perror("Error while opening input file. Execution aborted");
             exit(EXIT_FAILURE);
         }
-        cout << "Using input file: " << argv[1] << endl;
+        cout << "Using input file: " << src_file << endl;
     }
     if(argc>=3) {
         if(!(yyout=fopen(argv[2], "w"))) {
@@ -56,6 +62,7 @@ int main (int argc, char *argv[]) {
         cerr << "Parsing Failed" << endl;
     }
 
+    //Close files since we do not need them anymore
     if(yyin != stdin) {
         if(fclose(yyin) == EOF)
             perror("Error while closing input file.");
@@ -63,6 +70,14 @@ int main (int argc, char *argv[]) {
     if(yyout != stdout) {
         if(fclose(yyout) == EOF)
             perror("Error while closing output file.");
+    }
+
+    VMcode_generator vmcode_generator = VMcode_generator(icode_gen.get_quad_vector());
+
+    try {
+        vmcode_generator.generate_binary_file(string(src_file));
+    } catch(ofstream::failure const &err) {
+        cerr << "Binary file generation failed: " << err.what() << endl;
     }
 
     return 0;

@@ -9,7 +9,7 @@
 #include "errors/internal_error.h"
 #include "errors/alpha_runtime_error.h"
 #include "../../common_interface/errors/numeric_error.h"
-#include "../utilities.h"
+#include "../../common_interface/utilities.h"
 
 using namespace std;
 using namespace virtual_machine;
@@ -57,15 +57,10 @@ const AVM::Exec_func_map AVM::execute_func_map  = {
 /* Implementation of AVM class                  */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-AVM::AVM(const std::vector<virtual_machine::VMinstruction> &instructions,
-         const std::vector<long double> &numbers,
-         const std::vector<std::string> &strings, const std::vector<std::string> &libfuncs,
-         const std::vector<virtual_machine::Userfunc> &userfuncs,
-         unsigned int total_program_vars)  :
-        instructions(instructions),
-        const_pool(Constants_pool(numbers, strings, libfuncs, userfuncs)),
-        program_stack(Program_stack(total_program_vars)),
-        AVM_ENDING_PC(instructions.size())
+AVM::AVM(const vector<VMinstruction> &instructions, Constants_pool const &const_pool, unsigned int total_program_vars)
+        : instructions(instructions), const_pool(const_pool),
+          program_stack(Program_stack(total_program_vars)),
+          AVM_ENDING_PC(instructions.size())
 {
     ax = Memcell();
     bx = Memcell();

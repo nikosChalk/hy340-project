@@ -50,6 +50,9 @@ void RDP::Lookahead::next_token(Token::Type token_type) {
         case Type::UNSIGNED_SHORT:
             outer_rdp.ifs >> this->value.ushort;
             return;
+        case Type::BOOLEAN:
+            outer_rdp.ifs >> this->value.boolean;
+            return;
         default:
             assert(false);  //unreachable statement
     }

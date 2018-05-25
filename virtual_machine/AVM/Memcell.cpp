@@ -6,7 +6,7 @@
 #include <iostream>
 #include "Memcell.h"
 #include "Table.h"
-#include "../utilities.h"
+#include "../../common_interface/utilities.h"
 
 using namespace std;
 using namespace virtual_machine;

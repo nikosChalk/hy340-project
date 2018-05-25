@@ -4,7 +4,7 @@
 #include <vector>
 #include <functional>
 #include <sstream>
-#include "../utilities.h"
+#include "../../common_interface/utilities.h"
 #include "Table.h"
 
 using namespace std;

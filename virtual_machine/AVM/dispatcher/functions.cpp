@@ -5,7 +5,7 @@
 #include "../AVM.h"
 #include "../Memcell.h"
 #include "../errors/internal_error.h"
-#include "../../utilities.h"
+#include "../../../common_interface/utilities.h"
 
 using std::stringstream;
 using namespace virtual_machine;

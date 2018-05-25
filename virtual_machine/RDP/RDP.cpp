@@ -10,11 +10,8 @@ using namespace virtual_machine;
 RDP::RDP()
     : lookahead(*this)
 {
+    const_pool = Constants_pool();
     instructions = vector<VMinstruction>();
-    numbers = vector<long double>();
-    strings = vector<string>();
-    libfuncs = vector<string>();
-    userfuncs = vector<Userfunc>();
     total_program_vars = 0;
 
     ifs.exceptions(ifstream::failbit | ifstream::badbit | ifstream::eofbit);   //set when an exception should be thrown
@@ -38,26 +35,15 @@ void RDP::parse(const std::string &file_path) {
     ifs.close();
 }
 
+Constants_pool RDP::get_const_pool() const {
+    return const_pool;
+}
 const std::vector<VMinstruction> RDP::get_instructions() const {
     return instructions;
-}
-const std::vector<long double> RDP::get_numbers() const {
-    return numbers;
-}
-const std::vector<std::string> RDP::get_strings() const {
-    return strings;
-}
-const std::vector<std::string> RDP::get_libfuncs() const {
-    return libfuncs;
-}
-const std::vector<Userfunc> RDP::get_userfuncs() const {
-    return userfuncs;
 }
 unsigned int RDP::get_nr_total_program_vars() const {
     return total_program_vars;
 }
-
-
 
 void RDP::rule_binaryfile() {
     match(Token::Type::UNSIGNED_INT);
@@ -74,7 +60,11 @@ void RDP::rule_magicnumber() {
 
 void RDP::rule_arrays() {
     match(Token::Type::UNSIGNED_INT);
-    strings = rule_strings();
+
+    vector<string> readStrings = rule_strings();
+    for(unsigned int i=0; i<readStrings.size(); i++)
+        const_pool.register_string(i, readStrings.at(i));
+
     rule_numbers();
     rule_userfunctions();
     rule_libfunctions();
@@ -115,16 +105,16 @@ void RDP::rule_numbers() {
     match(Token::Type::UNSIGNED_INT);
     unsigned int total_numbers = rule_total();
 
-    for(int i=0; i<total_numbers; i++)
-        numbers.push_back(consume(Token::Type::DOUBLE_LONG).doublel);
+    for(unsigned int i=0; i<total_numbers; i++)
+        const_pool.register_number(i, consume(Token::Type::DOUBLE_LONG).doublel);
 }
 
 void RDP::rule_userfunctions() {
     match(Token::Type::UNSIGNED_INT);
     unsigned int total_userfuncs = rule_total();
 
-    for(int i=0;i<total_userfuncs; i++)
-        rule_oneuserfunc();
+    for(unsigned int i=0;i<total_userfuncs; i++)
+        const_pool.register_userfunc(i, rule_oneuserfunc());
 }
 
 Userfunc RDP::rule_oneuserfunc() {
@@ -147,7 +137,10 @@ string RDP::rule_id() {
 
 void RDP::rule_libfunctions() {
     match(Token::Type::UNSIGNED_INT);
-    libfuncs = rule_strings();
+    vector<string> libfuncs = rule_strings();
+
+    for(unsigned int i=0; i<libfuncs.size(); i++)
+        const_pool.register_libfunc(i, libfuncs.at(i));
 }
 
 void RDP::rule_code() {
@@ -168,8 +161,20 @@ VMopcode RDP::rule_vmopcode() {
 }
 
 VMarg* RDP::rule_vmarg() {
-    match(Token::Type::UNSIGNED_SHORT);
-    return new VMarg(rule_vmarg_type(), rule_vmarg_value());
+    match(Token::Type::BOOLEAN);
+
+    bool used = rule_vmarg_used();
+    VMarg::Type type = rule_vmarg_type();
+    unsigned int val = rule_vmarg_value();
+
+    if(used)
+        return new VMarg(type, val);
+    else
+        return nullptr;
+}
+
+bool RDP::rule_vmarg_used() {
+    return consume(Token::Type::BOOLEAN).boolean;
 }
 
 VMarg::Type RDP::rule_vmarg_type() {

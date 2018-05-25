@@ -15,7 +15,7 @@ namespace virtual_machine {
          * Token types that the parser can match (terminal symbol categories)
          */
         enum Type {
-            UNSIGNED_INT, DOUBLE_LONG, CHAR, UNSIGNED_SHORT
+            UNSIGNED_INT, DOUBLE_LONG, CHAR, UNSIGNED_SHORT, BOOLEAN
         };
 
         static std::string type_to_str(Type type);
@@ -28,6 +28,7 @@ namespace virtual_machine {
             double long doublel;    //used when type iS DOUBLE_LONG
             char ch;                //used when type is CHAR
             unsigned short ushort;  //used when type is UNSIGNED_SHORT
+            bool boolean;           //used when type is BOOLEAN
         };
 
         /**

@@ -28,10 +28,7 @@ int main (int argc, char *argv[]) {
     }
 
     //Initialize AVM
-    AVM avm = AVM(
-            rdp.get_instructions(), rdp.get_numbers(), rdp.get_strings(),
-            rdp.get_libfuncs(), rdp.get_userfuncs(), rdp.get_nr_total_program_vars()
-    );
+    AVM avm = AVM(rdp.get_instructions(), rdp.get_const_pool(), rdp.get_nr_total_program_vars());
 
     //Execute binary file
     try {
