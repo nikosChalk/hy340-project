@@ -4,6 +4,7 @@
 #include <cstring>
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 #include "Memcell.h"
 #include "Table.h"
 #include "../../common_interface/utilities.h"
@@ -275,7 +276,9 @@ std::string Memcell::to_string(const Constants_pool &const_pool) const {
 
 std::string Memcell::number_tostr(const Constants_pool &unused) const {
     assert(this->type == Memcell::Type::number);
-    return std::to_string(this->value.num);
+    stringstream ss;
+    ss << fixed << setprecision(3) << this->value.num;  //Krathse mono ta 3 dekadika pshfia tou arithmou
+    return ss.str();
 }
 
 std::string Memcell::string_tostr(const virtual_machine::Constants_pool &unused) const {
