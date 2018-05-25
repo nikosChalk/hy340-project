@@ -41,6 +41,7 @@
 
 #include <array>
 #include "Memcell.h"
+#include "AVM.h"
 
 namespace virtual_machine {
     class Program_stack {
@@ -122,6 +123,10 @@ namespace virtual_machine {
         bool is_in_stack(Memcell const *memcell) const;
 
     private:
+        //AVM library functions that rely on stack manipulation to work
+        friend void AVM::libfunc_totalarguments(void);
+        friend void AVM::libfunc_argument(void);
+
         /**
          * Stack's maximum memcells
          */

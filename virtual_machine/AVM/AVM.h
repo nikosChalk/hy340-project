@@ -145,6 +145,7 @@ namespace virtual_machine {
         void libfunc_objectmemberkeys(void);
         void libfunc_objecttotalmembers(void);
         void libfunc_objectcopy(void);
+
         void libfunc_totalarguments(void);
         void libfunc_argument(void);
 
