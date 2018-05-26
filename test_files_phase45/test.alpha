@@ -1,0 +1,25 @@
+//Functor example
+//x = [ {0: "abcd"}, {"()": (function(self){ print(self[0]); })} ];
+//x();
+
+/*
+t = [];
+
+x = 5;
+t[x] = "A";
+
+x = 7;
+t[x] = "B";
+
+t[nil] = [];
+
+x = 10;
+
+t[nil][nil] = nil;
+
+
+function f() {
+}
+//f[5];	//Should cause error
+t[f];	//it is ok
+*/

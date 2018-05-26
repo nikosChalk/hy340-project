@@ -1,6 +1,7 @@
 
 
 #include <cassert>
+#include <iostream>
 #include "../../common_interface/Constants.h"
 #include "RDP.h"
 
@@ -14,7 +15,7 @@ RDP::RDP()
     instructions = vector<VMinstruction>();
     total_program_vars = 0;
 
-    ifs.exceptions(ifstream::failbit | ifstream::badbit | ifstream::eofbit);   //set when an exception should be thrown
+    ifs.exceptions(ifstream::failbit | ifstream::badbit);   //set when an exception should be thrown
 }
 
 inline void RDP::match(Token::Type token_type) { lookahead.match(token_type); }
@@ -25,9 +26,19 @@ void RDP::parse(const std::string &file_path) {
     ifs.open(file_path, ifstream::in | ifstream::binary);   //open binary file
 
     //Parse the binary file
+    unsigned int x = 0;
     try {
-        rule_binaryfile();  //binaryfile is the starting non-terminal symbol
-    } catch(exception &ex) {    //catch any exception in order to cleanup
+        //rule_binaryfile();  //binaryfile is the starting non-terminal symbol
+
+
+        ifs >> x;
+    } catch(ifstream::failure const &ex) {    //catch any exception in order to cleanup
+        cout << "Open: " << ifs.is_open() << endl;
+        cout << "Good: " << ifs.good() << endl;
+        cout << "Bad: " << ifs.bad() << endl;
+        cout << "Fail: " << ifs.fail() << endl;
+        cout << "EOF: " << ifs.eof() << endl;
+
         ifs.close();
         throw ex;
     }

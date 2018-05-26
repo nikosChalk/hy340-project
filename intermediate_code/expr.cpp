@@ -3,6 +3,7 @@
 #include <cassert>
 #include <sstream>
 #include "expr.h"
+#include "semantic_error.h"
 
 using namespace std;
 using namespace syntax_analyzer;
@@ -33,7 +34,10 @@ expr* expr::make_lvalue_expr(symbol_table::entry *sym_entry) {
     return new_expr;
 }
 
-expr* expr::make_table_item(symbol_table::entry *sym_entry, expr *index) {
+expr* expr::make_table_item(symbol_table::entry *sym_entry, expr *index, unsigned int lineno) {
+    if(!dynamic_cast<symbol_table::var_entry*>(sym_entry))
+        throw semantic_error("non-variable used as table", lineno);
+
     expr *item = expr::make_expr(type::TABLE_ITEM_E);
     item->sym_entry = sym_entry;
     item->index = index;
@@ -41,8 +45,8 @@ expr* expr::make_table_item(symbol_table::entry *sym_entry, expr *index) {
     return item;
 }
 
-expr* expr::make_table_item(symbol_table::entry *sym_entry, const string &id) {
-    return make_table_item(sym_entry, expr::make_const_str(id));
+expr* expr::make_table_item(symbol_table::entry *sym_entry, const string &id, unsigned int lineno) {
+    return make_table_item(sym_entry, expr::make_const_str(id), lineno);
 }
 
 expr* expr::make_expr(type t) {

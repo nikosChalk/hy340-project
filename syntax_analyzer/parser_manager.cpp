@@ -784,26 +784,26 @@ namespace syntax_analyzer {
     expr* Manage_member__lvalue_DOT_IDENTIFIER(symbol_table &sym_table, unsigned int lineno, expr *lvalue, const string &id) {
         fprintf(yyout, "member -> lvalue.IDENTIFIER\n");
         lvalue = emit_iftableitem(lvalue, sym_table, lineno); //emit a quad::type::tablegetelem if lvalue was of that type
-        return expr::make_table_item(lvalue->sym_entry, id);
+        return expr::make_table_item(lvalue->sym_entry, id, lineno);
     }
     expr* Manage_member__lvalue_LEFT_BRACKET_expr_RIGHT_BRACKET(symbol_table &sym_table, unsigned int lineno, expr* lvalue, expr* expr) {
         fprintf(yyout, "member -> lvalue[expr]\n");
         lvalue = emit_iftableitem(lvalue, sym_table, lineno);   //emit a quad::type::tablegetelem if lvalue was of that type
         expr = patch_possible_sc_expr(expr, sym_table, lineno);
 
-		return expr::make_table_item(lvalue->sym_entry, expr);
+		return expr::make_table_item(lvalue->sym_entry, expr, lineno);
     }
 	expr* Manage_member__call_DOT_IDENTIFIER(symbol_table &sym_table, unsigned int lineno, expr *call, const string &id) {
         fprintf(yyout, "member -> call.IDENTIFIER\n");
 		call = emit_iftableitem(call, sym_table, lineno); //emit a quad::type::tablegetelem if call was of that type
-		return expr::make_table_item(call->sym_entry, id);
+		return expr::make_table_item(call->sym_entry, id, lineno);
     }
 	expr* Manage_member__call_LEFT_BRACKET_expr_RIGHT_BRAKET(symbol_table &sym_table, unsigned int lineno, expr* call, expr* expr) {
         fprintf(yyout, "member -> call[expr]\n");
 		call = emit_iftableitem(call, sym_table, lineno);   //emit a quad::type::tablegetelem if call was of that type
 		expr = patch_possible_sc_expr(expr, sym_table, lineno);
 
-		return expr::make_table_item(call->sym_entry, expr);
+		return expr::make_table_item(call->sym_entry, expr, lineno);
     }
 
 	/* Manage_call() */
@@ -823,7 +823,7 @@ namespace syntax_analyzer {
             expr *self, *table_item;
             self = lvalue;
             self = emit_iftableitem(self, sym_table, lineno);   //On the base case, lvalue is expr::type::NEW_TABLE_E. Emit a quad::type::tablegetelem if lvalue is a table element.
-            table_item = expr::make_table_item(self->sym_entry, meth_call->get_name()); //get the lvalue.csuffix as an expr*
+            table_item = expr::make_table_item(self->sym_entry, meth_call->get_name(), lineno); //get the lvalue.csuffix as an expr*
             lvalue = emit_iftableitem(table_item, sym_table, lineno);   //Will always emit a quad::type::tablegetelem since table_item is of expr::type::TABLE_ITEM_E.
 
             csuffix->get_elist().push_front(self);

@@ -54,10 +54,13 @@ VMcode_generator::VMcode_generator(vector<intermediate_code::quad*> const &quad_
         quad const *cur_quad = quad_vector.at(curr_proc_quad);
 
         address_links[curr_proc_quad] = Address_link(curr_proc_quad, next_vm_instr_address());
-        call_member_func_ptr(*this, VMcode_generator::generate_func_map.at(curr_proc_quad)) (cur_quad);
+        call_member_func_ptr(*this, VMcode_generator::generate_func_map.at(cur_quad->opcode)) (cur_quad);
     }
+
     //Generate ending "nop" VM instruction
-    generate_NOP(quad_vector.at(quad_vector.size()-1)->lineno); //Set the "nop" source line, as the last source line of the program
+    //Set the "nop" source line, as the last source line of the program. If the program is empty then set the line to 0
+    unsigned int nop_src_line = (unsigned int) ( (quad_vector.empty()) ? 0 : (quad_vector.at(quad_vector.size()-1)->lineno) );
+    generate_NOP(nop_src_line);
 
     //Patch incomplete jumps
     for(Incomplete_jump incomp_jump : incomplete_jumps){

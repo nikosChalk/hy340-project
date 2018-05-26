@@ -17,15 +17,16 @@ int main (int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    //TODO: fix this
     //Initialize RDP and parse binary file
     RDP rdp = RDP();
-    try {
+    //try {
         rdp.parse(string(argv[1]));
-    } catch(ifstream::failure const &err) {
-        cerr << err.what() << endl;
-        cerr << "Initialization of virtual machine failed." << endl;
-        exit(EXIT_FAILURE);
-    }
+    //} catch(ifstream::failure const &err) {
+    //    cerr << err.what() << endl;
+  //      cerr << "Initialization of virtual machine failed." << endl;
+//        exit(EXIT_FAILURE);
+    //}
 
     //Initialize AVM
     AVM avm = AVM(rdp.get_instructions(), rdp.get_const_pool(), rdp.get_nr_total_program_vars());

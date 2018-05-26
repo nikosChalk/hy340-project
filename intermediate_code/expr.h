@@ -107,9 +107,13 @@ namespace intermediate_code {
          *
          * @param sym_entry A symbol table entry pointing to the table
          * @param index The index that the returned expr has within the table.
+         * @param lineno The line number that triggered the creating of the TABLE_ITEM_E expr
          * @return A pointer to the new expr
+         *
+         * @throws intermediate_code::semantic_error if sym_entry cannot be dynamically casted to symbol_table::var_entry, i.e. it is
+         * not a variable but a function
          */
-        static expr* make_table_item(syntax_analyzer::symbol_table::entry *sym_entry, expr *index);
+        static expr* make_table_item(syntax_analyzer::symbol_table::entry *sym_entry, expr *index, unsigned int lineno);
 
         /**
          * Creates a new expr of type::TABLE_ITEM_E. This is used whenever we want a table's element as an expr*
@@ -117,9 +121,13 @@ namespace intermediate_code {
          *
          * @param sym_entry A symbol table entry pointing to the table
          * @param id The string index that the returned expr has within the table. (e.g. "x" if we have "table.x")
+         * @param lineno The line number that triggered the creating of the TABLE_ITEM_E expr
          * @return A pointer to the new expr
+         *
+         * @throws intermediate_code::semantic_error if sym_entry cannot be dynamically casted to symbol_table::var_entry, i.e. it is
+         * not a variable but a function
          */
-        static expr* make_table_item(syntax_analyzer::symbol_table::entry *sym_entry, const std::string &id);
+        static expr* make_table_item(syntax_analyzer::symbol_table::entry *sym_entry, const std::string &id, unsigned int lineno);
 
         /**
          * Creates a new generic expr with the given type and nullptr sym_entry and index
