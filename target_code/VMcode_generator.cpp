@@ -40,14 +40,17 @@ const VMcode_generator::Generate_func_map VMcode_generator::generate_func_map = 
         {quad::iopcode::jump, &VMcode_generator::generate_JUMP},
 };
 
-VMcode_generator::VMcode_generator(vector<intermediate_code::quad*> const &quad_vector, unsigned int total_program_vars) {
+VMcode_generator::VMcode_generator(vector<intermediate_code::quad*> const &quad_vector) {
+    this->quad_vector = vector<intermediate_code::quad*>(quad_vector);
+    const_pool = Constants_pool();
     vm_instructions = vector<VMinstruction>();
 	incomplete_jumps = vector<Incomplete_jump>();
     address_links = map<unsigned int, Address_link>();;   //key == quad address == value.get_quad_label()
 	func_stack = stack<vector<unsigned int>>();
-    binary_ofs = ofstream();
-    binary_ofs.exceptions(ofstream::badbit | ofstream::failbit);
-    this->total_program_vars = total_program_vars;
+	curr_proc_quad = 0;
+}
+
+void VMcode_generator::generate_target_code() {
 
     //Start generation process
     for(curr_proc_quad=0; curr_proc_quad<quad_vector.size(); curr_proc_quad++) {
@@ -59,7 +62,7 @@ VMcode_generator::VMcode_generator(vector<intermediate_code::quad*> const &quad_
 
     //Generate ending "nop" VM instruction
     //Set the "nop" source line, as the last source line of the program. If the program is empty then set the line to 0
-    unsigned int nop_src_line = (unsigned int) ( (quad_vector.empty()) ? 0 : (quad_vector.at(quad_vector.size()-1)->lineno) );
+    unsigned int nop_src_line = ( (quad_vector.empty()) ? 0 : (quad_vector.at(quad_vector.size()-1)->lineno) );
     generate_NOP(nop_src_line);
 
     //Patch incomplete jumps
@@ -72,6 +75,13 @@ VMcode_generator::VMcode_generator(vector<intermediate_code::quad*> const &quad_
             vm_instructions.at(address_to_patch).result->value = address_links.at(quad_target_address).get_vm_instr_label();
         }
     }
+}
+
+vector<VMinstruction> VMcode_generator::get_vm_instr_vector() const {
+    return vm_instructions;
+}
+Constants_pool VMcode_generator::get_const_pool() const {
+    return const_pool;
 }
 
 void VMcode_generator::emit(VMinstruction const &instruction) {
@@ -180,95 +190,4 @@ VMarg* VMcode_generator::translate_number(double long value) {
     arg->type = VMarg::Type::number;
     arg->value = const_pool.register_number(value);
     return arg;
-}
-
-void VMcode_generator::write_binary_file(const std::string &file_path) {
-    const string binary_extension = ".abc";
-	binary_ofs.open((file_path+binary_extension), ios::out | ios::binary);
-
-	/*Magic Number*/
-	binary_ofs << Constants::MAGICNUMBER;
-
-	/*write constants arrays (strings)*/
-    map<unsigned int, string> strMap = const_pool.get_string_array();
-    write_totals(strMap.size());
-    for(unsigned int i=0; i<strMap.size(); i++)
-        write_onestring(strMap.at(i));
-
-	/*write constants arrays (numbers)*/
-    map<unsigned int, double long> numbersMap = const_pool.get_numbers_array();
-	write_totals(numbersMap.size());
-	for(unsigned int i=0; i<numbersMap.size(); i++)
-		binary_ofs << numbersMap.at(i);
-
-	/*write constants arrays (userfunctions)*/
-    std::map<unsigned int, Userfunc> userfuncMap = const_pool.get_userfunc_array();
-	write_totals(userfuncMap.size());
-	for(unsigned int i=0; i<userfuncMap.size(); i++){
-		binary_ofs << userfuncMap.at(i).address;
-		binary_ofs << userfuncMap.at(i).nr_locals;
-		write_onestring(userfuncMap.at(i).name);
-	}
-
-	/*write constants arrays (libraryfunctions)*/
-    std::map<unsigned int, std::string> libfuncsMap = const_pool.get_libfunc_array();
-    write_totals(libfuncsMap.size());
-    for(unsigned int i=0; i<libfuncsMap.size(); i++)
-        write_onestring(libfuncsMap.at(i));
-
-	/*write code instructions*/
-    write_totals(vm_instructions.size());
-	for(unsigned int i=0; i<vm_instructions.size(); i++) {
-	    const VMinstruction &cur_instr = vm_instructions.at(i);
-		/*opcode*/
-		binary_ofs << (unsigned short) cur_instr.opcode;
-        write_vmarg(cur_instr.result);
-        write_vmarg(cur_instr.arg1);
-        write_vmarg(cur_instr.arg2);
-
-		/*scrline*/
-		binary_ofs << cur_instr.source_line;
-	}
-
-	/* total program scope space variables */
-	binary_ofs << this->total_program_vars;
-
-    binary_ofs.flush();
-	binary_ofs.close();
-	return;
-}
-
-void VMcode_generator::generate_binary_file(const std::string &file_path) { //Wrapper of write_binary_file in order to close the file properly
-    try {
-        write_binary_file(file_path);
-    } catch(exception const &ex) {
-        binary_ofs.close();
-        throw ex;
-    }
-}
-void VMcode_generator::generate_binary_file() {
-    generate_binary_file(string("a"));
-}
-
-void VMcode_generator::write_onestring(const std::string &string) {
-    binary_ofs << (unsigned int) string.size();
-    for(const char &ch : string)
-        binary_ofs.put(ch);
-    binary_ofs.put('\0');
-}
-
-void VMcode_generator::write_totals(unsigned long totals) {
-    binary_ofs << (unsigned int) totals;
-}
-
-void VMcode_generator::write_vmarg(VMarg const *vmarg) {
-    if(vmarg) {
-        binary_ofs << true; //used
-        binary_ofs << (unsigned short) vmarg->type; //type
-        binary_ofs << vmarg->value; //value
-    } else {
-        binary_ofs << false;    //vmarg is not used. Generate dummy info
-        binary_ofs << (unsigned short) VMarg::Type::label;      //the combination of the label and the value will probably raise an exception
-        binary_ofs << (unsigned int) vm_instructions.size();    //in case of logical error
-    }
 }

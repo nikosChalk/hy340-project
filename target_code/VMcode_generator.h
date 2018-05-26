@@ -21,29 +21,34 @@ namespace target_code {
         using Generate_func_map = std::map<unsigned int, Generate_membfunc_ptr >;   //maps all quad::iopcode enumerated values to "generate_" member functions
 
 		/**
-		 * Initializes the target code generator and initiates the target code generation process
+		 * Initializes the target code generator
 		 * @param quad_vector The vector containing all the quads
 		 * @param total_program_vars The number of total program scope space variables used in the alpha binary source code
 		 */
-		VMcode_generator(std::vector<intermediate_code::quad*> const &quad_vector, unsigned int total_program_vars);
+		explicit VMcode_generator(std::vector<intermediate_code::quad*> const &quad_vector);
 
 		/**
-		 * Generates the binary file which is in the same path as the source file. The binary file has the same name as
-		 * the source path but with the extension ".abc"
-		 * @param file_path The source file path
-		 *
-		 * @throws ofstream::failure If any error occured during the binary file generation
+		 * Initiates the target code generation process.
 		 */
-		void generate_binary_file(const std::string &file_path);
+        void generate_target_code();
+
 		/**
-		 * Same as generate_binary_file() but with a default "a.abc" binary file name existing in the same directory
-		 * where the compiler was invoked
+		 * Returns a vector which contains the translated VMinstructions
+		 * Should be called after generate_target_code() has been invoked
 		 */
-        void generate_binary_file();
+        std::vector<virtual_machine::VMinstruction> get_vm_instr_vector() const;
+
+        /**
+         * Returns the pool of constants that was generated due to the translation of VMinstructions
+         * Should be called after generate_target_code() has been invoked
+         */
+        virtual_machine::Constants_pool get_const_pool() const;
+
 
 	private:
 	    virtual_machine::Constants_pool const_pool; //handles the storage and registration of constants
 
+        std::vector<intermediate_code::quad*> quad_vector;
 		std::vector<virtual_machine::VMinstruction> vm_instructions;
 
 		//Mapping of quadno --> VM instruction address. A quadno is mapped to the first VMinstruction that it generates
@@ -51,14 +56,11 @@ namespace target_code {
 
 		std::vector<Incomplete_jump> incomplete_jumps;
         unsigned int curr_proc_quad;    //The address of the quad that is being currently translated
-        unsigned int total_program_vars; //total_program_vars The number of total program scope space variables used in the alpha binary source code
 
         //Stack of vectors. Each time we encounter a "funcstart" we push an empty vector and each time we encounter a "funcend"
         //we pop from the stack. The top vector contains VM instruction addresses, that are incomplete jump instructions and
         //they must be patched to jump to the "funcend" VM instruction
         std::stack<std::vector<unsigned int>> func_stack;
-
-        std::ofstream binary_ofs;
 
         /**
          * Appends the instruction to the end of the vm_instructions vector
@@ -146,27 +148,6 @@ namespace target_code {
 		void generate_relational(virtual_machine::VMopcode vmopcode, intermediate_code::quad const *quad);
 
         static const Generate_func_map generate_func_map;
-
-        /* Helper functions for writing to the binary file */
-
-        /**
-         * Internal function that writes the binary file. This function does not handle internal exceptions thus in case
-         * of an exception, the binary_ofs must be closed by the caller
-         */
-        void write_binary_file(const std::string &file_path);
-
-        /**
-         * Writes the given string to the binary_ofs, i.e. performs "string" grammar rule
-         */
-        void write_onestring(const std::string &string);
-
-        /**
-         * Writes the given totals as UNSIGNED INT to the binary_ofs, i.e. performs the "totals" grammar rule
-         * @param totals The totals to write, which is CONVERTED to unsigned int
-         */
-        void write_totals(unsigned long totals);
-
-        void write_vmarg(virtual_machine::VMarg const *vmarg);
 	};
 }
 

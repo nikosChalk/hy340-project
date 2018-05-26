@@ -26,19 +26,18 @@ void RDP::parse(const std::string &file_path) {
     ifs.open(file_path, ifstream::in | ifstream::binary);   //open binary file
 
     //Parse the binary file
-    unsigned int x = 0;
+    rule_binaryfile();  //binaryfile is the starting non-terminal symbol
+
     try {
         //rule_binaryfile();  //binaryfile is the starting non-terminal symbol
-
-
-        ifs >> x;
     } catch(ifstream::failure const &ex) {    //catch any exception in order to cleanup
+        /*
         cout << "Open: " << ifs.is_open() << endl;
         cout << "Good: " << ifs.good() << endl;
         cout << "Bad: " << ifs.bad() << endl;
         cout << "Fail: " << ifs.fail() << endl;
         cout << "EOF: " << ifs.eof() << endl;
-
+        */
         ifs.close();
         throw ex;
     }

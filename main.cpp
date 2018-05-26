@@ -7,6 +7,7 @@
 #include "syntax_analyzer/alpha_bison.h"
 #include "intermediate_code/icode_generator.h"
 #include "target_code/VMcode_generator.h"
+#include "target_code/Binary_writer.h"
 
 using namespace std;
 using namespace target_code;
@@ -71,10 +72,15 @@ int main (int argc, char *argv[]) {
             perror("Error while closing output file.");
     }
 
-    VMcode_generator vmcode_generator = VMcode_generator(icode_gen.get_quad_vector(), syntax_analyzer::get_total_program_vars());
+    VMcode_generator vmcode_generator = VMcode_generator(icode_gen.get_quad_vector());
+    vmcode_generator.generate_target_code();
+
+    Binary_writer writer = Binary_writer(
+            vmcode_generator.get_vm_instr_vector(), vmcode_generator.get_const_pool(), syntax_analyzer::get_total_program_vars()
+    );
 
     try {
-        vmcode_generator.generate_binary_file(string(src_file));
+        writer.generate_binary_file(string(src_file));
     } catch(ofstream::failure const &err) {
         cerr << "Binary file generation failed: " << err.what() << endl;
     }

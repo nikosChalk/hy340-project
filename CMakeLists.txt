@@ -45,7 +45,7 @@ add_executable(acc
 
         main.cpp
         not_implemented_error.cpp not_implemented_error.h
-        utilities.cpp utilities.h)
+        utilities.cpp utilities.h target_code/Binary_writer.cpp target_code/Binary_writer.h)
 
 add_executable(avm
         not_implemented_error.cpp not_implemented_error.h
