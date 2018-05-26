@@ -1,5 +1,4 @@
 .idea/
-CMakeLists.txt
 cmake-build-debug/
 alpha_lex/alpha_flex.h
 alpha_lex/alpha_flex.cpp

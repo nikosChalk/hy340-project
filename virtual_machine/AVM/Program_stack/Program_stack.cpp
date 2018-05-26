@@ -2,8 +2,7 @@
 
 #include <cassert>
 #include "Program_stack.h"
-#include "errors/internal_error.h"
-#include "Memcell.h"
+#include "../errors/internal_error.h"
 
 using namespace std;
 using namespace virtual_machine;

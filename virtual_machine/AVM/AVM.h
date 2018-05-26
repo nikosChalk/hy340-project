@@ -6,9 +6,9 @@
 #include <vector>
 #include <string>
 #include <array>
-#include "../../common_interface/Constants_pool.h"
 #include "Memcell.h"
-#include "Program_stack.h"
+#include "Program_stack/Program_stack.h"
+#include "../../common_interface/Constants_pool.h"
 #include "../../common_interface/vm_types.h"
 #include "../../common_interface/Builtin_funcs.h"
 

@@ -40,10 +40,10 @@
 #define HY340_PROJECT_PROGRAM_STACK_H
 
 #include <array>
-#include "Memcell.h"
+#include "../Memcell.h"
+#include "Stack_manipulator.h"
 
 namespace virtual_machine {
-    class AVM;  //forward declaration to break circular dependencies
 
     class Program_stack {
     public:
@@ -124,9 +124,7 @@ namespace virtual_machine {
         bool is_in_stack(Memcell const *memcell) const;
 
     private:
-        //AVM library functions that rely on stack manipulation to work
-        friend void AVM::libfunc_totalarguments(void);
-        friend void AVM::libfunc_argument(void);
+        friend Stack_manipulator;   //Attorney-client idiom
 
         /**
          * Stack's maximum memcells

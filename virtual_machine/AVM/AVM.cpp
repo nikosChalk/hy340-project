@@ -5,7 +5,6 @@
 #include <sstream>
 #include <cstring>
 #include "AVM.h"
-#include "Memcell.h"
 #include "errors/internal_error.h"
 #include "errors/alpha_runtime_error.h"
 #include "../../common_interface/errors/numeric_error.h"
