@@ -155,8 +155,7 @@ namespace virtual_machine {
          * Register that points to the first local variable of the active function
          * If we are not inside a function, topsp==top
          */
-        int topsp;
-        unsigned int total_program_vars;
+        int topsp;        unsigned int total_program_vars;
         unsigned int total_actuals; //counter of total actual arguments when calling a function
         unsigned int fcall_depth;   //depth of function calls, i.e. how many functions are currently active
 

@@ -26,6 +26,8 @@ namespace virtual_machine {
          */
         Table();
 
+		Table(Table const *other);
+
         /**
          * Increases the reference counter of this table by 1
          */
@@ -70,6 +72,10 @@ namespace virtual_machine {
          */
         void set_elem(Memcell const *idx, Memcell const *val);
 
+		Table* get_all_keys() const;
+
+		unsigned int get_nr_keys() const;
+
         /**
          * Returns the string representation of this object
          * @param const_pool The constans' pool, since for Memcells of type userfunc, we need to translate the userfunc_addr
@@ -82,7 +88,7 @@ namespace virtual_machine {
         unsigned int ref_counter;
         std::map<long double, Memcell> numericMap;      //used by statements e.g. table[5];
         std::map<std::string, Memcell> stringMap;       //used by statements e.g. table.key or table["key"];
-        std::map<Table const*, Memcell> tableMap;       //used by statements e.g. x = [5, 3]; table[x]; or table[ [] ];
+        std::map<Table*, Memcell> tableMap;       //used by statements e.g. x = [5, 3]; table[x]; or table[ [] ];
         std::map<unsigned int, Memcell> userfuncMap;    //used by statements e.g. function f() {}; table[f];
         std::map<std::string, Memcell> libfuncMap;      //used by statements e.g. table[cos];
         std::unordered_map<bool, Memcell> boolMap;      //used by statements e.g. table[true]; or table[false];

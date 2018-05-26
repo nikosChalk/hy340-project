@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.8)
 project(hy340_project)
 
 set(CMAKE_CXX_STANDARD 11)

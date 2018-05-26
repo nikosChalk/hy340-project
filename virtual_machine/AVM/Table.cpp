@@ -15,12 +15,28 @@ Table::Table() {
     ref_counter = 1;
     numericMap = map<long double, Memcell>();
     stringMap = map<std::string, Memcell>();
-    tableMap = map<Table const*, Memcell>();
+    tableMap = map<Table*, Memcell>();
     userfuncMap = map<unsigned int, Memcell>();
     libfuncMap = map<std::string, Memcell>();
     boolMap = unordered_map<bool, Memcell>();
 
     nil_pair = make_pair(Memcell(), false);
+}
+
+Table::Table(Table const *other){
+	this->ref_counter = 1;
+	this->numericMap = std::map<long double, Memcell>(other->numericMap);
+	for (auto &pair : this->stringMap)
+		pair.second.value.str_ptr = strdup(pair.second.value.str_ptr);
+	this->stringMap = std::map<std::string, Memcell>(other->stringMap);
+	this->tableMap = std::map<Table*, Memcell>(other->tableMap);
+	for (auto &pair : this->tableMap)
+		pair.second.value.table_ptr->increase_ref_counter();
+
+	this->userfuncMap = std::map<unsigned int, Memcell>(other->userfuncMap);
+	this->libfuncMap = std::map<std::string, Memcell>(other->libfuncMap);
+	this->boolMap = std::unordered_map<bool, Memcell>(other->boolMap);
+	this->nil_pair = std::pair<Memcell, bool>(other->nil_pair);
 }
 
 const Table::Getelem_func_map Table::getelem_func_map = {
@@ -94,6 +110,88 @@ void Table::set_elem(const Memcell *idx, const Memcell *val) {
     }
 }
 
+Table* Table::get_all_keys() const{
+	int idx = 0;
+	Table *table = new Table();
+	Memcell *memcell_key = new Memcell();
+	
+	memcell_key->type = Memcell::Type::number;
+
+	/*numericMap*/
+	for (auto const &number : this->numericMap){
+		Memcell *memcell_value = new Memcell();
+		memcell_key->value.num = idx;
+
+		memcell_value->type = Memcell::Type::number;
+		memcell_value->value.num = number.first;
+
+		table->set_elem(memcell_key,memcell_value);
+		idx++;
+	}
+	/*stringMap*/
+	for (auto const &number : this->stringMap){
+		memcell_key->value.num = idx;
+		Memcell *memcell_value = new Memcell();
+		memcell_value->type = Memcell::Type::string;
+		memcell_value->value.str_ptr = strdup(number.first.c_str());
+		table->set_elem(memcell_key, memcell_value);
+		idx++;
+		free(memcell_value->value.str_ptr);
+	}
+	/*tableMap*/
+	for (auto const &number : this->tableMap){
+		memcell_key->value.num = idx;
+		Memcell *memcell_value = new Memcell();
+		memcell_value->type = Memcell::Type::table;
+		memcell_value->value.table_ptr = number.first;
+		table->set_elem(memcell_key, memcell_value);
+		idx++;
+	}
+	/*userfuncMap*/
+	for (auto const &number : this->userfuncMap){
+		memcell_key->value.num = idx;
+		Memcell *memcell_value = new Memcell();
+		memcell_value->type = Memcell::Type::userfunc;
+		memcell_value->value.userfunc_addr = number.first;
+		table->set_elem(memcell_key, memcell_value);
+		idx++;
+	}
+	/*libfuncMap*/
+	for (auto const &number : this->libfuncMap){
+		memcell_key->value.num = idx;
+		Memcell *memcell_value = new Memcell();
+		memcell_value->type = Memcell::Type::libfunc;
+		memcell_value->value.libfunc_ptr = number.second.value.libfunc_ptr;
+		table->set_elem(memcell_key, memcell_value);
+		idx++;
+		free(memcell_value->value.str_ptr);
+	}
+	/*boolMap*/
+	for (auto const &number : this->boolMap){
+		memcell_key->value.num = idx;
+		Memcell *memcell_value = new Memcell();
+		memcell_value->type = Memcell::Type::boolean;
+		memcell_value->value.boolean = number.first;
+		table->set_elem(memcell_key, memcell_value);
+		idx++;
+	}
+	/*nil_pair*/
+	if (this->nil_pair.second){
+		Memcell *memcell_value = new Memcell();
+		memcell_value->type = Memcell::Type::nil;
+		table->set_elem(memcell_key, memcell_value);
+	}
+
+	delete memcell_key;
+}
+
+unsigned int Table::get_nr_keys() const{
+	int retval = this->numericMap.size() + this->stringMap.size() + this->tableMap.size() + this->userfuncMap.size() + this->libfuncMap.size() + this->boolMap.size();
+	if (this->nil_pair.second == true)
+		return retval + 1;
+	return retval;
+}
+
 /* getelem_ functions */
 
 Memcell* Table::getelem_number_key(const Memcell *key, bool auto_create) {
@@ -131,7 +229,7 @@ Memcell* Table::getelem_boolean_key(const Memcell *key, bool auto_create) {
 
 Memcell* Table::getelem_table_key(const Memcell *key, bool auto_create) {
     assert(key->type == Memcell::Type::table);
-    Table const *table_key = key->value.table_ptr;
+    Table *table_key = key->value.table_ptr;
 
     if(auto_create)
         return &tableMap[table_key];
