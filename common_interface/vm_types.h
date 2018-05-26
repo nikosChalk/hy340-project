@@ -142,6 +142,19 @@ namespace virtual_machine {
         Userfunc();
 
         /**
+         * Checks if the two given userfuncs are the same. They are the same if and only if this->address == other.address,
+         * i.e. the address is considered unique for each userfunc
+         * @param other The other userfunc to compare
+         * @return True if they are equal in the above terms. False otherwise
+         */
+        bool operator==(const Userfunc &other) const;
+
+        /**
+         * Returns !(*this == other)
+         */
+        bool operator!=(const Userfunc &other) const;
+
+        /**
          * Initializes the user function representation with the given attributes
          * @param address The address of the "funcstart" vm instruction
          * @param nr_locals The total number of local variables used by this function

@@ -41,9 +41,10 @@
 
 #include <array>
 #include "Memcell.h"
-#include "AVM.h"
 
 namespace virtual_machine {
+    class AVM;  //forward declaration to break circular dependencies
+
     class Program_stack {
     public:
 

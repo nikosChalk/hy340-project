@@ -96,3 +96,15 @@ Userfunc::Userfunc(unsigned int address, unsigned int nr_locals, const std::stri
         : address(address), nr_locals(nr_locals), name(name) { }
 
 Userfunc::Userfunc() = default;
+
+bool Userfunc::operator==(const virtual_machine::Userfunc &other) const {
+    if(this == &other)  //check if they are pointing to the same memory
+        return true;
+
+    //Perform comparison
+    return (this->address == other.address);
+}
+
+bool Userfunc::operator!=(const virtual_machine::Userfunc &other) const {
+    return !(*this == other);
+}

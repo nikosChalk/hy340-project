@@ -63,7 +63,7 @@ void RDP::rule_arrays() {
 
     vector<string> readStrings = rule_strings();
     for(unsigned int i=0; i<readStrings.size(); i++)
-        const_pool.register_string(i, readStrings.at(i));
+        const_pool.register_string(readStrings.at(i));
 
     rule_numbers();
     rule_userfunctions();
@@ -106,7 +106,7 @@ void RDP::rule_numbers() {
     unsigned int total_numbers = rule_total();
 
     for(unsigned int i=0; i<total_numbers; i++)
-        const_pool.register_number(i, consume(Token::Type::DOUBLE_LONG).doublel);
+        const_pool.register_number(consume(Token::Type::DOUBLE_LONG).doublel);
 }
 
 void RDP::rule_userfunctions() {
@@ -114,7 +114,7 @@ void RDP::rule_userfunctions() {
     unsigned int total_userfuncs = rule_total();
 
     for(unsigned int i=0;i<total_userfuncs; i++)
-        const_pool.register_userfunc(i, rule_oneuserfunc());
+        const_pool.register_userfunc(rule_oneuserfunc());
 }
 
 Userfunc RDP::rule_oneuserfunc() {
@@ -140,7 +140,7 @@ void RDP::rule_libfunctions() {
     vector<string> libfuncs = rule_strings();
 
     for(unsigned int i=0; i<libfuncs.size(); i++)
-        const_pool.register_libfunc(i, libfuncs.at(i));
+        const_pool.register_libfunc(libfuncs.at(i));
 }
 
 void RDP::rule_code() {

@@ -40,7 +40,7 @@ namespace intermediate_code {
         /**
          * Returns a string representation of the given iopcode
          * @param iopcode The intermediate code opcode
-         * @return The string representaiton
+         * @return The string representation
          */
         static std::string iopcode_to_str(iopcode iopcode);
 
