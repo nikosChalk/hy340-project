@@ -39,19 +39,19 @@ void RDP::Lookahead::next_token(Token::Type token_type) {
     this->is_empty = false;
     switch(token_type) {
         case Type::UNSIGNED_INT:
-            outer_rdp.ifs >> this->value.uint;
+			outer_rdp.ifs.read(reinterpret_cast<char*>(&this->value.uint),sizeof(unsigned int));
             return;
         case Type::DOUBLE_LONG:
-            outer_rdp.ifs >> this->value.doublel;
+			outer_rdp.ifs.read(reinterpret_cast<char*>(&this->value.doublel), sizeof(long double));
             return;
         case Type::CHAR:
-            outer_rdp.ifs.get(this->value.ch);
+			outer_rdp.ifs.read(reinterpret_cast<char*>(&this->value.ch), sizeof(char));
             return;
         case Type::UNSIGNED_SHORT:
-            outer_rdp.ifs >> this->value.ushort;
+			outer_rdp.ifs.read(reinterpret_cast<char*>(&this->value.ushort), sizeof(unsigned short));
             return;
         case Type::BOOLEAN:
-            outer_rdp.ifs >> this->value.boolean;
+			outer_rdp.ifs.read(reinterpret_cast<char*>(&this->value.boolean), sizeof(bool));
             return;
         default:
             assert(false);  //unreachable statement
