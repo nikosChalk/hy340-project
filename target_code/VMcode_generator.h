@@ -44,7 +44,6 @@ namespace target_code {
          */
         virtual_machine::Constants_pool get_const_pool() const;
 
-
 	private:
 	    virtual_machine::Constants_pool const_pool; //handles the storage and registration of constants
 

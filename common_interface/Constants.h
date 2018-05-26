@@ -11,7 +11,7 @@ namespace virtual_machine {
          */
         Constants() = delete;
 
-        static const unsigned int MAGICNUMBER = 340200501U;
+        static const unsigned int MAGICNUMBER = 340200501;
     };
 };
 

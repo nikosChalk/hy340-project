@@ -15,12 +15,12 @@ RDP::RDP()
     instructions = vector<VMinstruction>();
     total_program_vars = 0;
 
-    ifs.exceptions(ifstream::failbit | ifstream::badbit);   //set when an exception should be thrown
+    ifs.exceptions(ifstream::failbit | ifstream::badbit | ifstream::eofbit);   //set when an exception should be thrown
 }
 
 inline void RDP::match(Token::Type token_type) { lookahead.match(token_type); }
 
-inline Token::Value RDP::consume(Token::Type token_type) { lookahead.consume(token_type); }
+inline Token::Value RDP::consume(Token::Type token_type) { return lookahead.consume(token_type); }
 
 void RDP::parse(const std::string &file_path) {
     ifs.open(file_path, ifstream::in | ifstream::binary);   //open binary file
@@ -64,7 +64,7 @@ void RDP::rule_binaryfile() {
 }
 
 void RDP::rule_magicnumber() {
-    if(consume(Token::Type::UNSIGNED_INT).uint != Constants::MAGICNUMBER);
+    if(consume(Token::Type::UNSIGNED_INT).uint != Constants::MAGICNUMBER)
         throw ifstream::failure("Invalid magic number in binary file!");
 }
 
@@ -85,8 +85,9 @@ vector<string> RDP::rule_strings() {
     const unsigned int total_strings = rule_total();
     vector<string> v;
 
-    for(int i=0; i<total_strings; i++)
+    for(unsigned int i=0; i<total_strings; i++)
         v.push_back(rule_onestring());
+    return v;
 }
 
 unsigned int RDP::rule_total() {
@@ -102,7 +103,7 @@ std::string RDP::rule_onestring() {
     const unsigned int str_len = rule_strsize();
     char c_str[str_len+1];
 
-    for(int i=0; i<str_len+1; i++)
+    for(unsigned int i=0; i<str_len+1; i++)
         c_str[i] = consume(Token::Type::CHAR).ch;
     return string(c_str);
 }
@@ -129,7 +130,11 @@ void RDP::rule_userfunctions() {
 
 Userfunc RDP::rule_oneuserfunc() {
     match(Token::Type::UNSIGNED_INT);
-    return Userfunc(rule_address(), rule_nr_locals(), rule_id());
+    unsigned int func_addr = rule_address();
+    unsigned int nr_locals = rule_nr_locals();
+    string name = rule_id();
+
+    return Userfunc(func_addr, nr_locals, name);
 }
 
 unsigned int RDP::rule_address() {
@@ -163,7 +168,13 @@ void RDP::rule_code() {
 
 VMinstruction RDP::rule_oneinstruction() {
     match(Token::Type::UNSIGNED_SHORT);
-    return VMinstruction(rule_vmopcode(), rule_vmarg(), rule_vmarg(), rule_vmarg(), rule_srcline());
+    VMopcode vmopcode = rule_vmopcode();
+    VMarg *result = rule_vmarg();
+    VMarg *arg1 = rule_vmarg();
+    VMarg *arg2 = rule_vmarg();
+    unsigned int src_line = rule_srcline();
+
+    return VMinstruction(vmopcode, result, arg1, arg2, src_line);
 }
 
 VMopcode RDP::rule_vmopcode() {

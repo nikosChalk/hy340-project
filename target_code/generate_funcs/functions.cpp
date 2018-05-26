@@ -17,8 +17,8 @@ void VMcode_generator::generate_CALL(quad const *quad) {
 void VMcode_generator::generate_GETRETVAL(quad const *quad) {
     emit(VMinstruction(
             VMopcode::assign,
-            translate_retval(),
             translate_operand(quad->result),
+            translate_retval(),
             nullptr,
             quad->lineno
     ));

@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <fstream>
+#include <sstream>
 #include "VMcode_generator.h"
 #include "../syntax_analyzer/symbol_table.h"
 #include "../common_interface/Constants.h"

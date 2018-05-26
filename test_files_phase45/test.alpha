@@ -2,6 +2,23 @@
 //x = [ {0: "abcd"}, {"()": (function(self){ print(self[0]); })} ];
 //x();
 
+x=input();
+x=x+2;
+print(x);
+
+x = [];
+x[0] = 3;
+x["()"] = print;
+x=nil;
+
+x = [];
+x["()"] = cos;
+x["y"] = 5;
+
+print(x.y);
+print(x(180));
+
+
 /*
 t = [];
 
@@ -20,6 +37,7 @@ t[nil][nil] = nil;
 
 function f() {
 }
+
 //f[5];	//Should cause error
 t[f];	//it is ok
 */

@@ -10,6 +10,12 @@ Token::Token() {
     is_empty = true;
 }
 
+Token::Token(Type type, Value value) {
+    this->is_empty = false;
+    this->type = type;
+    this->value = value;
+}
+
 string Token::type_to_str(Token::Type type) {
     switch(type) {
         case Type::UNSIGNED_INT:    return "unsigned int";

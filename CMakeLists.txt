@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.9)
 project(hy340_project)
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "-g")
+set(CMAKE_CXX_FLAGS "-g -Wall")
 set(CMAKE_BUILD_TYPE DEBUG)
 
 add_executable(acc

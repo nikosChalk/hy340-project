@@ -10,7 +10,7 @@ using namespace virtual_machine;
 /**
  * Validates the given index to check if it is within the allocated stack.
  */
-#define assert_index(idx) assert( (top < (idx)) && (idx) < AVM_ENV_SIZE )
+#define assert_index(idx) assert( (top < (idx)) && (idx) < Program_stack::AVM_STACK_SIZE )
 
 /**
  * top_allocated_idx is the top allocated memcell index on the stack
@@ -30,8 +30,8 @@ Program_stack::Program_stack(unsigned int total_program_vars) {
         stack[i] = Memcell();
 
     this->total_program_vars = total_program_vars;
-    top = total_program_vars;
-    topsp = total_program_vars; //since we do not have a function record
+    top = Program_stack::AVM_STACK_SIZE - total_program_vars-1;
+    topsp = top; //since we do not have a function record
     total_actuals = 0;
     fcall_depth = 0;
 }
@@ -49,7 +49,7 @@ void Program_stack::allocate_memcells(unsigned int n) {
 }
 
 void Program_stack::save_environment(unsigned int pc) {
-    for(int i=0; i< AVM_ENV_SIZE; i++) {
+    for(unsigned int i=0; i< AVM_ENV_SIZE; i++) {
         allocate_memcells(1);
         stack[top_allocated_idx].type = Memcell::Type::number;
     }
@@ -154,5 +154,5 @@ unsigned int Program_stack::get_total_actuals() const {
 }
 
 bool Program_stack::is_in_stack(const Memcell *memcell) const {
-    return ( &stack[top] < memcell && memcell <= &stack[AVM_ENV_SIZE-1] );
+    return ( &stack[top] < memcell && memcell <= &stack[Program_stack::AVM_STACK_SIZE-1] );
 }

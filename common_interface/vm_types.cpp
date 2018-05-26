@@ -89,6 +89,38 @@ std::string VMinstruction::to_string() const {
     return ss.str();
 }
 
+#define MAX_TABS (string("\t\t\t"))
+#define MAX_TABS_COUNT ((long)(MAX_TABS).length())
+#define MAX(x,y) (((x) > (y)) ? (x) : (y))
+#define TAB(str) (string(MAX(MAX_TABS_COUNT - (long)((str).length()/8), 1), '\t'))
+string VMinstruction::to_string(vector<VMinstruction> const &vmi_vector) {
+        stringstream ss;
+        const string splitter_end = "----------------------------------------------------------------------------------------------------------------";
+        const string splitter_start = "------------------------------------- VM instruction vector ----------------------------------------------------";
+
+        ss << "vm instr#" << "\t" << "vmopcode" << MAX_TABS << "result" << MAX_TABS << "arg1" << MAX_TABS << "arg2" << MAX_TABS << "src line" << endl;
+        ss <<  splitter_start << endl;
+
+        for(unsigned int i=0; i<vmi_vector.size(); i++) {
+            VMinstruction const &vmi = vmi_vector.at(i);
+
+            string iopcode_str = virtual_machine::vmopcode_to_str(vmi.opcode);
+            string arg1_str = (vmi.arg1 == nullptr) ? "" : vmi.arg1->to_string();
+            string arg2_str = (vmi.arg2 == nullptr) ? "" : vmi.arg2->to_string();
+            string res_str = (vmi.result == nullptr) ? "" : vmi.result->to_string();;
+
+            ss << std::to_string(i+1) << ":" << "\t"
+               << iopcode_str << TAB(iopcode_str)
+               << res_str << TAB(res_str)
+               << arg1_str << TAB(arg1_str)
+               << arg2_str << TAB(arg2_str)
+               << std::to_string(vmi.source_line)
+               << endl;
+        }
+        ss << splitter_end << endl;
+        return ss.str();
+}
+
 
 /* ~~~~~~~~~~~~~~ Userfunc ~~~~~~~~~~~~~~ */
 

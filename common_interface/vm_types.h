@@ -43,6 +43,7 @@
 #define HY340_PROJECT_VM_TYPES_H
 
 #include <string>
+#include <vector>
 
 namespace virtual_machine {
 
@@ -126,6 +127,11 @@ namespace virtual_machine {
          * @return The string representation
          */
         std::string to_string() const;
+
+        /**
+         * Returns the string representation of the given VMinstruction vector
+         */
+        static std::string to_string(std::vector<VMinstruction> const &vmi_vector);
     };
 
     /**

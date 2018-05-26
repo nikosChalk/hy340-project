@@ -36,6 +36,13 @@ namespace virtual_machine {
          */
         Token();
 
+        /**
+         * Creates a non-empty token with the given type and value
+         * @param type The token's type
+         * @param value The token's value
+         */
+        Token(Type type, Value value);
+
         Type type;
         Value value;
         bool is_empty;  //true if the token is, i.e. it has invalid value and type. False otherwise

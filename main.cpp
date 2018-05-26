@@ -11,6 +11,7 @@
 
 using namespace std;
 using namespace target_code;
+using namespace virtual_machine;
 
 extern intermediate_code::icode_generator icode_gen;
 
@@ -60,7 +61,9 @@ int main (int argc, char *argv[]) {
 
         cerr << err.what() << endl;
         cerr << "Parsing Failed" << endl;
+        exit(EXIT_FAILURE);
     }
+    cout << endl;
 
     //Close files since we do not need them anymore
     if(yyin != stdin) {
@@ -74,6 +77,7 @@ int main (int argc, char *argv[]) {
 
     VMcode_generator vmcode_generator = VMcode_generator(icode_gen.get_quad_vector());
     vmcode_generator.generate_target_code();
+    cout << VMinstruction::to_string(vmcode_generator.get_vm_instr_vector());
 
     Binary_writer writer = Binary_writer(
             vmcode_generator.get_vm_instr_vector(), vmcode_generator.get_const_pool(), syntax_analyzer::get_total_program_vars()
