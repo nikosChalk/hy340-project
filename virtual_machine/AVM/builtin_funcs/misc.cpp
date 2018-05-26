@@ -37,16 +37,7 @@ void AVM::libfunc_print(void) {
     unsigned int total_actuals = program_stack.get_total_actuals();
     for(unsigned int i=0; i<total_actuals; i++) {
         Memcell const *cur_arg = program_stack.get_actual_arg(i);
-
-        switch(cur_arg->type) {
-            case Memcell::Type::userfunc:
-                cout << "user function " << cur_arg->value.userfunc_addr << endl;
-                break;
-            case Memcell::Type::libfunc:
-                cout << "library function ";    //intentionally skipped "break;"
-            default:
-                cout << cur_arg->to_string(const_pool) << endl;
-        }
+        cout << cur_arg->to_string(const_pool) << endl;
     }
 }
 

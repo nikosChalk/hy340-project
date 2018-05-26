@@ -63,6 +63,7 @@ namespace virtual_machine {
         /**
          * Saves the environment, as described in the beginning of the file, in the stack.
          * This function should be called by the AVM before entering a function
+         * Also increases the function call depth by 1
          * @param pc The current pc, i.e. the one that triggered the save_environment()
          *
          * @throws internal_error If the saving the environment would case a stack overflow
@@ -73,9 +74,17 @@ namespace virtual_machine {
         /**
          * Restores a previously saved environment and removes it from the stack.
          * This function should be called by the AVM whenever it exits a function
+         * Also decreases the function call depth by 1
+         *
          * @return The saved pc plus 1 (pc+1)
          */
         unsigned int restore_environment();
+
+        /**
+         * Returns the function call depth, i.e. how many functions are currently active
+         * @return The total number of currently active functions
+         */
+        unsigned int get_fcall_depth() const;
 
         /**
          * Allocates 1 memcell and pushed the given argument
@@ -149,6 +158,7 @@ namespace virtual_machine {
         int topsp;
         unsigned int total_program_vars;
         unsigned int total_actuals; //counter of total actual arguments when calling a function
+        unsigned int fcall_depth;   //depth of function calls, i.e. how many functions are currently active
 
         /**
          * The program's stack.

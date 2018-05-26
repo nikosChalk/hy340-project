@@ -298,12 +298,16 @@ std::string Memcell::table_tostr(const Constants_pool &const_pool) const {
 
 std::string Memcell::userfunc_tostr(const Constants_pool &const_pool) const {
     assert(this->type == Memcell::Type::userfunc);
-    return const_pool.get_userfunc_on_address(this->value.userfunc_addr).name;
+    stringstream ss;
+    ss << "user function: " << const_pool.get_userfunc_on_address(this->value.userfunc_addr).name;
+    return ss.str();
 }
 
 std::string Memcell::libfunc_tostr(const Constants_pool &unused) const {
     assert(this->type == Memcell::Type::libfunc);
-    return std::string(this->value.libfunc_ptr);
+    stringstream ss;
+    ss << "library function: " << std::string(this->value.libfunc_ptr);
+    return ss.str();
 }
 
 std::string Memcell::nil_tostr(const Constants_pool &unused) const {

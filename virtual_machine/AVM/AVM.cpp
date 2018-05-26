@@ -116,6 +116,11 @@ Memcell* AVM::translate_operand(const VMarg *vmarg, Memcell *reg /*=nullptr*/) {
 void AVM::run() {
     while(!finished)
         execute_cycle();
+
+    //Clear registers
+    ax.clear();
+    bx.clear();
+    retval.clear();
 }
 
 void AVM::execute_cycle() {

@@ -1,9 +1,12 @@
 
 
 #include <cassert>
+#include <cstring>
 #include <sstream>
+#include <string>
 #include "../AVM.h"
 #include "../Memcell.h"
+#include "../Table.h"
 #include "../errors/internal_error.h"
 #include "../../../common_interface/utilities.h"
 
@@ -18,6 +21,19 @@ void AVM::execute_call(const VMinstruction &instr) {
 
     //save environment
     program_stack.save_environment(pc);
+
+    //check if it is a functor
+    if(func->type == Memcell::Type::table) {
+        //check if an entry exists
+        bx.clear();
+        bx.type = Memcell::Type::string;
+        bx.value.str_ptr = strdup(std::string("()").c_str());
+        Memcell *func_to_call = func->value.table_ptr->get_elem(&bx);   //nullptr will be returned if t["()"] doesn't exist
+
+        //Check if the returned entry exists and if it is a function
+        if(func_to_call && (func_to_call->type == Memcell::Type::userfunc || func_to_call->type == Memcell::Type::libfunc))
+            func = func_to_call;
+    }
 
     //Call function
     switch(func->type) {

@@ -33,6 +33,7 @@ Program_stack::Program_stack(unsigned int total_program_vars) {
     top = total_program_vars;
     topsp = total_program_vars; //since we do not have a function record
     total_actuals = 0;
+    fcall_depth = 0;
 }
 
 void Program_stack::allocate_memcells(unsigned int n) {
@@ -60,9 +61,11 @@ void Program_stack::save_environment(unsigned int pc) {
     stack[topsp + AVM_SAVED_PC_OFFSET].value.num = pc+1;
     stack[topsp + AVM_SAVED_TOTAL_ACTUALS].value.num = total_actuals;
     total_actuals = 0;  //reset counter of actual arguments
+    fcall_depth++;  //increase function call depth
 }
 
 unsigned int Program_stack::restore_environment() {
+    assert(fcall_depth > 0);
     int old_top = top;
 
     //Restore environment
@@ -73,7 +76,13 @@ unsigned int Program_stack::restore_environment() {
     //Clear de-allocated cells
     while(++old_top <= top)     //Intentionally ignore first
         stack[old_top].clear();
+
+    fcall_depth--;
     return pc;
+}
+
+unsigned int Program_stack::get_fcall_depth() const {
+    return fcall_depth;
 }
 
 void Program_stack::push_actual_arg(Memcell const *actual_arg) {

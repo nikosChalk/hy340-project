@@ -6,6 +6,7 @@
 #include <sstream>
 #include "../../common_interface/utilities.h"
 #include "Table.h"
+#include "Memcell.h"
 
 using namespace std;
 using namespace virtual_machine;
@@ -233,9 +234,25 @@ string Table::to_string(Constants_pool const &const_pool) const {
     for(auto it=stringMap.cbegin(); it != stringMap.cend(); it++)
         ss << prefix << it->first << midfix << second_tostr() << suffix << endl;
 
-    //Table map. This can lead to recursive calls
-    for(auto it=tableMap.cbegin(); it != tableMap.cend(); it++)
-        ss << prefix << it->first->to_string(const_pool) << midfix << second_tostr() << suffix << endl;
+    //Table map. This can lead to endless recursive calls that we want to definately avoid
+    for(auto it=tableMap.cbegin(); it != tableMap.cend(); it++) {
+        ss << prefix;
+
+        //Do not recursively print self. (e.g. when we have table[table] = 5; print(table);)
+        if(it->first == this)
+            ss << "__self__";
+        else
+            ss << it->first->to_string(const_pool);
+        ss << midfix;
+
+        //Again, do not recursively print self. (e.g. when we have table[5] = table; print(table);)
+        if(it->second.type == Memcell::Type::table && it->second.value.table_ptr == this)
+            ss << "__self__";
+        else
+            ss << second_tostr();
+
+        ss  << suffix << endl;
+    }
 
     //Userfunc map
     for(auto it=userfuncMap.cbegin(); it != userfuncMap.cend(); it++)
