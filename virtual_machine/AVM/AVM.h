@@ -9,7 +9,7 @@
 #include "../../common_interface/Constants_pool.h"
 #include "Memcell.h"
 #include "Program_stack.h"
-#include "../../common_interface/types.h"
+#include "../../common_interface/vm_types.h"
 #include "../../common_interface/Builtin_funcs.h"
 
 namespace virtual_machine {

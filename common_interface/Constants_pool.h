@@ -7,7 +7,7 @@
 #include <vector>
 #include <string>
 #include <map>
-#include "types.h"
+#include "vm_types.h"
 
 namespace virtual_machine {
 

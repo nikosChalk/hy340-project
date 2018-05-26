@@ -9,7 +9,7 @@
 #include <fstream>
 #include "types.h"
 #include "../intermediate_code/quad.h"
-#include "../common_interface/types.h"
+#include "../common_interface/vm_types.h"
 #include "../common_interface/Constants_pool.h"
 
 namespace target_code {

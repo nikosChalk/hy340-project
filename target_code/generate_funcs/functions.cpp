@@ -18,7 +18,7 @@ void VMcode_generator::generate_GETRETVAL(quad const *quad) {
     emit(VMinstruction(
             VMopcode::assign,
             translate_retval(),
-            translate_operand(quad->arg1),
+            translate_operand(quad->result),
             nullptr,
             quad->lineno
     ));
@@ -30,10 +30,14 @@ void VMcode_generator::generate_FUNCSTART(quad const *quad) {
 }
 
 void VMcode_generator::generate_RET(quad const *quad) {
+    //In case that we have "return;" (and not e.g. return x;), we do not want to have a nullptr in arg1 because
+    //it would crash the AVM when the assign would execute
+    VMarg *arg1 = ((quad->arg1 == nullptr) ? new VMarg(VMarg::Type::nil, 0) : translate_operand(quad->arg1));
+
     emit(VMinstruction(
             VMopcode ::assign,
             translate_retval(),
-            translate_operand(quad->arg1),
+            arg1,
             nullptr,
             quad->lineno
     ));
@@ -41,12 +45,9 @@ void VMcode_generator::generate_RET(quad const *quad) {
     func_stack.top().push_back(next_vm_instr_address());    //push the incomplete jump which we will now emit
 
     //Emit an incomplete jump
-    VMarg *result = new VMarg();
-    result->type = VMarg::Type::label;
-
     emit(VMinstruction(
             VMopcode::jump,
-            result,
+            new VMarg(VMarg::Type::label, 0),   //incomplete jump
             nullptr,
             nullptr,
             quad->lineno

@@ -6,7 +6,7 @@
 #include <vector>
 #include <fstream>
 #include "Token.h"
-#include "../../common_interface/types.h"
+#include "../../common_interface/vm_types.h"
 #include "../../common_interface/Constants_pool.h"
 
 namespace virtual_machine {

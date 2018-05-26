@@ -2,7 +2,7 @@
 
 #include <cassert>
 #include <sstream>
-#include "types.h"
+#include "vm_types.h"
 
 using namespace std;
 using namespace virtual_machine;
