@@ -1,6 +1,7 @@
 
 
 #include <cassert>
+#include <iostream>
 #include "../VMcode_generator.h"
 
 using namespace std;

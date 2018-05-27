@@ -301,4 +301,5 @@ emit_incomplete_jmp:	%empty	{$$ = Manage_emit_incomplete_jmp__empty(yylineno);}
 int yyerror (const symbol_table &sym_table, char const *msg){
 	std::cerr << msg << ": at line " << std::to_string(yylineno) << ", before token: " << yytext << std::endl;
 	std::cerr << "INPUT NOT VALID" << std::endl;
+	return 0;
 }

@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <cassert>
+#include <iostream>
 #include "symbol_table.h"
 #include "../common_interface/Builtin_funcs.h"
 
@@ -127,15 +128,13 @@ namespace syntax_analyzer {
     }
 
     /* ~~~~~~ symbol_table implementation ~~~~~~ */
-    vector<string> symbol_table::lib_func_names = vector<string>(Builtin_funcs::LIB_FUNC_NAMES);
-
     symbol_table::symbol_table() {
         this->sym_tables = vector<
                 unordered_map<string, vector<entry*>>
         >();
 
         this->sym_tables.push_back(unordered_map<string, vector<entry*>>());
-        for(const string &lib_func_name : lib_func_names) {
+        for(const string &lib_func_name : Builtin_funcs::LIB_FUNC_NAMES) {
             bool ret_val = (lib_func_name != Builtin_funcs::libname_print);
 
             this->sym_tables.at(scope_handler::GLOBAL_SCOPE)[lib_func_name].push_back(new func_entry(

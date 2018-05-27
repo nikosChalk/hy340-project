@@ -265,8 +265,6 @@ namespace syntax_analyzer {
         friend std::ostream& operator<<(std::ostream &os, const symbol_table &x);
 
     private:
-        static std::vector<std::string> lib_func_names;
-
         /**
          * For each scope we have a symbol table. sym_tables[i] gives the symbol table for scope i.
          * A given symbol_table is just a hash table with names as keys and entry* as values.
