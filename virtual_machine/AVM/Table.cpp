@@ -1,12 +1,13 @@
 
 
 #include <cassert>
+#include <cstring>
 #include <vector>
 #include <functional>
 #include <sstream>
-#include "../../common_interface/utilities.h"
 #include "Table.h"
 #include "Memcell.h"
+#include "../../common_interface/utilities.h"
 
 using namespace std;
 using namespace virtual_machine;
@@ -17,25 +18,27 @@ Table::Table() {
     stringMap = map<std::string, Memcell>();
     tableMap = map<Table*, Memcell>();
     userfuncMap = map<unsigned int, Memcell>();
-    libfuncMap = map<std::string, Memcell>();
+    libfuncMap = map<char const*, Memcell>();
     boolMap = unordered_map<bool, Memcell>();
 
     nil_pair = make_pair(Memcell(), false);
 }
 
-Table::Table(Table const *other){
+Table::Table(Table const *other) {
 	this->ref_counter = 1;
-	this->numericMap = std::map<long double, Memcell>(other->numericMap);
+	this->numericMap = map<long double, Memcell>(other->numericMap);
+
+    this->stringMap = map<string, Memcell>(other->stringMap);
 	for (auto &pair : this->stringMap)
 		pair.second.value.str_ptr = strdup(pair.second.value.str_ptr);
-	this->stringMap = std::map<std::string, Memcell>(other->stringMap);
-	this->tableMap = std::map<Table*, Memcell>(other->tableMap);
+
+	this->tableMap = map<Table*, Memcell>(other->tableMap);
 	for (auto &pair : this->tableMap)
 		pair.second.value.table_ptr->increase_ref_counter();
 
-	this->userfuncMap = std::map<unsigned int, Memcell>(other->userfuncMap);
-	this->libfuncMap = std::map<std::string, Memcell>(other->libfuncMap);
-	this->boolMap = std::unordered_map<bool, Memcell>(other->boolMap);
+	this->userfuncMap = map<unsigned int, Memcell>(other->userfuncMap);
+	this->libfuncMap = map<char const*, Memcell>(other->libfuncMap);
+	this->boolMap = unordered_map<bool, Memcell>(other->boolMap);
 	this->nil_pair = std::pair<Memcell, bool>(other->nil_pair);
 }
 
@@ -110,85 +113,91 @@ void Table::set_elem(const Memcell *idx, const Memcell *val) {
     }
 }
 
-Table* Table::get_all_keys() const{
-	int idx = 0;
-	Table *table = new Table();
-	Memcell *memcell_key = new Memcell();
-	
-	memcell_key->type = Memcell::Type::number;
+Table* Table::get_keys() const {
+	unsigned int key_counter = 0;
+
+	Table *table = new Table(); //table that will be returned and that contains the keys of *this
+    Memcell *tmp = new Memcell();   //temporary helper variable
+
 
 	/*numericMap*/
-	for (auto const &number : this->numericMap){
-		Memcell *memcell_value = new Memcell();
-		memcell_key->value.num = idx;
+    tmp->type = Memcell::Type::number;
+	for (auto const &pair : this->numericMap) {
+        Memcell &lvalue = table->numericMap[key_counter++];
+        tmp->value.num = pair.first;    //long double
 
-		memcell_value->type = Memcell::Type::number;
-		memcell_value->value.num = number.first;
-
-		table->set_elem(memcell_key,memcell_value);
-		idx++;
+        lvalue.assign(tmp);
 	}
+
 	/*stringMap*/
-	for (auto const &number : this->stringMap){
-		memcell_key->value.num = idx;
-		Memcell *memcell_value = new Memcell();
-		memcell_value->type = Memcell::Type::string;
-		memcell_value->value.str_ptr = strdup(number.first.c_str());
-		table->set_elem(memcell_key, memcell_value);
-		idx++;
-		free(memcell_value->value.str_ptr);
+    tmp->type = Memcell::Type::string;
+	for (auto const &pair : this->stringMap) {
+        Memcell &lvalue = table->numericMap[key_counter++];
+        tmp->value.str_ptr = strdup(pair.first.c_str());
+
+        lvalue.assign(tmp);         //will create internally an strdup of "pair.first"
+        free(tmp->value.str_ptr);
 	}
+
 	/*tableMap*/
-	for (auto const &number : this->tableMap){
-		memcell_key->value.num = idx;
-		Memcell *memcell_value = new Memcell();
-		memcell_value->type = Memcell::Type::table;
-		memcell_value->value.table_ptr = number.first;
-		table->set_elem(memcell_key, memcell_value);
-		idx++;
+    tmp->type = Memcell::Type::table;
+	for (auto const &pair : this->tableMap) {
+        Memcell &lvalue = table->numericMap[key_counter++];
+        tmp->value.table_ptr = pair.first;
+
+        lvalue.assign(tmp); //will also increase reference counter of table "pair.first"
 	}
+
 	/*userfuncMap*/
-	for (auto const &number : this->userfuncMap){
-		memcell_key->value.num = idx;
-		Memcell *memcell_value = new Memcell();
-		memcell_value->type = Memcell::Type::userfunc;
-		memcell_value->value.userfunc_addr = number.first;
-		table->set_elem(memcell_key, memcell_value);
-		idx++;
+    tmp->type = Memcell::Type::userfunc;
+	for (auto const &pair : this->userfuncMap) {
+        Memcell &lvalue = table->numericMap[key_counter++];
+        tmp->value.userfunc_addr = pair.first;
+
+        lvalue.assign(tmp);
 	}
 	/*libfuncMap*/
-	for (auto const &number : this->libfuncMap){
-		memcell_key->value.num = idx;
-		Memcell *memcell_value = new Memcell();
-		memcell_value->type = Memcell::Type::libfunc;
-		memcell_value->value.libfunc_ptr = number.second.value.libfunc_ptr;
-		table->set_elem(memcell_key, memcell_value);
-		idx++;
-		free(memcell_value->value.str_ptr);
-	}
-	/*boolMap*/
-	for (auto const &number : this->boolMap){
-		memcell_key->value.num = idx;
-		Memcell *memcell_value = new Memcell();
-		memcell_value->type = Memcell::Type::boolean;
-		memcell_value->value.boolean = number.first;
-		table->set_elem(memcell_key, memcell_value);
-		idx++;
-	}
-	/*nil_pair*/
-	if (this->nil_pair.second){
-		Memcell *memcell_value = new Memcell();
-		memcell_value->type = Memcell::Type::nil;
-		table->set_elem(memcell_key, memcell_value);
+    tmp->type = Memcell::Type::libfunc;
+	for (auto const &pair : this->libfuncMap) {
+        Memcell &lvalue = table->numericMap[key_counter++];
+        tmp->value.libfunc_ptr = pair.first;
+
+        lvalue.assign(tmp);
 	}
 
-	delete memcell_key;
+	/*boolMap*/
+    tmp->type = Memcell::Type::boolean;
+	for (auto const &pair : this->boolMap) {
+        Memcell &lvalue = table->numericMap[key_counter++];
+        tmp->value.boolean = pair.first;
+
+        lvalue.assign(tmp);
+	}
+
+	/*nil_pair*/
+	if(this->nil_pair.second) {
+        tmp->type = Memcell::Type::nil;
+
+        Memcell &lvalue = table->numericMap[key_counter++];
+        lvalue.assign(tmp);
+	}
+
+	delete tmp;
+    return table;
 }
 
-unsigned int Table::get_nr_keys() const{
-	int retval = this->numericMap.size() + this->stringMap.size() + this->tableMap.size() + this->userfuncMap.size() + this->libfuncMap.size() + this->boolMap.size();
-	if (this->nil_pair.second == true)
-		return retval + 1;
+unsigned int Table::get_nr_elements() const {
+	unsigned int retval = (unsigned int) (
+	        numericMap.size() +
+            stringMap.size() +
+            tableMap.size() +
+            userfuncMap.size() +
+            libfuncMap.size() +
+            boolMap.size()
+    );
+
+	if(nil_pair.second)
+		retval++;
 	return retval;
 }
 
@@ -251,7 +260,7 @@ Memcell* Table::getelem_userfunc_key(const Memcell *key, bool auto_create) {
 
 Memcell* Table::getelem_libfunc_key(const Memcell *key, bool auto_create) {
     assert(key->type == Memcell::Type::libfunc);
-    string libfunc_key = string(key->value.libfunc_ptr);
+    char const *libfunc_key = key->value.libfunc_ptr;
 
     if(auto_create)
         return &libfuncMap[libfunc_key];
@@ -302,7 +311,7 @@ void Table::unregister_userfunc_key(const Memcell *key) {
 
 void Table::unregister_libfunc_key(const Memcell *key) {
     assert(key->type == Memcell::Type::libfunc);
-    unregister(libfuncMap, string(key->value.libfunc_ptr));
+    unregister(libfuncMap, key->value.libfunc_ptr);
 }
 
 void Table::unregister_nil_key(const Memcell *key) {
@@ -358,7 +367,7 @@ string Table::to_string(Constants_pool const &const_pool) const {
 
     //Libfunc map
     for(auto it=libfuncMap.cbegin(); it != libfuncMap.cend(); it++)
-        ss << prefix << it->first << midfix << second_tostr() << suffix << endl;
+        ss << prefix << std::string(it->first) << midfix << second_tostr() << suffix << endl;
 
     //Bool map
     for(auto it=boolMap.cbegin(); it != boolMap.cend(); it++)

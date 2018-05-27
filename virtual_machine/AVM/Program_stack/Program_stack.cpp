@@ -20,10 +20,6 @@ using namespace virtual_machine;
 /**
  * Offsets from "topsp" index for the corresponding environmental values
  */
-#define AVM_SAVED_TOPSP_OFFSET   (+1)
-#define AVM_SAVED_TOP_OFFSET    (+2)
-#define AVM_SAVED_PC_OFFSET     (+3)
-#define AVM_SAVED_TOTAL_ACTUALS (+4)
 
 Program_stack::Program_stack(unsigned int total_program_vars) {
     for(unsigned int i=0; i<stack.size(); i++)
@@ -34,6 +30,7 @@ Program_stack::Program_stack(unsigned int total_program_vars) {
     topsp = top; //since we do not have a function record
     total_actuals = 0;
     fcall_depth = 0;
+    saved_pointers_stack = std::stack<std::pair<int, int>>();
 }
 
 void Program_stack::allocate_memcells(unsigned int n) {
@@ -49,6 +46,8 @@ void Program_stack::allocate_memcells(unsigned int n) {
 }
 
 void Program_stack::save_environment(unsigned int pc) {
+    assert(saved_pointers_stack.empty());   //assert that we are in the most recent called function
+
     for(unsigned int i=0; i< AVM_ENV_SIZE; i++) {
         allocate_memcells(1);
         stack[top_allocated_idx].type = Memcell::Type::number;
@@ -57,21 +56,21 @@ void Program_stack::save_environment(unsigned int pc) {
     stack[top_allocated_idx].value.num = topsp;
     topsp = top;
 
-    stack[topsp + AVM_SAVED_TOP_OFFSET].value.num = top+AVM_ENV_SIZE+total_actuals;
-    stack[topsp + AVM_SAVED_PC_OFFSET].value.num = pc+1;
-    stack[topsp + AVM_SAVED_TOTAL_ACTUALS].value.num = total_actuals;
+    stack[topsp + SAVED_TOP_OFFSET].value.num = top+AVM_ENV_SIZE+total_actuals;
+    stack[topsp + SAVED_PC_OFFSET].value.num = pc+1;
+    stack[topsp + SAVED_TOTAL_ACTUALS].value.num = total_actuals;
     total_actuals = 0;  //reset counter of actual arguments
     fcall_depth++;  //increase function call depth
 }
 
 unsigned int Program_stack::restore_environment() {
-    assert(fcall_depth > 0);
+    assert(fcall_depth > 0 && saved_pointers_stack.empty());
     int old_top = top;
 
     //Restore environment
-    unsigned int pc = get_env_value((unsigned int)(topsp+AVM_SAVED_PC_OFFSET));
-    top = get_env_value((unsigned int)(topsp + AVM_SAVED_TOP_OFFSET));
-    topsp = get_env_value((unsigned int)(topsp + AVM_SAVED_TOPSP_OFFSET));
+    unsigned int pc = get_env_value((unsigned int)(topsp+SAVED_PC_OFFSET));
+    top = get_env_value((unsigned int)(topsp + SAVED_TOP_OFFSET));
+    topsp = get_env_value((unsigned int)(topsp + SAVED_TOPSP_OFFSET));
 
     //Clear de-allocated cells
     while(++old_top <= top)     //Intentionally ignore first
@@ -80,6 +79,8 @@ unsigned int Program_stack::restore_environment() {
     fcall_depth--;
     return pc;
 }
+
+
 
 unsigned int Program_stack::get_fcall_depth() const {
     return fcall_depth;
@@ -94,12 +95,12 @@ void Program_stack::push_actual_arg(Memcell const *actual_arg) {
 }
 
 unsigned int Program_stack::get_env_value(unsigned int idx) const {
-    assert(idx == topsp+AVM_SAVED_TOPSP_OFFSET || idx == topsp+AVM_SAVED_TOP_OFFSET ||
-           idx == topsp+AVM_SAVED_PC_OFFSET   || idx == topsp+AVM_SAVED_TOTAL_ACTUALS);
+    assert(idx == topsp+SAVED_TOPSP_OFFSET || idx == topsp+SAVED_TOP_OFFSET ||
+           idx == topsp+SAVED_PC_OFFSET   || idx == topsp+SAVED_TOTAL_ACTUALS);
     assert(stack.at(idx).type == Memcell::Type::number);   //environmental values are numbers
 
     unsigned int env_val = (unsigned int)stack.at(idx).value.num;
-    assert(stack.at(idx).value.num == (double) env_val);   //validate that the environmental value is indeed an integer
+    assert(stack.at(idx).value.num == (long double) env_val);   //validate that the environmental value is indeed an integer
 
     return env_val;
 }
@@ -150,9 +151,26 @@ const Memcell* Program_stack::get_actual_arg(unsigned int offset) const {
 }
 
 unsigned int Program_stack::get_total_actuals() const {
-    return get_env_value((unsigned int) (topsp + AVM_SAVED_TOTAL_ACTUALS));
+    return get_env_value((unsigned int) (topsp + SAVED_TOTAL_ACTUALS));
 }
 
 bool Program_stack::is_in_stack(const Memcell *memcell) const {
     return ( &stack[top] < memcell && memcell <= &stack[Program_stack::AVM_STACK_SIZE-1] );
+}
+
+void Program_stack::move_up() {
+    assert(fcall_depth > saved_pointers_stack.size()+1);    //assert that there is an active function to which we can go up
+
+    saved_pointers_stack.push(make_pair(top, topsp));
+    top = get_env_value((unsigned int)(topsp + SAVED_TOP_OFFSET));
+    topsp = get_env_value((unsigned int)(topsp + SAVED_TOPSP_OFFSET));
+}
+
+void Program_stack::move_down() {
+    assert(!saved_pointers_stack.empty());
+
+    std::pair saved_pointers_pair = saved_pointers_stack.top();
+    saved_pointers_stack.pop();
+    top = saved_pointers_pair.first;
+    topsp = saved_pointers_pair.second;
 }

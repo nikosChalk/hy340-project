@@ -40,6 +40,7 @@
 #define HY340_PROJECT_PROGRAM_STACK_H
 
 #include <array>
+#include <stack>
 #include "../Memcell.h"
 #include "Stack_manipulator.h"
 
@@ -145,6 +146,14 @@ namespace virtual_machine {
          */
         static const unsigned int AVM_ENV_SIZE = 4;
 
+        /**
+         * Offsets from "topsp" index for the corresponding environmental values
+         */
+        static int SAVED_TOPSP_OFFSET = +1;
+        static int SAVED_TOP_OFFSET = +2;
+        static int SAVED_PC_OFFSET = +3;
+        static int SAVED_TOTAL_ACTUALS = +4;
+
 
         /**
          * Register that points to the next available (free) memcell within the stack
@@ -155,7 +164,9 @@ namespace virtual_machine {
          * Register that points to the first local variable of the active function
          * If we are not inside a function, topsp==top
          */
-        int topsp;        unsigned int total_program_vars;
+        int topsp;
+
+        unsigned int total_program_vars;
         unsigned int total_actuals; //counter of total actual arguments when calling a function
         unsigned int fcall_depth;   //depth of function calls, i.e. how many functions are currently active
 
@@ -164,6 +175,12 @@ namespace virtual_machine {
          * Its semantics are defined by the runtime environment and are documented at the beginning of this file.
          */
         std::array<Memcell, AVM_STACK_SIZE> stack;
+
+        /**
+         * This stack is solely used by move_up() and move_down() functions for implementation purpose
+         * When we move up we push <top, topsp> and when we move down we pop()
+         */
+        std::stack<std::pair<int, int>> saved_pointers_stack;
 
         /**
          * Returns the environmental value at the given index
@@ -195,6 +212,21 @@ namespace virtual_machine {
          * @return The index within the ALLOCATED stack, where the actual argument can be found
          */
         unsigned long get_actual_arg_index(unsigned int offset) const;
+
+        /**
+         * Move one activation record up, i.e. to one previous function. This changes top and topsp but does not
+         * restore the environment. It can be used with combination of e.g. get_actual_arg() in order to get an argument
+         * of the previously called function.
+         * Note that save/call environment cannot be invoked when we are not in the most recent active function stack frame
+         */
+        void move_up();
+
+        /**
+         * Move one activation record down, i.e. to one more recently called function. This changes top and topsp but does not
+         * save or restore the environment. It can be used after the move_up() function
+         * Note that save/call environment cannot be invoked when we are not in the most recent active function stack frame
+         */
+        void move_down();
     };
 
 }

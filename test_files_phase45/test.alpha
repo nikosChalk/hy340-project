@@ -41,3 +41,6 @@ function f() {
 //f[5];	//Should cause error
 t[f];	//it is ok
 */
+
+//TODO: exei allaksei o typos gia to libfunc map.
+//TODO: na auksanw reference counter otan exw: x[ [] ] = 5; ??

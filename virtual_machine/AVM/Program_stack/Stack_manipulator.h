@@ -12,12 +12,15 @@ namespace virtual_machine {
     class Stack_manipulator {
     public:
 
-        //TODO: remove this function if it is not needed
-        //TODO: move getters to public interface?
-        static int get_topsp(Program_stack const &program_stack);   //exmaple of how to have private access.
+        /**
+         * Proxy for program_stack.move_up()
+         */
+        static void move_up(Program_stack &program_stack);
 
-        //TODO: remove this function if it is not needed
-        static void set_topsp(Program_stack &program_stack, int topsp);   //exmaple of how to have private access.
+        /**
+         * Proxy for program_stack.move_down()
+         */
+        static void move_down(Program_stack &program_stack);
     };
 };
 

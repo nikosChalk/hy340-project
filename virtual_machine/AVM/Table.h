@@ -26,7 +26,14 @@ namespace virtual_machine {
          */
         Table();
 
-		Table(Table const *other);
+        /**
+         * Creates a shallow copy of other table. A shallow copy contains all contents of other and:
+         * strings are duplicated (through strdup)
+         * references to tables are copied, thus no new tables. The corresponding reference counters are increased.
+         * Note that the returned table has a reference counter of 1.
+         * @param other The table to copy
+         */
+		explicit Table(Table const *other);
 
         /**
          * Increases the reference counter of this table by 1
@@ -72,9 +79,19 @@ namespace virtual_machine {
          */
         void set_elem(Memcell const *idx, Memcell const *val);
 
-		Table* get_all_keys() const;
+        /**
+         * Returns a new table (allocated with "new" operator) that contains all the keys of this table as elements in
+         * enumerated indexes.
+         * Note that the returned table has already a reference counter of 1.
+         * @return The keys of this as a new table
+         */
+		Table* get_keys() const;
 
-		unsigned int get_nr_keys() const;
+		/**
+		 * Returns the total number of elements that this table has
+		 * @return The total number of elements
+		 */
+		unsigned int get_nr_elements() const;
 
         /**
          * Returns the string representation of this object
@@ -90,7 +107,7 @@ namespace virtual_machine {
         std::map<std::string, Memcell> stringMap;       //used by statements e.g. table.key or table["key"];
         std::map<Table*, Memcell> tableMap;       //used by statements e.g. x = [5, 3]; table[x]; or table[ [] ];
         std::map<unsigned int, Memcell> userfuncMap;    //used by statements e.g. function f() {}; table[f];
-        std::map<std::string, Memcell> libfuncMap;      //used by statements e.g. table[cos];
+        std::map<char const*, Memcell> libfuncMap;      //used by statements e.g. table[cos];
         std::unordered_map<bool, Memcell> boolMap;      //used by statements e.g. table[true]; or table[false];
 
         /* For the Memcell::Type::nil, we do no need an std::map as it is jut one Memcell                           */
