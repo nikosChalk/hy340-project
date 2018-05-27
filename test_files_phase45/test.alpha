@@ -1,7 +1,15 @@
+function f(x,y,z) {
+	print("x == ", x);
+	print("y == ", y);
+	print("z == ", z);
+}
+
+f(10,100, 1000);
+
 //Functor example
 //x = [ {0: "abcd"}, {"()": (function(self){ print(self[0]); })} ];
 //x();
-
+/*
 x=input();
 x=x+2;
 print(x);
@@ -17,7 +25,23 @@ x["y"] = 5;
 
 print(x.y);
 print(x(180));
+*/
 
+//x=1;
+//x=2;
+
+/*
+function f1() {
+
+
+	x=1;
+	function f2() {	print("Alpha"); }
+	x=2;
+	f2();
+}
+
+x = f1();
+*/
 
 /*
 t = [];

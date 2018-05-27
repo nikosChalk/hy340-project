@@ -1,0 +1,41 @@
+x=5;
+y=1;
+z=3.1;
+w=10;
+t=2;
+s=0;
+u=20;
+v=4;
+r=12;
+l=3;
+
+print("---------------");
+print(x+y);	//6
+print(z*w);	//31
+print(t-s);	//2
+print(u/v);	//5
+print(r%l);	//0
+
+print("---------------");
+y++;	//2
+print(x+y);	//7
+print(--t+r);	//13
+print(w--+u);	//30
+print(w);		//9
+print(u/++l);	//5
+
+print("---------------");
+print(l);		//4
+print(s/l);		//0
+
+x=-1;
+print(x%u);	//??
+
+s=-10.5;
+print(s+x);	//-11.5
+
+//errors
+y=0;
+//print(w/y);		//division by zero
+
+//print((v+5) % y);	//modulo by zero

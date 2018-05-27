@@ -49,10 +49,12 @@ int main (int argc, char *argv[]) {
         fprintf(yyout, "%s\n", sym_table.to_string().c_str());
         fprintf(yyout, "%s\n", icode_gen.to_string().c_str());
 
-        if(ret_val == 0)
-            fprintf(yyout, "EOF reached. Success!\n");
-        else
+        if(ret_val == 0) {
+            fprintf(yyout, "EOF reached. Parsing success!\n");
+        } else {
             fprintf(yyout, "Error while parsing. yyparse returned %d\n", ret_val);
+            exit(EXIT_FAILURE);
+        }
     } catch(runtime_error &err) {
         cerr << "Current Symbol Table Is:" << endl;
         cerr << sym_table << endl;
@@ -79,12 +81,12 @@ int main (int argc, char *argv[]) {
     vmcode_generator.generate_target_code();
     cout << VMinstruction::to_string(vmcode_generator.get_vm_instr_vector());
 
-    Binary_writer writer = Binary_writer(
+    Binary_writer writer(
             vmcode_generator.get_vm_instr_vector(), vmcode_generator.get_const_pool(), syntax_analyzer::get_total_program_vars()
     );
 
     try {
-        writer.generate_binary_file(string(src_file));
+        writer.generate_binary_file();
     } catch(ofstream::failure const &err) {
         cerr << "Binary file generation failed: " << err.what() << endl;
     }

@@ -16,6 +16,7 @@
 #include "../intermediate_code/semantic_error.h"
 #include "../common_interface/arithm_ops.h"
 #include "../common_interface/errors/numeric_error.h"
+#include "Func_handler.h"
 
 using namespace std;
 using namespace intermediate_code;
@@ -30,6 +31,7 @@ namespace syntax_analyzer {
     static scope_handler scp_handler = scope_handler();
     static hidden_var_handler hvar_handler = hidden_var_handler();
 	static loop_handler lp_handler = loop_handler();
+	static Func_handler func_handler = Func_handler();
 
     /**
      * If the given expr is not of type expression_type::TABLE_ITEM_E, then expr is simply returned.
@@ -488,6 +490,8 @@ namespace syntax_analyzer {
         fprintf(yyout, "returnstmt -> return expr;\n");
         expr = patch_possible_sc_expr(expr, sym_table, lineno);
         handle_returnstmt(expr, lineno);
+        func_handler.get_active_func()->set_ret_val();
+
         return void_value;
     }
 
@@ -992,6 +996,8 @@ namespace syntax_analyzer {
 			scope, lineno, id, symbol_table::entry::USER_FUNC, icode_gen.next_quad_label()
 		);
 		sym_table.insert(new_func_entry);
+		func_handler.enter_function(new_func_entry);
+
 		icode_gen.emit_quad(new quad(quad::iopcode::funcstart, nullptr, expr::make_lvalue_expr(new_func_entry), nullptr, lineno));
 
         scp_handler.enter_formal_arg_ss();
@@ -1018,6 +1024,7 @@ namespace syntax_analyzer {
                                                                            unsigned int lineno, unsigned int total_func_locals) {
         fprintf(yyout, "funcdef -> funcprefix funcargs funcbody\n");
         func_entry->set_total_locals(total_func_locals);
+        func_handler.exit_function();
 
 		icode_gen.emit_quad(new quad(quad::iopcode::funcend, nullptr, expr::make_lvalue_expr(func_entry), nullptr, lineno));
         return func_entry;
@@ -1066,15 +1073,24 @@ namespace syntax_analyzer {
         fprintf(yyout, "idlist -> IDENTIFIER tmp_idlist\n");
         unsigned int scope = scp_handler.get_current_scope();
 
-        tmp_id_list.push_back(identifier);
-        for(const auto &cur_id : tmp_id_list) {
+        vector<string> ordered_vector = vector<string>();
+        ordered_vector.push_back(identifier);
+        ordered_vector.insert(ordered_vector.end(), tmp_id_list.begin(), tmp_id_list.end());
+
+        for(const auto &cur_id : ordered_vector) {
             vector<symbol_table::entry*> cur_scope_entries = sym_table.lookup(cur_id, scope);  /* Look up only at the current scope */
             vector<symbol_table::entry*> global_entries = sym_table.lookup(cur_id, scope_handler::GLOBAL_SCOPE);  /* Look up only at the global scope */
 
             if(cur_scope_entries.empty()) {
+                symbol_table::var_entry *v = new symbol_table::var_entry(
+                        scope, lineno, cur_id, symbol_table::entry::FORMAL_ARG, scp_handler.get_current_ss(), scp_handler.fetch_and_incr_cur_ssoffset()
+                );
+                sym_table.insert(v);
+                        /*
                 sym_table.insert(new symbol_table::var_entry(
                     scope, lineno, cur_id, symbol_table::entry::FORMAL_ARG, scp_handler.get_current_ss(), scp_handler.fetch_and_incr_cur_ssoffset()
                 ));
+                         */
             } else {
                 throw syntax_error("Formal Argument \'" + cur_id + "\' defined multiple times", lineno);
             }
@@ -1083,7 +1099,7 @@ namespace syntax_analyzer {
                 if(entry->get_sym_type() == symbol_table::entry::LIB_FUNC)
                     throw syntax_error("Formal Argument \'" + cur_id + "\' shadows library function", lineno);
         }
-        return tmp_id_list;
+        return ordered_vector;
     }
     vector<string> Manage_idlist__empty(){
 		fprintf(yyout, "idlist -> <empty>\n");

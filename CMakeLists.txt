@@ -31,10 +31,12 @@ add_executable(acc
         syntax_analyzer/scope_handler.cpp syntax_analyzer/scope_handler.h
         syntax_analyzer/symbol_table.cpp syntax_analyzer/symbol_table.h
         syntax_analyzer/syntax_error.cpp syntax_analyzer/syntax_error.h
+        syntax_analyzer/Func_handler.cpp syntax_analyzer/Func_handler.h
         syntax_analyzer/types.h
 
         target_code/VMcode_generator.cpp target_code/VMcode_generator.h
         target_code/types.h target_code/types.cpp
+        target_code/Binary_writer.cpp target_code/Binary_writer.h
 
         target_code/generate_funcs/helpers.cpp
         target_code/generate_funcs/arithmetic.cpp
@@ -44,12 +46,9 @@ add_executable(acc
         target_code/generate_funcs/functions.cpp
 
         main.cpp
-        not_implemented_error.cpp not_implemented_error.h
-        utilities.cpp utilities.h target_code/Binary_writer.cpp target_code/Binary_writer.h)
+        utilities.cpp utilities.h)
 
 add_executable(avm
-        not_implemented_error.cpp not_implemented_error.h
-
         common_interface/errors/numeric_error.cpp common_interface/errors/numeric_error.h
 
         common_interface/Builtin_funcs.h common_interface/Builtin_funcs.cpp

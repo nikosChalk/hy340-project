@@ -99,11 +99,13 @@ namespace syntax_analyzer {
     }
 
     /* ~~~~~~ symbol_table::func_entry implementation ~~~~~~ */
-    symbol_table::func_entry::func_entry(unsigned int scope, unsigned int line, const string &name, sym_type symbol_type, unsigned int iaddress)
+    symbol_table::func_entry::func_entry(unsigned int scope, unsigned int line, const string &name, sym_type symbol_type,
+                                         unsigned int iaddress, bool ret_val/*=false*/)
         : entry(scope, line, (name.empty() ? ("_gfunc" + std::to_string(generic_names++)) : name), symbol_type) {
         if(symbol_type != LIB_FUNC && symbol_type != USER_FUNC)
             throw std::runtime_error("Invalid symbol type");
         this->iaddress = iaddress;
+        this->ret_val = ret_val;
     }
 
     unsigned int symbol_table::func_entry::get_iaddress() const {
@@ -117,6 +119,13 @@ namespace syntax_analyzer {
         this->total_locals = total_locals;
     }
 
+    bool symbol_table::func_entry::has_ret_val() const {
+        return ret_val;
+    }
+    void symbol_table::func_entry::set_ret_val() {
+        ret_val = true;
+    }
+
     /* ~~~~~~ symbol_table implementation ~~~~~~ */
     vector<string> symbol_table::lib_func_names = vector<string>(Builtin_funcs::LIB_FUNC_NAMES);
 
@@ -126,10 +135,13 @@ namespace syntax_analyzer {
         >();
 
         this->sym_tables.push_back(unordered_map<string, vector<entry*>>());
-        for(const string &lib_func_name : lib_func_names)
+        for(const string &lib_func_name : lib_func_names) {
+            bool ret_val = (lib_func_name != Builtin_funcs::libname_print);
+
             this->sym_tables.at(scope_handler::GLOBAL_SCOPE)[lib_func_name].push_back(new func_entry(
-                    scope_handler::GLOBAL_SCOPE, 0, lib_func_name, entry::LIB_FUNC, 0
+                    scope_handler::GLOBAL_SCOPE, 0, lib_func_name, entry::LIB_FUNC, 0, ret_val
             ));
+        }
     }
 
     void symbol_table::insert(entry *sym_entry) {

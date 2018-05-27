@@ -18,7 +18,7 @@ int main (int argc, char *argv[]) {
     }
 
     //Initialize RDP and parse binary file
-    RDP rdp = RDP();
+    RDP rdp;
     try {
         rdp.parse(string(argv[1]));
     } catch(ifstream::failure const &err) {

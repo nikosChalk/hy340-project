@@ -6,7 +6,6 @@
 #include "../AVM.h"
 #include "../Memcell.h"
 #include "../errors/internal_error.h"
-#include "../../../not_implemented_error.h"
 
 using namespace std;
 using namespace virtual_machine;
@@ -34,11 +33,19 @@ void AVM::libfunc_input(void) {
 }
 
 void AVM::libfunc_print(void) {
+    retval.clear();
+    retval.type = Memcell::Type::nil;
+
     unsigned int total_actuals = program_stack.get_total_actuals();
-    for(unsigned int i=0; i<total_actuals; i++) {
+    for(int i=0; i<total_actuals; i++) {
         Memcell const *cur_arg = program_stack.get_actual_arg(i);
-        cout << cur_arg->to_string(const_pool) << endl;
+        cout << cur_arg->to_string(const_pool);
+
+        if(i != total_actuals-1)
+            cout << " ";
     }
+    cout << endl;
+
 }
 
 void AVM::libfunc_strtonum(void) {

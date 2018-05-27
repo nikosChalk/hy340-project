@@ -109,7 +109,7 @@ string VMinstruction::to_string(vector<VMinstruction> const &vmi_vector) {
             string arg2_str = (vmi.arg2 == nullptr) ? "" : vmi.arg2->to_string();
             string res_str = (vmi.result == nullptr) ? "" : vmi.result->to_string();;
 
-            ss << std::to_string(i+1) << ":" << "\t"
+            ss << std::to_string(i) << ":" << "\t"
                << iopcode_str << TAB(iopcode_str)
                << res_str << TAB(res_str)
                << arg1_str << TAB(arg1_str)

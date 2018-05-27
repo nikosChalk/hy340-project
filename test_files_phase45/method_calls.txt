@@ -1,0 +1,38 @@
+function Point(x,y)	{
+	return[
+		{"x" : x},
+		{"y" : y},
+		{"move" : (function(this, dx, dy) {
+			this.x = this.x + dx;
+			this.y = this.y + dy;
+		})}
+	];
+}
+
+function Square(p1,p2){
+	return[
+		{"p1" :p1},
+		{"p2" :p2},
+		{"move" : (function(this,dx,dy){
+			this.p1..move(dx,dy);
+			this.p2..move(dx,dy);
+		})}
+	];
+}
+
+pt = Point(20,30);
+print("Point: ", pt);
+
+pt.move(pt,-1,-2);
+print("Moved x:-1, y:-2: ", pt);
+
+pt..move(-1,-2);
+print("Moved x:-1, y:-2: ", pt);
+
+sq = Square(Point(10,20),Point(30,40));
+print("Square: " , sq);
+
+sq..move(-4,-8);
+print("sq moved x:-4, y:-8: ", sq);
+
+

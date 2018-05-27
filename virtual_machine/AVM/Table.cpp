@@ -19,7 +19,7 @@ Table::Table() {
     tableMap = map<Table*, Memcell>();
     userfuncMap = map<unsigned int, Memcell>();
     libfuncMap = map<char const*, Memcell>();
-    boolMap = unordered_map<bool, Memcell>();
+    boolMap = map<bool, Memcell>();
 
     nil_pair = make_pair(Memcell(), false);
 }
@@ -29,17 +29,39 @@ Table::Table(Table const *other) {
 	this->numericMap = map<long double, Memcell>(other->numericMap);
 
     this->stringMap = map<string, Memcell>(other->stringMap);
-	for (auto &pair : this->stringMap)
-		pair.second.value.str_ptr = strdup(pair.second.value.str_ptr);
-
 	this->tableMap = map<Table*, Memcell>(other->tableMap);
-	for (auto &pair : this->tableMap)
-		pair.second.value.table_ptr->increase_ref_counter();
 
 	this->userfuncMap = map<unsigned int, Memcell>(other->userfuncMap);
 	this->libfuncMap = map<char const*, Memcell>(other->libfuncMap);
-	this->boolMap = unordered_map<bool, Memcell>(other->boolMap);
+	this->boolMap = map<bool, Memcell>(other->boolMap);
 	this->nil_pair = std::pair<Memcell, bool>(other->nil_pair);
+
+    handle_copied_references(numericMap);
+    handle_copied_references(stringMap);
+    handle_copied_references(tableMap);
+    handle_copied_references(userfuncMap);
+    handle_copied_references(libfuncMap);
+    handle_copied_references(boolMap);
+
+    if(nil_pair.second) {
+        Memcell &memcell = nil_pair.first;
+
+        if(memcell.type == Memcell::Type::string)
+            memcell.value.str_ptr = strdup(memcell.value.str_ptr );
+        else if(memcell.type == Memcell::Type::table)
+            memcell.value.table_ptr->increase_ref_counter();
+    }
+}
+
+template<typename T>
+void Table::handle_copied_references(map<T, Memcell> &map) {
+    for(auto &it : map) {
+        Memcell &memcell = it.second;
+        if(memcell.type == Memcell::Type::string)
+            memcell.value.str_ptr = strdup(memcell.value.str_ptr );
+        else if(memcell.type == Memcell::Type::table)
+            memcell.value.table_ptr->increase_ref_counter();
+    }
 }
 
 const Table::Getelem_func_map Table::getelem_func_map = {
@@ -324,7 +346,9 @@ void Table::unregister_undef_key(const Memcell *key) {
     return; //no action
 }
 
-#define second_tostr() (it->second.to_string(const_pool))
+//Do not recursively print self. (e.g. when we have table[5] = table; print(table);)
+#define memcell_to_str(memcell) (is_self(memcell) ? "__self__" : (memcell)->to_string(const_pool))
+#define second_tostr() (memcell_to_str(&it->second))
 string Table::to_string(Constants_pool const &const_pool) const {
     stringstream ss;
     const string prefix = "\t{ ";
@@ -377,9 +401,12 @@ string Table::to_string(Constants_pool const &const_pool) const {
     if(nil_pair.second)
         ss << prefix << "nil" << midfix << nil_pair.first.to_string(const_pool) << suffix << endl;
 
-    //Reference counter
-    ss << "\tReference Counter: " << ref_counter << endl;
     ss << "]" << endl;
     return ss.str();
+}
+
+bool Table::is_self(const Memcell *other) const {
+    assert(other);
+    return (other->type == Memcell::Type::table && other->value.table_ptr == this);
 }
 

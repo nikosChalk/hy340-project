@@ -103,6 +103,7 @@ Memcell* AVM::translate_operand(const VMarg *vmarg, Memcell *reg /*=nullptr*/) {
         case VMarg::Type::userfunc:
             reg->type = Memcell::Type::userfunc;
             reg->value.userfunc_addr = const_pool.get_userfunc_on_idx(vmarg->value).address;
+            return reg;
         case VMarg::Type::libfunc:
             reg->type = Memcell::Type::libfunc;
             reg->value.libfunc_ptr = const_pool.get_libfunc(vmarg->value).c_str();

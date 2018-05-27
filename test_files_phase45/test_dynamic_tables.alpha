@@ -1,0 +1,43 @@
+//keys are numbers
+/*
+t = [10,20,30,t=40];
+t[0]="hello";
+t[1]=50;
+print(t);
+
+t2=[{"t" : t}];
+t=nil;
+print(t2);
+
+t2.t2 = t2;
+t2.t = nil;
+print(t2);
+
+t2 = nil;
+print(t2);
+*/
+
+
+function f() {
+	print(5);
+}
+
+t3 = [];
+t3[0] = 0;
+t3["a"] = 12;
+t3.b = 14.232;
+t3[false] = cos;
+t3[t3] = t3;
+t3[ (function () {  }) ] = 5;
+t3[print] = print;
+t3[nil] = true;
+
+t3[32] = f;
+//print(t3);
+
+t3[print]("called print");
+t3[32]();
+print("cos is:", t3[false](180));
+
+t3["()"] = print;
+t3("functor called");

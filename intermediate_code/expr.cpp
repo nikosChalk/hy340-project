@@ -103,8 +103,6 @@ const bool expr::must_be_patched() const {
 }
 
 std::string expr::to_string() const {
-    stringstream ss;
-
     switch(this->expr_type) {
         case type::VAR_E:
         case type::TABLE_ITEM_E:
@@ -126,7 +124,7 @@ std::string expr::to_string() const {
 
         case type::BOOL_E:  //BOOL_E is an internal expr for handling short-circuit evaluation. No quad should have an operand of BOOL_E
         default:
-            assert(0);  //unreachable statement
+            assert(false);  //unreachable statement
     }
 }
 

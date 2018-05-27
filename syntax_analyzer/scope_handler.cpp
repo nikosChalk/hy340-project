@@ -34,11 +34,13 @@ scope_handler::scope_space scope_handler::get_current_ss() const {
 
 unsigned int scope_handler::increase_scope() {
     scope++;
+    return scope;
 }
 
 unsigned int scope_handler::decrease_scope() {
     assert(scope != 0); //avoid possible wrap-arround due to programming fault
     scope--;
+    return scope;
 }
 
 unsigned int scope_handler::fetch_and_incr_cur_ssoffset() {

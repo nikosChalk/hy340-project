@@ -2,7 +2,6 @@
 
 #include "../AVM.h"
 #include "../Program_stack/Stack_manipulator.h"
-#include "../../../not_implemented_error.h"
 #include "../errors/internal_error.h"
 #include "../Memcell.h"
 

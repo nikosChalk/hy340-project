@@ -1,0 +1,70 @@
+
+function f() {}
+t=[3.14];
+
+print(true, 5, "abcd", nil, f, cos, t);
+
+/*
+print("Give number");
+number = input();
+print("value has type", typeof(number));
+
+print("Give bool");
+bool = input();
+print("value has type", typeof(bool));
+
+print("Give nil");
+my_nil = input();
+print("value has type", typeof(my_nil));
+*/
+
+
+t=[100];
+t=[ {0 : 0}, {"a" : 12}, {false : cos}, {t : t}, {f : -1}, {print : print}, {nil : 1}  ];
+print("total members: ", objecttotalmembers(t));
+print("keys:", objectmemberkeys(t));
+copy = objectcopy(t);
+
+print("original: ", t);
+print("copy: ", copy);
+
+function foo(x,y,z) {
+	print("foo called with total args: ", totalarguments());
+}
+print("calling foo with 2", foo(1,2));
+print("calling foo with 3", foo(cos,sin,32.2));
+print("calling foo with 4", foo([], "x", 0, 1));
+
+function bar() {
+	for(i=0; i<totalarguments(); i++) {
+		print("bar var_arg ", i, " == ", argument(i));
+	}
+}
+
+bar();
+bar(0);
+bar(0,1,2);
+bar(cos, bar, "foo", true, false, nil, [cos,sin], argument);
+
+t3=objectmemberkeys(t);
+for(i=0; i<objecttotalmembers(t3); i++) {
+	print("value '", t[t3[i]], "' has type: ", typeof( t[t3[i]] ), " found in index ", t3[i]);
+}
+
+print("strtonum_ok", strtonum("2563262.32141"));
+print("strtonum_ok", strtonum("2563262"));
+print("strtonum_FALSE", strtonum("xy32za"));
+
+print("sqrt_ok ", sqrt(121));
+print("sqrt_ok ", sqrt(3.14));
+print("sqrt_ok ", sqrt(0));
+print("sqrt_no ", sqrt(-0.2151));
+
+print("cos180 ", cos(180));
+print("sin45 ", cos(45));
+
+
+
+
+
+

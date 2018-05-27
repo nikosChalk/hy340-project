@@ -1,0 +1,26 @@
+
+
+x=1;
+nr=50;
+
+str="sgdndksjgn";
+
+function foo(a, b, c) {
+	local x=2;	//shadows global
+	y=3;
+	q=32;
+
+	print("local x ", x);
+	print("global x ", ::x);
+
+	print("local y: ", y);
+
+	v = "abcd";
+	print("local str: ", v);
+
+	print("a=", a);
+	print("b=", b);
+	print("c=", c);
+}
+
+foo("ashga", cos, foo);

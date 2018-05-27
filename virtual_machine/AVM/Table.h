@@ -108,7 +108,7 @@ namespace virtual_machine {
         std::map<Table*, Memcell> tableMap;       //used by statements e.g. x = [5, 3]; table[x]; or table[ [] ];
         std::map<unsigned int, Memcell> userfuncMap;    //used by statements e.g. function f() {}; table[f];
         std::map<char const*, Memcell> libfuncMap;      //used by statements e.g. table[cos];
-        std::unordered_map<bool, Memcell> boolMap;      //used by statements e.g. table[true]; or table[false];
+        std::map<bool, Memcell> boolMap;      //used by statements e.g. table[true]; or table[false];
 
         /* For the Memcell::Type::nil, we do no need an std::map as it is jut one Memcell                           */
         /* Thus we use a pair of <Memcell, bool>, where the boolean value indicates if this memcell has been set.   */
@@ -217,6 +217,23 @@ namespace virtual_machine {
          * Map that maps all Memcell::Type enumerated values to the corresponding "unregister_"  member functions
          */
         static const Unregister_func_map unregister_func_map;
+
+        /**
+         * Checks if other Memcell is this, i.e. other->value.table_ptr == this
+         * @param other The other Memcell. Must not be NULL/nullptr
+         * @return True if other is this. False otherwise
+         */
+        bool is_self(Memcell const *other) const;
+
+        /**
+         * Function that for each Memcell m:
+         * if m is of type string, then an strdup is created,
+         * if m is of type table, then the table's reference counter is increased
+         * @tparam T unused
+         * @param map A this->map, e.g. stringMap, userfuncMap, etc.
+         */
+        template<typename T>
+        void handle_copied_references(std::map<T, Memcell> &map);
     };
 }
 

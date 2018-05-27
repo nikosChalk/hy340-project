@@ -1,0 +1,15 @@
+
+
+function f() { return true; }
+x = f();
+
+while (x) {
+	function g() {
+		while(true){
+			break;
+		}
+	}
+	print(x);
+	g();
+	break;
+}

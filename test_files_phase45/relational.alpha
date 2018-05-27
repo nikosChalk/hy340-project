@@ -1,0 +1,78 @@
+
+function foo() {}
+
+x = 1;
+print("bool and number ", true and x);
+
+print("bool and str", true and "srt");
+
+x=false;
+print("bool and bool", true and x);
+
+print("bool and nil", nil and true);
+print("bool or nil", nil or true);
+print("bool and table", true and [1,2]);
+
+print("bool and userfunc", true and foo);
+print("bool or libfunc", false or cos);
+
+print("table eq nil", [] == nil);
+print("nil==nil", nil==nil);
+print("nil==true ", nil==true);
+print("nil==false", nil==false);
+
+x=5.2;
+y=7;
+print("5.2 == 7", x==y);
+x=y=3.22;
+print("x==x ", x==y);
+
+print("Give name");
+x=input();
+print("Is ismini NOT the type?", "Ismini" != x);
+
+x="foo";
+y=input();
+print("y==foo?", x==y);
+
+t1 = [];
+t2 = [];
+print("t1==t2? false", t1==t2);
+
+t1.x = t2;
+print("t1.x == t2?", t1.x == t2);
+
+t1.x = nil;
+print("t1.x == t2?", t1.x == t2);
+
+print("cos == sin?", cos == sin);
+print("cos == cos?", cos == cos);
+
+function g(){}
+function f() {}
+print("f==g?", f==g);
+
+x=f;
+print("f==f?", x==f);
+
+//print("uncomparable", f==print);	//error
+
+
+x=5;
+y=g;
+
+//x>y;	//error
+
+y=3;
+
+print("should be true: ", x>y);
+print("should be true: ", not(x+100 < y));
+
+a=3;
+b=3;
+print("should be true", a>=b and a<=b);
+
+
+
+
+

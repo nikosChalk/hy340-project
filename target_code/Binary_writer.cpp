@@ -11,12 +11,12 @@ using namespace virtual_machine;
 Binary_writer::Binary_writer(vector<VMinstruction> const &vm_instructions,
                              const Constants_pool &const_pool,
                              unsigned int total_program_vars)
+        : binary_ofs()
 {
     this->total_program_vars = total_program_vars;
     this->vm_instructions = vector<VMinstruction>(vm_instructions);
     this->const_pool = const_pool;
 
-    binary_ofs = ofstream();
     binary_ofs.exceptions(ofstream::badbit | ofstream::failbit);
 }
 

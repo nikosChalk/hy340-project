@@ -1,0 +1,27 @@
+x = 10;
+y = 1;
+z = 2.4;
+w = 2;
+
+function f(){}
+if (x+y >= z-w){
+	f(x,y,z);
+	print(x,y,z);
+}
+
+a = true;
+b = 1;
+
+if (false or a or b)
+    x=y;
+else
+    y = z;
+
+if (a or b){
+    x=y;
+}
+else{
+    y = z;
+}
+
+print(x, y, z);

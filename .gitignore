@@ -4,5 +4,4 @@ alpha_lex/alpha_flex.h
 alpha_lex/alpha_flex.cpp
 syntax_analyzer/alpha_bison.h
 syntax_analyzer/alpha_bison.cpp
-test.cpp
 flex_doc.txt

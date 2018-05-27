@@ -61,6 +61,12 @@ namespace target_code {
         //they must be patched to jump to the "funcend" VM instruction
         std::stack<std::vector<unsigned int>> func_stack;
 
+        //Stack that contains address of unpatched VM instruction jumps. These jumps do no exist in the intermediate code
+        //in order to be patched with the "normal" way of address_links.
+        //Whenever we encounter a funcstart, we push the address of the incomplete jump, and
+        //whenever we encounter a funcend, we pop.
+        std::stack<unsigned int> jumps_before_funcenter;
+
         /**
          * Appends the instruction to the end of the vm_instructions vector
          * @param instruction The instruction to emit.

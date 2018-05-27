@@ -1,0 +1,12 @@
+
+a = 3;
+function f(a) { }
+
+while(a){
+	print(a);
+	print(f);
+
+	a--;
+	continue;
+	break;
+}

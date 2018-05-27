@@ -1,0 +1,24 @@
+x = 3;
+y = 1;
+z = 15;
+w = 2.3;
+a = 10;
+b = 0;
+
+while (x-y < z-w){
+	if (b)
+		break;
+    else
+		x = x+2;
+	print(x, y, z, w);
+}
+
+while (a>1) {
+	while (b == 1){
+		break;
+	}
+	function A(){
+
+	}
+	a--;
+}

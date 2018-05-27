@@ -1,0 +1,43 @@
+
+
+function f(a,b) { return a+b; }
+function g() {
+	function h() {
+		return 5;
+	}
+	return h();
+}
+
+x = g;
+print("Value of x : ", x());
+
+x = (function() { return "hello";});
+print("Value of x : ", x());
+
+a=10;
+b=20;
+x = (function(a,b){ return a+b;});
+print("Value of x : ", x(a,b, 30));
+
+x = (function(z,w,q) {return "perfect!!!";})(5, true, q);
+print("Value of x : ", x);
+
+function fact(n){
+		if (n==1){
+			return 1;
+		}
+		return n*fact(n-1);
+}
+
+n = fact(10);
+print("fibonacci of : ", 10, " is: ", n);	//3.628.800
+
+n = f(1,2);
+print("Value of n : ", n);
+
+function error(){
+	error();
+}
+
+print("Stack smashing!");
+error(1,2);

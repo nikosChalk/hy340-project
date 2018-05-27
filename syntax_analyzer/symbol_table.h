@@ -150,9 +150,11 @@ namespace syntax_analyzer {
              * @param name. Same as entry except that if the name is empty, then a generic name is instead used
              * @param symbol_type Must be either USER_FUNC or LIB_FUNC
              * @param iaddress The quad number of this function, i.e. its address within the intermediate code
+             * @param ret_val Whether or not this function has a return value. Default is false.
              * @throws std::runtime_error if symbol_type has wrong value
              */
-            func_entry(unsigned int scope, unsigned int line, const std::string &name, sym_type symbol_type, unsigned int iaddress);
+            func_entry(unsigned int scope, unsigned int line, const std::string &name, sym_type symbol_type,
+                       unsigned int iaddress, bool ret_val=false);
 
             /**
              * Returns the quad number of the function, i.e. its address within the intermediate code
@@ -166,6 +168,16 @@ namespace syntax_analyzer {
              */
             unsigned int get_total_locals() const;
 
+            /**
+             * Returns whether or not this function has a return value
+             * @return True if it has. False otherwise
+             */
+            bool has_ret_val() const;
+
+            /**
+             * Set this function's ret_val to true, i.e. register that this function has a return value
+             */
+            void set_ret_val();
 
             /**
              * Sets the number of total local variables that this function uses
@@ -185,6 +197,11 @@ namespace syntax_analyzer {
              * Number of
              */
             unsigned int total_locals;
+
+            /**
+             * True if this function has a return value. False otherwise.
+             */
+            bool ret_val;
         };
 
 
