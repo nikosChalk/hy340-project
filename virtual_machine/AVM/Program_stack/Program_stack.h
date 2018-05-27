@@ -149,10 +149,10 @@ namespace virtual_machine {
         /**
          * Offsets from "topsp" index for the corresponding environmental values
          */
-        static int SAVED_TOPSP_OFFSET = +1;
-        static int SAVED_TOP_OFFSET = +2;
-        static int SAVED_PC_OFFSET = +3;
-        static int SAVED_TOTAL_ACTUALS = +4;
+        static const int SAVED_TOPSP_OFFSET = +1;
+        static const int SAVED_TOP_OFFSET = +2;
+        static const int SAVED_PC_OFFSET = +3;
+        static const int SAVED_TOTAL_ACTUALS = +4;
 
 
         /**

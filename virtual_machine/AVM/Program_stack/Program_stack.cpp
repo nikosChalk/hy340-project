@@ -169,7 +169,7 @@ void Program_stack::move_up() {
 void Program_stack::move_down() {
     assert(!saved_pointers_stack.empty());
 
-    std::pair saved_pointers_pair = saved_pointers_stack.top();
+    std::pair<int, int> saved_pointers_pair = saved_pointers_stack.top();
     saved_pointers_stack.pop();
     top = saved_pointers_pair.first;
     topsp = saved_pointers_pair.second;
